@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Hệ thống quản lý bãi đỗ xe ParkTech</title>
+  <!-- Liên kết file CSS riêng biệt từ thư mục ../css/ -->
+  <link rel="stylesheet" href="../css/login.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Thẻ đăng nhập chính -->
+  <main class="login-card">
+    
+    <!-- Đầu thẻ: Huy hiệu hệ thống & Thương hiệu -->
+    <header class="card-header">
+      <!-- Huy hiệu hệ thống -->
+      <div class="badge-system">
+        <span class="badge-dot"></span>
+        HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE
+      </div>
+
+      <!-- Logo & Thương hiệu ParkTech sử dụng hình ảnh từ thư mục ../images/ -->
+      <div class="brand-container">
+        <img src="../images/logo.svg" alt="ParkTech Logo" class="brand-logo-img">
+        <span class="brand-name">Smart Parking</span>
+      </div>
+
+      <!-- Tiêu đề và mô tả ngắn -->
+      <h1 class="login-title">Đăng nhập</h1>
+      <p class="login-subtitle">Vui lòng đăng nhập để tiếp tục.</p>
+    </header>
+
+    <!-- Biểu mẫu nhập thông tin đăng nhập -->
+    <form class="login-form" action="#" method="POST" onsubmit="event.preventDefault();">
+      
+      <!-- Ô nhập Tên đăng nhập -->
+      <div class="form-group">
+        <label for="username" class="form-label">Tên đăng nhập</label>
+        <div class="input-wrapper">
+          <span class="input-icon-left">
+            <img src="../images/icon-user.svg" alt="User Icon" class="input-img-icon">
+          </span>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="input-field" 
+            placeholder="Nhập tên đăng nhập" 
+            autocomplete="username" 
+            required
+          >
+        </div>
+      </div>
+
+      <!-- Ô nhập Mật khẩu -->
+      <div class="form-group">
+        <label for="password" class="form-label">Mật khẩu</label>
+        <div class="input-wrapper">
+          <span class="input-icon-left">
+            <img src="../images/icon-lock.svg" alt="Lock Icon" class="input-img-icon">
+          </span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="input-field" 
+            placeholder="Nhập mật khẩu" 
+            autocomplete="current-password" 
+            required
+          >
+          <!-- Nút ẩn / hiện mật khẩu -->
+          <button type="button" class="toggle-password-btn" id="togglePassword" aria-label="Ẩn/Hiện mật khẩu">
+            <img id="eyeImg" src="../images/icon-eye.svg" alt="Toggle Password" class="toggle-eye-img">
+          </button>
+        </div>
+      </div>
+
+      <!-- Nút Đăng nhập -->
+      <button type="submit" class="btn-submit">
+        <span>Đăng nhập</span>
+        <img src="../images/icon-arrow-right.svg" alt="Arrow Right" class="btn-arrow-img">
+      </button>
+
+      <!-- Dòng chú thích bảo mật phía dưới -->
+      <footer class="card-footer">
+        <img src="../images/icon-shield.svg" alt="Shield Icon" class="footer-shield-img">
+        <span>Hệ thống quản lý bãi đỗ xe nội bộ</span>
+      </footer>
+
+    </form>
+
+  </main>
+
+  <!-- Liên kết file JavaScript riêng biệt từ thư mục ../js/ -->
+  <script src="../js/login.js"></script>
+
+</body>
+</html>
