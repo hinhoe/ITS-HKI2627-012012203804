@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghi nhận xe ra & Tính phí - ParkAIVision</title>
+  
+  <!-- File CSS riêng biệt cho trang Ghi nhận xe ra -->
+  <link rel="stylesheet" href="../css/checkout.css">
+  
+  <!-- Font chữ Inter (Đồng bộ tuyệt đối với hệ thống) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- ======================================================================
+       1. SIDEBAR: THANH ĐIỀU HƯỚNG VÀ THÔNG TIN CA TRỰC
+       ====================================================================== -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <!-- Thương hiệu & Logo -->
+      <div class="sidebar-logo">
+        <div class="logo-badge">P</div>
+        <span class="logo-text">ParkTech</span>
+      </div>
+
+      <!-- Trạng thái ca trực -->
+      <div class="shift-status-container">
+        <div class="section-label">Chế độ vận hành</div>
+        <div class="shift-badge">
+          <span class="pulse-dot"></span>
+          <span>Ca trực sáng</span>
+        </div>
+      </div>
+
+      <!-- Menu nghiệp vụ bãi xe (Dành cho nhân viên) -->
+      <div class="sidebar-nav-container">
+        <div class="section-label" style="padding-left: 14px;">Nghiệp vụ bãi xe</div>
+        <ul class="nav-menu">
+          <li>
+            <a href="checkin.html" class="nav-item-link">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i>
+              <span>Ghi nhận xe vào bãi</span>
+            </a>
+          </li>
+          <li>
+            <a href="checkout.html" class="nav-item-link active">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Ghi nhận xe ra & Tính phí</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item-link">
+              <i class="fa-solid fa-square-parking"></i>
+              <span>Xe đang gửi trong bãi</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item-link">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Lịch sử vào/ra & Tra cứu</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Theo dõi sức chứa bãi xe (Quy chuẩn tối đa 500 phương tiện) -->
+    <div class="capacity-card">
+      <div class="capacity-header">
+        <span class="capacity-title">Sức chứa thời gian thực</span>
+        <span class="capacity-percent" id="capacityPercent">82.4%</span>
+      </div>
+      <div class="capacity-progress-bg">
+        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 82.4%;"></div>
+      </div>
+      <div class="capacity-footer">
+        <span class="capacity-count" id="capacityCount">412 / 500</span>
+        <span class="capacity-available" id="capacityAvailable">88 chỗ trống</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======================================================================
+       2. MAIN CONTENT WRAPPER: HEADER & NỘI DUNG CHÍNH
+       ====================================================================== -->
+  <div class="main-wrapper">
+    
+    <!-- Top Header (Đồng bộ cấu trúc với checkin.html) -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="header-icon-box">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </div>
+        <div class="header-text">
+          <h1>Ghi nhận xe ra & Tính phí</h1>
+          <p>Tự động nhận diện biển số ra, đối soát lượt gửi và tính phí dịch vụ</p>
+        </div>
+      </div>
+
+      <!-- Dropdown Profile Nhân viên ở góc phải -->
+      <div class="user-menu-wrapper">
+        <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <div class="avatar-circle">
+            <i class="fa-regular fa-user"></i>
+          </div>
+          <div class="user-info">
+            <div class="user-name">Trần Bảo Anh</div>
+            <div class="user-role">Nhân viên</div>
+          </div>
+          <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+        </button>
+
+        <!-- Menu thả xuống -->
+        <div class="user-dropdown-menu" id="userDropdownMenu">
+          <a href="#" class="dropdown-item">
+            <i class="fa-regular fa-id-badge"></i>
+            <span>Thông tin cá nhân</span>
+          </a>
+          <a href="#" class="dropdown-item">
+            <i class="fa-solid fa-gear"></i>
+            <span>Cài đặt ca trực</span>
+          </a>
+          <a href="login.html" class="dropdown-item logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Đăng xuất</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Thân trang cuộn (Content Body) -->
+    <main class="content-body">
+
+      <!-- Lưới 2 cột: Khung hình ảnh xe ra & Kết quả nhận diện & Tính phí -->
+      <section class="grid-recognition-row">
+        
+        <!-- Cột trái: Khung hình ảnh xe ra -->
+        <article class="card camera-card">
+          <div>
+            <div class="card-header-flex">
+              <div class="card-title-group">
+                <i class="fa-solid fa-image"></i>
+                <span>Hình ảnh xe ra</span>
+              </div>
+              <div class="file-status-badge">
+                <i class="fa-solid fa-circle-check"></i>
+                <span id="fileStatusText">Đã tải: xe_ra_lane1.jpg (2.6 MB)</span>
+              </div>
+            </div>
+
+            <!-- Viewport mô phỏng camera hoặc ảnh xe ra tải lên -->
+            <div class="viewport-container">
+              <img id="vehiclePreviewImg" class="vehicle-preview-img" alt="Ảnh phương tiện ra bãi">
+
+              <!-- Thẻ nhãn camera mô phỏng -->
+              <div class="viewport-overlay-tag">
+                <span class="live-dot"></span>
+                <span>CAM 02 - CỔNG RA LANE 1</span>
+              </div>
+
+              <!-- Hộp Bounding Box nhận diện biển số của AI -->
+              <div class="ai-detection-box" id="aiPlateBox">
+                <span class="ai-tag-label">AI phát hiện biển số</span>
+                <span class="ai-plate-preview" id="aiPlateText">[ 30G-928.31 ]</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nút điều khiển bên dưới khung ảnh -->
+          <div class="camera-controls-bar">
+            <div class="left-controls">
+              <!-- Input file ẩn để chọn ảnh thực tế từ máy tính -->
+              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg" style="display: none;">
+              <button type="button" class="btn btn-secondary" id="btnSelectImage">
+                <i class="fa-regular fa-image" style="color: #2563eb;"></i>
+                <span>Chọn ảnh xe</span>
+              </button>
+              <span class="file-hint-text">Hỗ trợ định dạng JPG, PNG từ máy tính</span>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnRecognize">
+              <i class="fa-solid fa-expand"></i>
+              <span>Nhận diện biển số</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Cột phải: Kết quả nhận diện & Tính phí -->
+        <article class="card results-card">
+          <div>
+            <div class="card-title-group" style="margin-bottom: 10px;">
+              <span>Kết quả nhận diện & Tính phí</span>
+            </div>
+
+            <!-- Khối hiển thị ảnh cắt biển số (Crop Box) -->
+            <div class="crop-preview-box">
+              <div class="crop-label">Ảnh cắt biển số & nhận diện AI</div>
+              <div class="crop-image-placeholder" id="cropPlaceholder">
+                <i class="fa-solid fa-camera fa-2x"></i>
+              </div>
+
+              <!-- Kết quả ký tự nhận diện (OCR) -->
+              <div class="plate-result-display">
+                <span class="plate-number-text" id="resultPlateText">30G-928.31</span>
+              </div>
+              <div class="ocr-confidence-text">
+                Độ tin cậy OCR: <strong id="ocrConfidenceText">99.8%</strong>
+              </div>
+            </div>
+
+            <!-- Danh sách chi tiết lượt gửi xe đối soát -->
+            <div class="meta-details-list">
+              <div class="meta-row">
+                <span class="meta-label">Thời gian vào:</span>
+                <span class="meta-value font-mono" id="timeInText">14:35:10 - 28/10/2026</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Thời gian ra:</span>
+                <span class="meta-value font-mono" id="timeOutText">16:45:20 - 28/10/2026</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Tổng thời gian:</span>
+                <span class="meta-value" id="durationText">2 giờ 10 phút</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Loại xe:</span>
+                <!-- Đúng quy tắc: Chỉ có Ô tô hoặc Xe máy -->
+                <span class="meta-value" id="vehicleTypeText">Ô tô</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Loại phí:</span>
+                <!-- Đúng quy tắc: Bình thường, Qua đêm, Ban ngày -->
+                <span class="meta-value" id="feeTypeText">Ban ngày</span>
+              </div>
+            </div>
+
+            <!-- Khu vực tính phí gửi xe -->
+            <div class="fee-summary-container">
+              <div>
+                <div class="fee-title">Phí gửi xe phải thu</div>
+                <div class="fee-amount-display" id="feeAmountText">25.000 VNĐ</div>
+              </div>
+              <div class="fee-status-badge">Đã thu phí</div>
+            </div>
+
+            <!-- Nút hành động chính: Ghi nhận xe ra bãi -->
+            <div class="checkout-action-wrapper" style="margin-top: 14px;">
+              <button type="button" class="btn btn-primary" id="btnConfirmCheckout" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 13px;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Ghi nhận xe ra bãi</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Khung thông báo thành công màu xanh lá (ẩn ban đầu, chỉ hiện sau khi nhấn Ghi nhận xe ra bãi thành công) -->
+          <div class="checkout-notification-box" id="checkoutSuccessBanner" style="display: none; margin-top: 12px;">
+            <div class="checkout-check-icon">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <div>
+              <div class="checkout-btn-title">Ghi nhận xe ra thành công</div>
+              <div class="checkout-btn-sub">Xe đã hoàn tất thủ tục ra bãi</div>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- 3. Khối Bảng: Lượt xe ra gần đây (tối đa 5 lượt mới nhất) -->
+      <section class="card history-card">
+        <div class="card-header-flex">
+          <div class="card-title-group">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Lượt xe ra gần đây</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Biển số xe</th>
+                <th>Thời gian ra</th>
+                <th>Phí gửi xe</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Sẽ được render động đúng tối đa 5 bản ghi mới nhất bởi checkout.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JavaScript xử lý tương tác -->
+  <script src="../js/checkout.js"></script>
+</body>
+</html>
