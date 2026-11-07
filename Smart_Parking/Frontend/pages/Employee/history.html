@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xe đang gửi trong bãi - ParkAIVision</title>
+  <title>Lịch sử gửi xe & Tra cứu - ParkAIVision</title>
   
-  <!-- File CSS riêng biệt cho trang Quản lý xe đang gửi -->
-  <link rel="stylesheet" href="../css/current-parking.css">
+  <!-- File CSS riêng biệt cho trang Lịch sử & Tra cứu -->
+  <link rel="stylesheet" href="../../css/Employee/history.css">
   
   <!-- Font chữ Inter chuẩn của toàn hệ thống -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,13 +55,13 @@
             </a>
           </li>
           <li>
-            <a href="current-parking.html" class="nav-item-link active">
+            <a href="current-parking.html" class="nav-item-link">
               <i class="fa-solid fa-square-parking"></i>
               <span>Xe đang gửi trong bãi</span>
             </a>
           </li>
           <li>
-            <a href="history.html" class="nav-item-link">
+            <a href="history.html" class="nav-item-link active">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Lịch sử vào/ra & Tra cứu</span>
             </a>
@@ -93,47 +93,52 @@
     
     <!-- Top Header -->
     <header class="top-header">
-      <!-- Tiêu đề & Badges thống kê đặt trực tiếp trong Header -->
+      <!-- Tiêu đề trang & Mô tả đặt trực tiếp trong Header -->
       <div class="header-left">
-        <div class="icon-badge-p">P</div>
-        <h1 class="page-main-title">Xe đang gửi trong bãi</h1>
-        <span class="stat-pill stat-pill-blue">
-          <i class="fa-solid fa-car"></i>
-          <span>412 xe đang trong bãi</span>
-        </span>
-        <span class="stat-pill stat-pill-danger">
-          <i class="fa-regular fa-clock"></i>
-          <span>3 xe đã gửi quá 24h</span>
-        </span>
+        <div class="header-icon-box">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="header-text">
+          <h1>Lịch sử gửi xe & Tra cứu</h1>
+          <p>Tra cứu các lượt gửi xe đã hoàn tất</p>
+        </div>
       </div>
 
-      <!-- Dropdown Profile Nhân viên ở góc phải -->
-      <div class="user-menu-wrapper">
-        <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
-          <div class="avatar-circle">
-            <i class="fa-regular fa-user"></i>
-          </div>
-          <div class="user-info">
-            <div class="user-name">Trần Bảo Anh</div>
-            <div class="user-role">Nhân viên</div>
-          </div>
-          <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+      <!-- Khu vực bên phải: Nút Xuất danh sách & Profile nhân viên -->
+      <div class="header-right-group">
+        <button type="button" class="btn-export" id="btnExport">
+          <i class="fa-solid fa-download"></i>
+          <span>Xuất danh sách</span>
         </button>
 
-        <!-- Menu thả xuống -->
-        <div class="user-dropdown-menu" id="userDropdownMenu">
-          <a href="#" class="dropdown-item">
-            <i class="fa-regular fa-id-badge"></i>
-            <span>Thông tin cá nhân</span>
-          </a>
-          <a href="#" class="dropdown-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>Cài đặt ca trực</span>
-          </a>
-          <a href="login.html" class="dropdown-item logout">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            <span>Đăng xuất</span>
-          </a>
+        <!-- Dropdown Profile Nhân viên -->
+        <div class="user-menu-wrapper">
+          <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <div class="avatar-circle">
+              <i class="fa-regular fa-user"></i>
+            </div>
+            <div class="user-info">
+              <div class="user-name">Trần Bảo Anh</div>
+              <div class="user-role">Nhân viên</div>
+            </div>
+            <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+          </button>
+
+          <!-- Menu thả xuống -->
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <a href="#" class="dropdown-item">
+              <i class="fa-regular fa-id-badge"></i>
+              <span>Thông tin cá nhân</span>
+            </a>
+            <a href="#" class="dropdown-item">
+              <i class="fa-solid fa-gear"></i>
+              <span>Cài đặt ca trực</span>
+            </a>
+            <a href="../login.html" class="dropdown-item logout">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Đăng xuất</span>
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -141,7 +146,7 @@
     <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
 
-      <!-- 1. Thanh lọc và tìm kiếm (Filter & Search Bar) -->
+      <!-- 1. Thanh lọc và tìm kiếm (Filter Bar) -->
       <section class="card filter-bar-card">
         <!-- Ô tìm kiếm theo biển số xe -->
         <div class="search-input-wrapper">
@@ -155,22 +160,23 @@
           >
         </div>
 
+        <!-- Bộ lọc Thời gian -->
+        <div class="filter-select-wrapper">
+          <select id="filterDateSelect" class="filter-select">
+            <option value="all">Thời gian: Tất cả (1.248 lượt)</option>
+            <option value="today">Thời gian: Hôm nay (15/04/2026)</option>
+            <option value="yesterday">Thời gian: Hôm qua</option>
+            <option value="week">Thời gian: 7 ngày qua</option>
+          </select>
+          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
+        </div>
+
         <!-- Bộ lọc Loại xe -->
         <div class="filter-select-wrapper">
           <select id="filterTypeSelect" class="filter-select">
             <option value="all">Loại xe: Tất cả</option>
             <option value="Ô tô">Ô tô</option>
             <option value="Xe máy">Xe máy</option>
-          </select>
-          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
-        </div>
-
-        <!-- Bộ lọc Thời gian gửi -->
-        <div class="filter-select-wrapper">
-          <select id="filterDurationSelect" class="filter-select">
-            <option value="all">Thời gian gửi: Tất cả</option>
-            <option value="under24">Dưới 24 giờ</option>
-            <option value="overdue">Đậu quá 24 giờ</option>
           </select>
           <i class="fa-solid fa-chevron-down filter-select-icon"></i>
         </div>
@@ -182,7 +188,7 @@
         </button>
       </section>
 
-      <!-- 3. Bảng danh sách xe đang trong bãi -->
+      <!-- 2. Bảng dữ liệu Lịch sử gửi xe đã hoàn tất -->
       <section class="card table-card">
         <div class="table-responsive">
           <table class="custom-table">
@@ -191,25 +197,25 @@
                 <th>Biển số xe</th>
                 <th>Loại xe</th>
                 <th>Thời gian vào</th>
+                <th>Thời gian ra</th>
                 <th>Thời gian gửi</th>
-                <th>Cổng vào</th>
-                <th>Trạng thái</th>
-                <th>Xem ảnh vào</th>
+                <th>Phí gửi xe</th>
+                <th>Xem ảnh</th>
               </tr>
             </thead>
-            <tbody id="vehiclesTableBody">
-              <!-- Render động bởi current-parking.js -->
+            <tbody id="historyTableBody">
+              <!-- Render động bởi history.js -->
             </tbody>
           </table>
         </div>
 
-        <!-- 4. Thanh phân trang (Pagination Footer) -->
+        <!-- 3. Thanh phân trang (Pagination Footer) -->
         <div class="table-pagination-footer">
           <div class="pagination-info" id="paginationInfo">
-            Hiển thị 1–20 trên tổng 412 xe
+            Hiển thị 1–20 trên tổng 1.248 lượt gửi xe đã hoàn tất
           </div>
           <div class="pagination-controls" id="paginationControls">
-            <!-- Render động và có tương tác click bởi current-parking.js -->
+            <!-- Render động và có tương tác click bởi history.js -->
           </div>
         </div>
       </section>
@@ -218,43 +224,65 @@
   </div>
 
   <!-- ======================================================================
-       MODAL: XEM ẢNH PHƯƠNG TIỆN LÚC VÀO
+       MODAL: XEM ẢNH ĐỐI SOÁT VÀO / RA
        ====================================================================== -->
   <div class="modal-backdrop" id="photoModalBackdrop">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title">
-          <i class="fa-solid fa-image" style="color: #2563eb; margin-right: 6px;"></i>
-          Ảnh phương tiện lúc vào bãi
+          <i class="fa-regular fa-image" style="color: #2563eb; margin-right: 6px;"></i>
+          Ảnh đối soát phương tiện vào / ra
         </div>
         <button type="button" class="modal-close-btn" id="modalCloseBtn" aria-label="Đóng">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div class="modal-body">
-        <div class="modal-image-preview">
-          <!-- Placeholder camera chụp xe lúc vào -->
-          <div style="text-align: center; color: #94a3b8;">
-            <i class="fa-solid fa-camera fa-2x" style="margin-bottom: 8px;"></i>
-            <div style="font-size: 11px;">Ảnh chụp camera nhận diện cổng vào</div>
+        <!-- Lưới 2 ảnh: Ảnh xe lúc vào & Ảnh xe lúc ra -->
+        <div class="modal-photos-grid">
+          <div class="photo-preview-item">
+            <div class="photo-preview-label">
+              <i class="fa-solid fa-arrow-right-to-bracket" style="color: #2563eb;"></i>
+              <span>Ảnh lúc vào bãi</span>
+            </div>
+            <div class="photo-box">
+              <div style="text-align: center;">
+                <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
+                <span>CAM CỔNG VÀO</span>
+              </div>
+            </div>
+          </div>
+          <div class="photo-preview-item">
+            <div class="photo-preview-label">
+              <i class="fa-solid fa-arrow-right-from-bracket" style="color: #10b981;"></i>
+              <span>Ảnh lúc ra bãi</span>
+            </div>
+            <div class="photo-box">
+              <div style="text-align: center;">
+                <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
+                <span>CAM CỔNG RA</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Thông tin chi tiết đối soát -->
         <div class="modal-meta-grid">
           <div class="modal-meta-item">
             <div class="modal-meta-label">Biển số xe</div>
-            <div class="modal-meta-value font-mono" id="modalPlateNumber">--</div>
+            <div class="modal-meta-value font-mono" id="modalPlate">--</div>
           </div>
           <div class="modal-meta-item">
             <div class="modal-meta-label">Loại xe</div>
-            <div class="modal-meta-value" id="modalVehicleType">--</div>
+            <div class="modal-meta-value" id="modalType">--</div>
           </div>
           <div class="modal-meta-item">
-            <div class="modal-meta-label">Thời gian vào</div>
-            <div class="modal-meta-value font-mono" id="modalTimeIn">--</div>
+            <div class="modal-meta-label">Tổng thời gian</div>
+            <div class="modal-meta-value" id="modalDuration">--</div>
           </div>
           <div class="modal-meta-item">
-            <div class="modal-meta-label">Cổng vào</div>
-            <div class="modal-meta-value" id="modalGateIn">--</div>
+            <div class="modal-meta-label">Phí đã thu</div>
+            <div class="modal-meta-value font-mono" style="color: #10b981;" id="modalFee">--</div>
           </div>
         </div>
       </div>
@@ -262,6 +290,6 @@
   </div>
 
   <!-- File JavaScript xử lý tương tác -->
-  <script src="../js/current-parking.js"></script>
+  <script src="../../js/Employee/history.js"></script>
 </body>
 </html>
