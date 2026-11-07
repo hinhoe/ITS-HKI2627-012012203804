@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thống kê & Báo cáo - Quản trị ParkTech</title>
+
+  <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
+  <link rel="stylesheet" href="../../css/Admin/dashboard.css">
+
+  <!-- Font chữ Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js để vẽ biểu đồ kết hợp (Combo Bar + Line Chart) chuẩn xác -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ======================================================================
+       1. SIDEBAR: THANH ĐIỀU HƯỚNG QUẢN TRỊ VIÊN (ADMIN)
+       ====================================================================== -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <!-- Thương hiệu & Logo -->
+      <div class="sidebar-logo">
+        <div class="logo-badge">P</div>
+        <span class="logo-text">ParkTech</span>
+      </div>
+
+      <!-- Nhãn phân hệ Quản trị -->
+      <div class="shift-status-container">
+        <div class="section-label-row">
+          <span class="section-label">PHÂN HỆ QUẢN TRỊ</span>
+          <span class="admin-badge">Admin</span>
+        </div>
+      </div>
+
+      <!-- Danh mục menu quản trị -->
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="dashboard.html" class="nav-item-link active">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Thống kê & Báo cáo</span>
+            </a>
+          </li>
+          <li>
+            <a href="pricing.html" class="nav-item-link">
+              <i class="fa-regular fa-money-bill-1"></i>
+              <span>Quản lý mức phí gửi xe</span>
+            </a>
+          </li>
+          <li>
+            <a href="accounts.html" class="nav-item-link">
+              <i class="fa-solid fa-user-gear"></i>
+              <span>Quản lý tài khoản & Phân quyền</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Nửa dưới Sidebar: Sức chứa thời gian thực bãi đỗ xe -->
+    <div class="sidebar-bottom">
+      <div class="capacity-widget-card">
+        <div class="capacity-widget-header">
+          <span class="widget-title">Sức chứa thời gian thực</span>
+          <span class="capacity-percentage" id="capacityPercent">82.4%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="capacityProgressBar" style="width: 82.4%;"></div>
+        </div>
+        <div class="capacity-widget-footer">
+          <span class="capacity-count" id="capacityCurrent">412 / 500</span>
+          <span class="capacity-empty" id="capacityEmpty">88 chỗ trống</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======================================================================
+       2. KHUNG NỘI DUNG CHÍNH (MAIN WRAPPER)
+       ====================================================================== -->
+  <div class="main-wrapper">
+
+    <!-- Header Trang Admin -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-title-group">
+          <h1 class="page-title">Thống kê & Báo cáo</h1>
+          <p class="page-subtitle">Theo dõi tổng quan lưu lượng xe và doanh thu bãi đỗ xe</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Bộ lọc khoảng thời gian nhanh -->
+        <div class="date-filter-group">
+          <button type="button" class="date-filter-btn" data-range="today">Hôm nay</button>
+          <button type="button" class="date-filter-btn active" data-range="7days">7 ngày qua</button>
+          <button type="button" class="date-filter-btn" data-range="month">Tháng này</button>
+          <div class="date-filter-btn custom-date-btn" id="customDateBtn">
+            <span id="customDateLabel">Tùy chọn ngày</span>
+            <i class="fa-regular fa-calendar" style="margin-left: 6px;"></i>
+            <input type="date" id="customDatePicker" class="custom-date-native-input" aria-label="Chọn ngày xem báo cáo">
+          </div>
+        </div>
+
+        <!-- Nút Xuất báo cáo -->
+        <button type="button" class="btn-export-report" id="btnExportReport">
+          <i class="fa-solid fa-download"></i>
+          <span>Xuất báo cáo</span>
+        </button>
+
+        <!-- Dropdown Quản trị viên -->
+        <div class="user-menu-wrapper">
+          <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <div class="avatar-circle">
+              <i class="fa-regular fa-user"></i>
+            </div>
+            <div class="user-info">
+              <div class="user-name">Nguyễn Thành Tùng</div>
+              <div class="user-role">Quản trị viên</div>
+            </div>
+            <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+          </button>
+
+          <!-- Menu thả xuống -->
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <a href="#" class="dropdown-item">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Cài đặt hệ thống</span>
+            </a>
+            <a href="../Employee/checkin.html" class="dropdown-item">
+              <i class="fa-solid fa-users-viewfinder"></i>
+              <span>Chuyển sang giao diện Nhân viên</span>
+            </a>
+            <a href="../login.html" class="dropdown-item logout">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Đăng xuất</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Thân trang cuộn (Content Body) -->
+    <main class="content-body">
+
+      <!-- 1. 4 Thẻ KPI Số liệu tổng quan (Stats Cards) -->
+      <section class="kpi-grid">
+        <!-- KPI 1: Tổng lượt xe vào -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Tổng lượt xe vào</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono">1.480</span>
+            <span class="kpi-unit">lượt</span>
+          </div>
+          <div class="kpi-trend trend-up">
+            <i class="fa-solid fa-arrow-up"></i>
+            <span>+8.2%</span>
+            <span class="trend-compare">so với hôm qua</span>
+          </div>
+        </div>
+
+        <!-- KPI 2: Tổng lượt xe ra -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Tổng lượt xe ra</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono">1.432</span>
+            <span class="kpi-unit">lượt</span>
+          </div>
+          <div class="kpi-trend trend-up">
+            <i class="fa-solid fa-arrow-up"></i>
+            <span>+7.5%</span>
+            <span class="trend-compare">so với hôm qua</span>
+          </div>
+        </div>
+
+        <!-- KPI 3: Xe đang trong bãi -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Xe đang trong bãi</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-solid fa-car"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono">412</span>
+            <span class="kpi-unit">xe</span>
+          </div>
+          <div class="kpi-sub-info">
+            <span>412/500 chỗ</span>
+            <span class="dot-separator">•</span>
+            <span>82.4% công suất</span>
+          </div>
+        </div>
+
+        <!-- KPI 4: Doanh thu thu được -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Doanh thu thu được</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-regular fa-credit-card"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono">7.420.000</span>
+            <span class="kpi-currency">đ</span>
+          </div>
+          <div class="kpi-trend trend-up">
+            <i class="fa-solid fa-arrow-up"></i>
+            <span>+12.4%</span>
+            <span class="trend-compare">so với kỳ trước</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Biểu đồ Lưu lượng phương tiện & Doanh thu -->
+      <section class="card chart-card">
+        <div class="chart-header">
+          <div class="chart-title-group">
+            <h2 class="chart-title">Lưu lượng phương tiện & Doanh thu</h2>
+            <p class="chart-subtitle">Phân bổ lượt xe ô tô, xe máy và chỉ số doanh thu 7 ngày gần nhất</p>
+          </div>
+
+          <!-- Chú giải biểu đồ (Legend) -->
+          <div class="chart-legend-group">
+            <div class="legend-item">
+              <span class="legend-bar legend-bar-motor"></span>
+              <span>Xe máy (Lượt)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-bar legend-bar-car"></span>
+              <span>Ô tô (Lượt)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-line-dot"></span>
+              <span>Doanh thu (Triệu VNĐ)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khung vẽ Chart.js -->
+        <div class="chart-canvas-container">
+          <canvas id="trafficRevenueChart"></canvas>
+        </div>
+      </section>
+
+      <!-- 3. Bảng Đối soát doanh thu 7 ngày gần nhất -->
+      <section class="card audit-card">
+        <div class="audit-header">
+          <h2 class="audit-title" id="auditTitle">Đối soát doanh thu 7 ngày gần nhất</h2>
+          <span class="audit-currency-label">ĐƠN VỊ: VNĐ</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>NGÀY ĐỐI SOÁT</th>
+                <th>LƯỢT VÀO</th>
+                <th>LƯỢT RA</th>
+                <th>THU TIỀN MẶT</th>
+                <th>CHUYỂN KHOẢN QR</th>
+                <th>TỔNG DOANH THU</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <!-- Render tự động bởi dashboard.js -->
+            </tbody>
+            <tfoot id="auditTableFoot">
+              <!-- Render hàng tổng cộng tự động bởi dashboard.js -->
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- File JavaScript xử lý logic Dashboard -->
+  <script src="../../js/Admin/dashboard.js"></script>
+</body>
+</html>
