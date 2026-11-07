@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý tài khoản & Phân quyền - Quản trị ParkTech</title>
+
+  <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
+  <link rel="stylesheet" href="../../css/Admin/accounts.css">
+
+  <!-- Font chữ Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- ======================================================================
+       1. SIDEBAR: THANH ĐIỀU HƯỚNG QUẢN TRỊ VIÊN (ADMIN)
+       ====================================================================== -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <!-- Thương hiệu & Logo -->
+      <div class="sidebar-logo">
+        <div class="logo-badge">P</div>
+        <span class="logo-text">ParkTech</span>
+      </div>
+
+      <!-- Nhãn phân hệ Quản trị -->
+      <div class="shift-status-container">
+        <div class="section-label-row">
+          <span class="section-label">PHÂN HỆ QUẢN TRỊ</span>
+          <span class="admin-badge">Admin</span>
+        </div>
+      </div>
+
+      <!-- Danh mục menu quản trị -->
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="dashboard.html" class="nav-item-link">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Thống kê & Báo cáo</span>
+            </a>
+          </li>
+          <li>
+            <a href="pricing.html" class="nav-item-link">
+              <i class="fa-regular fa-money-bill-1"></i>
+              <span>Quản lý mức phí gửi xe</span>
+            </a>
+          </li>
+          <li>
+            <a href="accounts.html" class="nav-item-link active">
+              <i class="fa-solid fa-user-gear"></i>
+              <span>Quản lý tài khoản & Phân quyền</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Nửa dưới Sidebar: Sức chứa thời gian thực bãi đỗ xe -->
+    <div class="sidebar-bottom">
+      <div class="capacity-widget-card">
+        <div class="capacity-widget-header">
+          <span class="widget-title">Sức chứa thời gian thực</span>
+          <span class="capacity-percentage">82.4%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: 82.4%;"></div>
+        </div>
+        <div class="capacity-widget-footer">
+          <span class="capacity-count">412 / 500</span>
+          <span class="capacity-empty">88 chỗ trống</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======================================================================
+       2. KHUNG NỘI DUNG CHÍNH (MAIN WRAPPER)
+       ====================================================================== -->
+  <div class="main-wrapper">
+
+    <!-- Header Trang Admin -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-breadcrumb">
+          <span class="breadcrumb-prefix">HỆ THỐNG ĐIỀU HÀNH</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">Phân quyền bảo mật</span>
+        </div>
+        <div class="header-title-group">
+          <h1 class="page-title">Quản lý tài khoản & Phân quyền</h1>
+          <p class="page-subtitle">Quản lý danh sách người dùng và cấp quyền truy cập hệ thống</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Nút Thêm tài khoản mới -->
+        <button type="button" class="btn-add-account" id="btnAddAccount">
+          <i class="fa-solid fa-plus"></i>
+          <span>Thêm tài khoản mới</span>
+        </button>
+
+        <!-- Dropdown Quản trị viên -->
+        <div class="user-menu-wrapper">
+          <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <div class="user-info">
+              <div class="user-name">Nguyễn Thành Tùng</div>
+              <div class="user-role">Quản trị viên (Admin)</div>
+            </div>
+            <div class="avatar-circle">
+              <i class="fa-regular fa-user"></i>
+            </div>
+          </button>
+
+          <!-- Menu thả xuống -->
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <a href="#" class="dropdown-item">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Cài đặt hệ thống</span>
+            </a>
+            <a href="../Employee/checkin.html" class="dropdown-item">
+              <i class="fa-solid fa-users-viewfinder"></i>
+              <span>Chuyển sang giao diện Nhân viên</span>
+            </a>
+            <a href="../login.html" class="dropdown-item logout">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Đăng xuất</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Thân trang cuộn (Content Body) -->
+    <main class="content-body">
+
+      <!-- 1. 4 Thẻ KPI Thống kê Tài khoản -->
+      <section class="kpi-grid">
+        <!-- KPI 1: Tổng số tài khoản -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">TỔNG SỐ TÀI KHOẢN</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-regular fa-id-badge"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono" id="statTotal">18</span>
+          </div>
+          <div class="kpi-sub-text">Trên toàn hệ thống cổng</div>
+        </div>
+
+        <!-- KPI 2: Quản trị viên -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">QUẢN TRỊ VIÊN</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono" id="statAdmin">3</span>
+          </div>
+          <div class="kpi-sub-text">Toàn quyền cấu hình</div>
+        </div>
+
+        <!-- KPI 3: Nhân viên bãi xe -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">NHÂN VIÊN BÃI XE</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-solid fa-car"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono" id="statStaff">15</span>
+          </div>
+          <div class="kpi-sub-text">Trực ca kiểm soát cổng</div>
+        </div>
+
+        <!-- KPI 4: Đang hoạt động -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">ĐANG HOẠT ĐỘNG</span>
+            <div class="kpi-icon-box kpi-icon-blue">
+              <i class="fa-regular fa-circle-check"></i>
+            </div>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value font-mono" id="statActive">16</span>
+          </div>
+          <div class="kpi-sub-text" id="statLocked">2 tài khoản tạm khóa</div>
+        </div>
+      </section>
+
+      <!-- 2. Thanh tìm kiếm & Các bộ lọc phân loại -->
+      <section class="card filter-bar-card">
+        <!-- Ô tìm kiếm theo tên đăng nhập hoặc họ tên -->
+        <div class="search-input-wrapper">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="Nhập tên đăng nhập hoặc họ tên..."
+            autocomplete="off"
+          >
+        </div>
+
+        <!-- Cụm lọc theo Vai trò -->
+        <div class="filter-btn-group" id="roleFilterGroup">
+          <button type="button" class="filter-pill-btn active" data-role="all">Tất cả vai trò</button>
+          <button type="button" class="filter-pill-btn" data-role="staff">Nhân viên bãi xe</button>
+          <button type="button" class="filter-pill-btn" data-role="admin">Quản trị viên</button>
+        </div>
+
+        <!-- Cụm lọc theo Trạng thái -->
+        <div class="filter-btn-group" id="statusFilterGroup">
+          <button type="button" class="filter-pill-btn active" data-status="all">Tất cả</button>
+          <button type="button" class="filter-pill-btn" data-status="active">Đang hoạt động</button>
+          <button type="button" class="filter-pill-btn" data-status="locked">Đã khóa</button>
+        </div>
+
+        <!-- Nút Đặt lại bộ lọc -->
+        <button type="button" class="btn-reset-filter" id="btnResetFilter">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>Đặt lại</span>
+        </button>
+      </section>
+
+      <!-- 3. Bảng Dữ liệu Tài khoản -->
+      <section class="card table-card">
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>TÊN ĐĂNG NHẬP</th>
+                <th>MẬT KHẨU</th>
+                <th>HỌ VÀ TÊN</th>
+                <th>VAI TRÒ</th>
+                <th>CA TRỰC / GHI CHÚ</th>
+                <th>TRẠNG THÁI</th>
+                <th>NGÀY TẠO</th>
+                <th style="text-align: right;">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody id="accountsTableBody">
+              <!-- Render tự động bởi accounts.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 4. Thanh phân trang chân bảng -->
+        <div class="table-pagination-footer">
+          <div class="pagination-info" id="paginationInfo">
+            Hiển thị 5 / 18 tài khoản
+          </div>
+          <div class="pagination-controls" id="paginationControls">
+            <!-- Render động bởi accounts.js -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: THÊM / CẬP NHẬT TÀI KHOẢN
+       ====================================================================== -->
+  <div class="modal-backdrop" id="accountModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-user-plus" style="color: #2563eb; margin-right: 6px;"></i>
+          <span id="modalFormTitle">Thêm tài khoản mới</span>
+        </div>
+        <button type="button" class="modal-close-btn" id="modalCloseBtn" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form class="modal-body" id="accountForm">
+        <div class="form-group">
+          <label for="inputUsername" class="form-label">Tên đăng nhập *</label>
+          <input type="text" id="inputUsername" class="input-field font-mono" placeholder="ví dụ: nv_namanh" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputFullName" class="form-label">Họ và tên *</label>
+          <input type="text" id="inputFullName" class="input-field" placeholder="ví dụ: Nguyễn Nam Anh" required>
+        </div>
+
+        <div class="form-group">
+          <label for="selectRole" class="form-label">Vai trò *</label>
+          <select id="selectRole" class="input-field">
+            <option value="staff">Nhân viên bãi xe</option>
+            <option value="admin">Quản trị viên</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="inputShift" class="form-label">Ca trực / Ghi chú nhiệm vụ</label>
+          <input type="text" id="inputShift" class="input-field" placeholder="ví dụ: Ca sáng (06:00 - 14:00)">
+        </div>
+
+        <div class="form-group" id="passwordGroup">
+          <label for="inputPassword" class="form-label" id="passwordLabel">Mật khẩu *</label>
+          <div class="password-input-wrapper">
+            <input type="text" id="inputPassword" class="input-field font-mono" placeholder="Nhập mật khẩu" required>
+            <button type="button" class="btn-copy-pwd" id="btnCopyPwd" title="Sao chép mật khẩu">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="modalCancelBtn">Hủy bỏ</button>
+          <button type="submit" class="btn-primary" id="modalSubmitBtn">Lưu tài khoản</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST THÔNG BÁO -->
+  <div class="toast-notification" id="toastNotification">
+    <i class="fa-solid fa-circle-check toast-icon"></i>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle">Thành công!</div>
+      <div class="toast-desc" id="toastDesc">Thao tác đã được hệ thống ghi nhận.</div>
+    </div>
+  </div>
+
+  <!-- File JavaScript xử lý logic -->
+  <script src="../../js/Admin/accounts.js"></script>
+</body>
+</html>
