@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -154,14 +154,16 @@
               </div>
             </div>
 
-            <!-- Viewport mô phỏng camera hoặc ảnh xe ra tải lên -->
+            <!-- Viewport mô phỏng camera hoặc ảnh xe ra tải lên / webcam trực tiếp -->
             <div class="viewport-container">
               <img id="vehiclePreviewImg" class="vehicle-preview-img" alt="Ảnh phương tiện ra bãi">
+              <video id="webcamVideo" class="vehicle-preview-img" autoplay playsinline muted style="display: none; object-fit: cover;"></video>
+              <canvas id="captureCanvas" style="display: none;"></canvas>
 
               <!-- Thẻ nhãn camera mô phỏng -->
               <div class="viewport-overlay-tag">
-                <span class="live-dot"></span>
-                <span>CAM 02 - CỔNG RA LANE 1</span>
+                <span class="live-dot" id="camStatusDot"></span>
+                <span id="camStatusText">CAM 02 - CỔNG RA LANE 1</span>
               </div>
 
               <!-- Hộp Bounding Box nhận diện biển số của AI -->
@@ -181,12 +183,26 @@
                 <i class="fa-regular fa-image" style="color: #2563eb;"></i>
                 <span>Chọn ảnh xe</span>
               </button>
-              <span class="file-hint-text">Hỗ trợ định dạng JPG, PNG từ máy tính</span>
+
+              <!-- Nút Bật / Tắt Webcam Camera trực tiếp -->
+              <button type="button" class="btn btn-secondary" id="btnToggleWebcam">
+                <i class="fa-solid fa-video" style="color: #10b981;"></i>
+                <span id="webcamBtnText">Camera</span>
+              </button>
             </div>
-            <button type="button" class="btn btn-primary" id="btnRecognize">
-              <i class="fa-solid fa-expand"></i>
-              <span>Nhận diện biển số</span>
-            </button>
+
+            <div class="right-controls">
+              <!-- Nút Chụp từ Camera khi đang bật webcam -->
+              <button type="button" class="btn btn-secondary" id="btnCaptureWebcam" style="display: none;">
+                <i class="fa-solid fa-camera" style="color: #2563eb;"></i>
+                <span>Chụp ảnh</span>
+              </button>
+
+              <button type="button" class="btn btn-primary" id="btnRecognize">
+                <i class="fa-solid fa-expand"></i>
+                <span>Nhận diện biển số</span>
+              </button>
+            </div>
           </div>
         </article>
 

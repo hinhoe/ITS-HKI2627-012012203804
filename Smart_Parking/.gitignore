@@ -40,3 +40,10 @@ ENV/
 # Operating System files
 .DS_Store
 Thumbs.db
+
+# Runtime output and uploaded files
+uploads/*
+!uploads/.gitkeep
+results/*
+!results/.gitkeep
+

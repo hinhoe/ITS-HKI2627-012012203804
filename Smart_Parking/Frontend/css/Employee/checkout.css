@@ -560,6 +560,12 @@ body {
   gap: 10px;
 }
 
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .file-hint-text {
   font-size: 11px;
   color: var(--color-text-subtle);

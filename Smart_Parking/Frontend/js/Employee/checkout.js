@@ -68,6 +68,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileStatusText = document.getElementById('fileStatusText');
   const btnRecognize = document.getElementById('btnRecognize');
   const btnConfirmCheckout = document.getElementById('btnConfirmCheckout');
+
+  // Webcam elements
+  const btnToggleWebcam = document.getElementById('btnToggleWebcam');
+  const webcamBtnText = document.getElementById('webcamBtnText');
+  const btnCaptureWebcam = document.getElementById('btnCaptureWebcam');
+  const webcamVideo = document.getElementById('webcamVideo');
+  const captureCanvas = document.getElementById('captureCanvas');
+  const camStatusDot = document.getElementById('camStatusDot');
+  const camStatusText = document.getElementById('camStatusText');
+  let webcamStream = null;
   const aiPlateBox = document.getElementById('aiPlateBox');
   const aiPlateText = document.getElementById('aiPlateText');
   
@@ -238,9 +248,94 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // B. Chọn ảnh xe ra từ máy tính (mô phỏng tải ảnh phương tiện)
+  // B1. Bật / Tắt Webcam Camera Laptop
+  async function startWebcam() {
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+      });
+      if (webcamVideo) {
+        webcamVideo.srcObject = webcamStream;
+        webcamVideo.style.display = 'block';
+      }
+      if (vehiclePreviewImg) vehiclePreviewImg.style.display = 'none';
+      if (aiPlateBox) aiPlateBox.style.display = 'none';
+
+      if (btnCaptureWebcam) btnCaptureWebcam.style.display = 'inline-flex';
+      if (webcamBtnText) webcamBtnText.textContent = 'Tắt Camera';
+      if (fileStatusText) fileStatusText.textContent = 'Đang phát trực tiếp từ Camera Laptop';
+      if (camStatusText) camStatusText.textContent = 'WEBCAM LAPTOP - CỔNG RA';
+      if (camStatusDot) camStatusDot.style.backgroundColor = '#10b981';
+    } catch (err) {
+      console.error('Không thể mở camera:', err);
+      alert('Không thể mở camera laptop! Vui lòng kiểm tra quyền truy cập camera trên trình duyệt của bạn.');
+    }
+  }
+
+  function stopWebcam() {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+      webcamStream = null;
+    }
+    if (webcamVideo) {
+      webcamVideo.srcObject = null;
+      webcamVideo.style.display = 'none';
+    }
+    if (vehiclePreviewImg) vehiclePreviewImg.style.display = 'block';
+
+    if (btnCaptureWebcam) btnCaptureWebcam.style.display = 'none';
+    if (webcamBtnText) webcamBtnText.textContent = 'Camera';
+    if (fileStatusText) fileStatusText.textContent = 'Sẵn sàng nhận diện';
+    if (camStatusText) camStatusText.textContent = 'CAM 02 - CỔNG RA LANE 1';
+    if (camStatusDot) camStatusDot.style.backgroundColor = '#2563eb';
+  }
+
+  if (btnToggleWebcam) {
+    btnToggleWebcam.addEventListener('click', () => {
+      if (webcamStream) {
+        stopWebcam();
+      } else {
+        startWebcam();
+      }
+    });
+  }
+
+  // B2. Chụp ảnh từ Webcam để nhận diện
+  if (btnCaptureWebcam && webcamVideo && captureCanvas) {
+    btnCaptureWebcam.addEventListener('click', () => {
+      if (!webcamStream) return;
+
+      const videoW = webcamVideo.videoWidth || 640;
+      const videoH = webcamVideo.videoHeight || 480;
+
+      captureCanvas.width = videoW;
+      captureCanvas.height = videoH;
+      const ctx = captureCanvas.getContext('2d');
+      ctx.drawImage(webcamVideo, 0, 0, videoW, videoH);
+
+      const capturedDataUrl = captureCanvas.toDataURL('image/jpeg');
+
+      // Tắt stream và hiển thị ảnh vừa chụp
+      stopWebcam();
+      if (vehiclePreviewImg) {
+        vehiclePreviewImg.src = capturedDataUrl;
+        vehiclePreviewImg.style.display = 'block';
+      }
+      if (fileStatusText) {
+        fileStatusText.textContent = 'Đã chụp ảnh từ Camera Laptop';
+      }
+
+      // Kích hoạt nhận diện ngay sau khi chụp
+      if (btnRecognize) {
+        btnRecognize.click();
+      }
+    });
+  }
+
+  // B3. Chọn ảnh xe ra từ máy tính (mô phỏng tải ảnh phương tiện)
   if (btnSelectImage && fileInputVehicle) {
     btnSelectImage.addEventListener('click', () => {
+      if (webcamStream) stopWebcam();
       fileInputVehicle.click();
     });
 

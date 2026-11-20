@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -137,117 +137,166 @@
     <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
 
-      <!-- Lưới 2 cột: Khung camera/ảnh xe & Kết quả nhận diện AI -->
-      <section class="grid-recognition-row">
+      <!-- BỐ CỤC KHUNG CHÍNH 2 HÀNG CHUẨN XÁC THEO ẢNH MẪU -->
+      <div class="workspace-grid-layout">
         
-        <!-- Cột trái: Khung hình ảnh xe vào -->
-        <article class="card camera-card">
-          <div>
-            <div class="card-header-flex">
-              <div class="card-title-group">
-                <i class="fa-solid fa-car"></i>
-                <span>Hình ảnh xe vào</span>
-              </div>
-              <div class="file-status-badge">
-                <i class="fa-solid fa-circle-check"></i>
-                <span id="fileStatusText">Đã tải: xe_vao_01.jpg (2.4 MB)</span>
-              </div>
+        <!-- Hàng 1 - Cột 1: Ảnh Phương Tiện Ban Đầu -->
+        <article class="pipeline-card col-original">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">1</span>
+              <span>Ảnh Phương Tiện Ban Đầu</span>
             </div>
-
-            <!-- Viewport mô phỏng camera hoặc ảnh tải lên -->
-            <div class="viewport-container">
-              <img id="vehiclePreviewImg" class="vehicle-preview-img" alt="Ảnh phương tiện vào bãi">
-
-              <!-- Thẻ nhãn camera mô phỏng -->
-              <div class="viewport-overlay-tag">
-                <span class="live-dot"></span>
-                <span>CAM 01 - CỔNG VÀO CHÍNH</span>
-              </div>
-
-              <!-- Hộp Bounding Box nhận diện biển số của AI (YOLOv8) -->
-              <div class="ai-detection-box" id="aiPlateBox">
-                <span class="ai-tag-label">AI phát hiện biển số</span>
-                <span class="ai-plate-preview" id="aiPlateText">[ 30G-928.31 ]</span>
-              </div>
-            </div>
+            <span class="card-badge-info">Cổng CAM 01</span>
           </div>
-
-          <!-- Nút điều khiển bên dưới khung ảnh -->
-          <div class="camera-controls-bar">
-            <div class="left-controls">
-              <!-- Input file ẩn để chọn ảnh thực tế từ máy tính -->
-              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg" style="display: none;">
-              <button type="button" class="btn btn-secondary" id="btnSelectImage">
-                <i class="fa-regular fa-image" style="color: #2563eb;"></i>
-                <span>Chọn ảnh xe</span>
-              </button>
-              <span class="file-hint-text">Hỗ trợ định dạng JPG, PNG từ máy tính</span>
+          <div class="viewport-box" id="viewportOriginalBox">
+            <div class="empty-viewport-placeholder" id="emptyViewportPlaceholder">
+              <i class="fa-regular fa-image fa-2x"></i>
+              <span>Chưa có ảnh phương tiện</span>
+              <small>Bấm "Chọn ảnh từ máy" hoặc mở Camera</small>
             </div>
-            <button type="button" class="btn btn-primary" id="btnRecognize">
-              <i class="fa-solid fa-expand"></i>
-              <span>Nhận diện biển số</span>
-            </button>
+            <img id="vehiclePreviewImg" class="viewport-img" alt="Ảnh phương tiện vào bãi" style="display: none;">
+            <video id="webcamVideo" class="viewport-img" autoplay playsinline muted style="display: none;"></video>
+            <canvas id="captureCanvas" style="display: none;"></canvas>
+            <div class="viewport-tag">
+              <span class="live-dot" id="camStatusDot"></span>
+              <span id="camStatusText">CAM 01 -- CỔNG VÀO</span>
+            </div>
           </div>
         </article>
 
-        <!-- Cột phải: Kết quả nhận diện & Chi tiết lượt vào -->
-        <article class="card results-card">
-          <div>
-            <div class="card-title-group" style="margin-bottom: 12px;">
-              <span>Kết quả nhận diện</span>
+        <!-- Hàng 1 - Cột 2: YOLOv8 Khoanh Vùng Biển Số -->
+        <article class="pipeline-card col-yolo">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">2</span>
+              <span>YOLOv8 Khoanh Vùng Biển Số</span>
             </div>
-
-            <!-- Khối hiển thị ảnh cắt biển số (Crop Box) -->
-            <div class="crop-preview-box">
-              <div class="crop-label">Ảnh cắt biển số & nhận diện AI</div>
-              <div class="crop-image-placeholder" id="cropPlaceholder">
-                <i class="fa-solid fa-camera fa-2x"></i>
-              </div>
-
-              <!-- Kết quả ký tự nhận diện (OCR) -->
-              <div class="plate-result-display">
-                <span class="plate-number-text" id="resultPlateText">30G-928.31</span>
-              </div>
-              <div class="ocr-confidence-text">
-                Độ tin cậy OCR: <strong id="ocrConfidenceText">99.8%</strong>
-              </div>
+            <span class="card-badge-info" id="yoloModelBadge">YOLOv8 Detection</span>
+          </div>
+          <div class="viewport-box" id="viewportAnnotatedBox">
+            <div class="empty-viewport-placeholder" id="emptyAnnotatedPlaceholder">
+              <i class="fa-solid fa-crosshairs fa-2x"></i>
+              <span>Vùng khoanh biển số AI</span>
+              <small>Tự động xuất hiện sau khi nhận diện</small>
             </div>
-
-            <!-- Danh sách thông tin chi tiết -->
-            <div class="meta-details-list">
-              <div class="meta-row">
-                <span class="meta-label">Thời gian vào:</span>
-                <span class="meta-value font-mono" id="entryTimeText">14:35:10 - 28/10/2026</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Loại xe:</span>
-                <!-- Đúng quy tắc nghiệp vụ: Chỉ có Ô tô hoặc Xe máy -->
-                <span class="meta-value" id="vehicleTypeText">Ô tô</span>
-              </div>
+            <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh YOLOv8 khoanh vùng biển số" style="display: none;">
+            <div class="viewport-tag tag-ai">
+              <i class="fa-solid fa-microchip"></i>
+              <span>AI BOUNDING BOX</span>
             </div>
+          </div>
+        </article>
 
-            <!-- Nút xác nhận ghi nhận xe vào bãi riêng biệt -->
-            <div style="margin-top: 14px;">
-              <button type="button" class="btn btn-primary" id="btnConfirmCheckin" style="width: 100%; justify-content: center; padding: 10px 16px;">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                <span>Ghi nhận xe vào bãi</span>
-              </button>
+        <!-- Hàng 1 - Cột 3: Kết Quả & Xác Thực -->
+        <article class="pipeline-card col-results results-pipeline-card">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">3</span>
+              <span>Kết Quả & Xác Thực</span>
+            </div>
+            <span class="badge-status-pill waiting" id="aiStatusPill">
+              <span class="status-bullet"></span> <span id="aiStatusText">Chờ xử lý</span>
+            </span>
+          </div>
+
+          <!-- Khối hiển thị ảnh cắt biển số (Crop Box) -->
+          <div class="crop-section">
+            <div class="crop-header-flex">
+              <span class="crop-title"><i class="fa-regular fa-clone"></i> Ảnh cắt biển số (Crop)</span>
+              <span class="crop-dims" id="cropDimsText">Tỷ lệ chuẩn</span>
+            </div>
+            <div class="crop-image-placeholder" id="cropPlaceholder">
+              <i class="fa-solid fa-camera"></i>
+              <span>Chưa có ảnh crop</span>
             </div>
           </div>
 
-          <!-- Banner thông báo Ghi nhận thành công / Barrier tự động mở -->
+          <!-- Khung biển số chuẩn Việt Nam -->
+          <div class="license-plate-card">
+            <span class="plate-number-display" id="resultPlateText">---</span>
+          </div>
+
+          <!-- Bảng thông số chi tiết -->
+          <div class="meta-details-grid">
+            <div class="meta-item">
+              <span class="meta-label">Loại phương tiện:</span>
+              <span class="meta-val" id="vehicleTypeText">Chưa xác định</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">YOLO Conf:</span>
+              <span class="meta-val font-mono" id="yoloConfText">--%</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Gemini OCR:</span>
+              <span class="meta-val font-mono" id="ocrConfidenceText">--%</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Thời gian AI:</span>
+              <span class="meta-val font-mono" id="processingTimeText">-- ms</span>
+            </div>
+            <div class="meta-item full-width">
+              <span class="meta-label">Thời gian vào bãi:</span>
+              <span class="meta-val font-mono" id="entryTimeText">--:--:-- - --/--/----</span>
+            </div>
+          </div>
+
+          <!-- Nút Ghi nhận xe vào bãi -->
+          <button type="button" class="btn-confirm-entry" id="btnConfirmCheckin">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            <span>Ghi nhận xe vào bãi (Mở Barrier)</span>
+          </button>
+        </article>
+
+        <!-- Hàng 2 - Nằm dưới Cột 1 & Cột 2: Thanh công cụ tác vụ -->
+        <div class="toolbar-bottom-container">
+          <section class="action-toolbar-card">
+            <div class="toolbar-left">
+              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg, image/webp" style="display: none;">
+              <button type="button" class="btn btn-secondary" id="btnSelectImage">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: #2563eb;"></i>
+                <span>Chọn ảnh từ máy</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnToggleWebcam">
+                <i class="fa-solid fa-video" style="color: #10b981;"></i>
+                <span id="webcamBtnText">Mở Camera</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCaptureWebcam" style="display: none;">
+                <i class="fa-solid fa-camera" style="color: #2563eb;"></i>
+                <span>Chụp ảnh</span>
+              </button>
+            </div>
+
+            <div class="toolbar-center">
+              <div class="file-status-badge" id="fileStatusBadge">
+                <i class="fa-solid fa-circle-check"></i>
+                <span id="fileStatusText">Sẵn sàng nhận diện phương tiện qua cổng</span>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <button type="button" class="btn btn-recognize-main" id="btnRecognize">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Nhận diện biển số AI</span>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Hàng 2 - Nằm dưới Cột 3: Banner Ghi nhận thành công -->
+        <div class="banner-bottom-container">
           <div class="success-banner" id="successBanner" style="display: none;">
             <div class="success-icon-badge">
               <i class="fa-solid fa-check"></i>
             </div>
             <div>
               <div class="success-text-title">Ghi nhận thành công</div>
-              <div class="success-text-desc">Barrier tự động mở</div>
+              <div class="success-text-desc">Barrier tự động mở • Đã lưu vào hệ thống</div>
             </div>
           </div>
-        </article>
+        </div>
 
-      </section>
+      </div>
 
       <!-- Khối Bảng: Lượt xe vào gần đây -->
       <section class="card history-card">
