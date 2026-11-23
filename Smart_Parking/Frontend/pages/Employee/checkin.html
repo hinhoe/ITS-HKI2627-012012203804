@@ -6,7 +6,54 @@
   <title>Ghi nhận xe vào bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt theo chuẩn dự án -->
-  <link rel="stylesheet" href="../../css/Employee/checkin.css">
+  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=8.0">
+  
+  <style>
+    /* Styling màu sắc cho nút Thao tác Sửa và Xóa */
+    .table-actions-cell {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .btn-action-edit {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      border: 1px solid #bfdbfe !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-edit:hover {
+      background-color: #dbeafe !important;
+      color: #1d4ed8 !important;
+      border-color: #93c5fd !important;
+    }
+    .btn-action-delete {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #fef2f2 !important;
+      color: #ef4444 !important;
+      border: 1px solid #fecaca !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-delete:hover {
+      background-color: #fee2e2 !important;
+      color: #dc2626 !important;
+      border-color: #fca5a5 !important;
+    }
+  </style>
   
   <!-- Font chữ Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,25 +90,25 @@
         <div class="section-label" style="padding-left: 14px;">Nghiệp vụ bãi xe</div>
         <ul class="nav-menu">
           <li>
-            <a href="checkin.html" class="nav-item-link active">
+            <a href="checkin.html?v=5.0" class="nav-item-link active">
               <i class="fa-solid fa-arrow-right-to-bracket"></i>
               <span>Ghi nhận xe vào bãi</span>
             </a>
           </li>
           <li>
-            <a href="checkout.html" class="nav-item-link">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              <span>Ghi nhận xe ra & Tính phí</span>
-            </a>
-          </li>
-          <li>
-            <a href="current-parking.html" class="nav-item-link">
+            <a href="current-parking.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-square-parking"></i>
               <span>Xe đang gửi trong bãi</span>
             </a>
           </li>
           <li>
-            <a href="history.html" class="nav-item-link">
+            <a href="checkout.html?v=5.0" class="nav-item-link">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Ghi nhận xe ra & Tính phí</span>
+            </a>
+          </li>
+          <li>
+            <a href="history.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Lịch sử vào/ra & Tra cứu</span>
             </a>
@@ -74,14 +121,14 @@
     <div class="capacity-card">
       <div class="capacity-header">
         <span class="capacity-title">Sức chứa thời gian thực</span>
-        <span class="capacity-percent" id="capacityPercent">82.4%</span>
+        <span class="capacity-percent" id="capacityPercent">0.0%</span>
       </div>
       <div class="capacity-progress-bg">
-        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 82.4%;"></div>
+        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 0%;"></div>
       </div>
       <div class="capacity-footer">
-        <span class="capacity-count" id="capacityCount">412 / 500</span>
-        <span class="capacity-available" id="capacityAvailable">88 chỗ trống</span>
+        <span class="capacity-count" id="capacityCount">0 / 500</span>
+        <span class="capacity-available" id="capacityAvailable">500 chỗ trống</span>
       </div>
     </div>
   </aside>
@@ -158,6 +205,22 @@
             <img id="vehiclePreviewImg" class="viewport-img" alt="Ảnh phương tiện vào bãi" style="display: none;">
             <video id="webcamVideo" class="viewport-img" autoplay playsinline muted style="display: none;"></video>
             <canvas id="captureCanvas" style="display: none;"></canvas>
+
+            <!-- Khung căn chỉnh và Nút chụp trực tiếp đè lên Camera -->
+            <div class="webcam-live-controls" id="webcamLiveControls" style="display: none;">
+              <div class="camera-aim-box">
+                <div class="aim-corner top-left"></div>
+                <div class="aim-corner top-right"></div>
+                <div class="aim-corner bottom-left"></div>
+                <div class="aim-corner bottom-right"></div>
+                <span class="aim-label">ĐẶT BIỂN SỐ VÀO KHUNG NÀY</span>
+              </div>
+              <button type="button" class="btn-shutter-live" id="btnShutterLive">
+                <i class="fa-solid fa-camera"></i>
+                <span>Chụp & Nhận diện ngay</span>
+              </button>
+            </div>
+
             <div class="viewport-tag">
               <span class="live-dot" id="camStatusDot"></span>
               <span id="camStatusText">CAM 01 -- CỔNG VÀO</span>
@@ -165,35 +228,35 @@
           </div>
         </article>
 
-        <!-- Hàng 1 - Cột 2: YOLOv8 Khoanh Vùng Biển Số -->
+        <!-- Hàng 1 - Cột 2: Khoanh Vùng Biển Số -->
         <article class="pipeline-card col-yolo">
           <div class="card-header-flex">
             <div class="card-title-group">
               <span class="step-number">2</span>
-              <span>YOLOv8 Khoanh Vùng Biển Số</span>
+              <span>Khoanh Vùng Biển Số</span>
             </div>
-            <span class="card-badge-info" id="yoloModelBadge">YOLOv8 Detection</span>
+            <span class="card-badge-info" id="yoloModelBadge">Tự động phát hiện</span>
           </div>
           <div class="viewport-box" id="viewportAnnotatedBox">
             <div class="empty-viewport-placeholder" id="emptyAnnotatedPlaceholder">
               <i class="fa-solid fa-crosshairs fa-2x"></i>
-              <span>Vùng khoanh biển số AI</span>
+              <span>Vùng khoanh biển số</span>
               <small>Tự động xuất hiện sau khi nhận diện</small>
             </div>
-            <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh YOLOv8 khoanh vùng biển số" style="display: none;">
+            <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh khoanh vùng biển số" style="display: none;">
             <div class="viewport-tag tag-ai">
-              <i class="fa-solid fa-microchip"></i>
-              <span>AI BOUNDING BOX</span>
+              <i class="fa-solid fa-vector-square"></i>
+              <span>KHUNG BIỂN SỐ</span>
             </div>
           </div>
         </article>
 
-        <!-- Hàng 1 - Cột 3: Kết Quả & Xác Thực -->
+        <!-- Hàng 1 - Cột 3: Kết Quả Xác Thực -->
         <article class="pipeline-card col-results results-pipeline-card">
           <div class="card-header-flex">
             <div class="card-title-group">
               <span class="step-number">3</span>
-              <span>Kết Quả & Xác Thực</span>
+              <span>Kết Quả Xác Thực</span>
             </div>
             <span class="badge-status-pill waiting" id="aiStatusPill">
               <span class="status-bullet"></span> <span id="aiStatusText">Chờ xử lý</span>
@@ -212,27 +275,45 @@
             </div>
           </div>
 
-          <!-- Khung biển số chuẩn Việt Nam -->
-          <div class="license-plate-card">
-            <span class="plate-number-display" id="resultPlateText">---</span>
+          <!-- Khung biển số chuẩn Việt Nam (Hỗ trợ Nhận diện & Nhập tay thủ công) -->
+          <div class="license-plate-card" id="licensePlateCard">
+            <span class="plate-number-display" id="resultPlateText" title="Nhấn để chỉnh sửa bằng tay">---</span>
+            <input type="text" class="plate-number-input" id="plateManualInput" placeholder="Nhập biển số..." style="display: none;" maxlength="15" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn-clear-plate" id="btnClearPlateInput" title="Xóa trắng để nhập lại ký tự" style="display: none;">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+            <button type="button" class="btn-edit-plate" id="btnToggleEditPlate" title="Nhập / Sửa biển số bằng tay">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+          </div>
+
+          <!-- Thông báo hỗ trợ nhập tay khi độ tin cậy < 90% hoặc hệ thống lỗi/bảo trì -->
+          <div class="manual-entry-hint" id="manualEntryHint" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="manualEntryHintText">Độ tin cậy &lt; 90% — Vui lòng kiểm tra hoặc nhập tay</span>
           </div>
 
           <!-- Bảng thông số chi tiết -->
           <div class="meta-details-grid">
             <div class="meta-item">
               <span class="meta-label">Loại phương tiện:</span>
-              <span class="meta-val" id="vehicleTypeText">Chưa xác định</span>
+              <div class="vehicle-type-switch-group">
+                <span class="meta-val" id="vehicleTypeText">Chưa xác định</span>
+                <button type="button" class="btn-switch-type" id="btnSwitchVehicleType" title="Nhấn để đổi Ô tô / Xe máy" style="display: none;">
+                  <i class="fa-solid fa-repeat"></i>
+                </button>
+              </div>
             </div>
             <div class="meta-item">
-              <span class="meta-label">YOLO Conf:</span>
+              <span class="meta-label">Độ tin cậy phát hiện:</span>
               <span class="meta-val font-mono" id="yoloConfText">--%</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Gemini OCR:</span>
+              <span class="meta-label">Độ tin cậy nhận diện:</span>
               <span class="meta-val font-mono" id="ocrConfidenceText">--%</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Thời gian AI:</span>
+              <span class="meta-label">Thời gian xử lý:</span>
               <span class="meta-val font-mono" id="processingTimeText">-- ms</span>
             </div>
             <div class="meta-item full-width">
@@ -261,6 +342,10 @@
                 <i class="fa-solid fa-video" style="color: #10b981;"></i>
                 <span id="webcamBtnText">Mở Camera</span>
               </button>
+              <button type="button" class="btn btn-secondary" id="btnFlipWebcam" style="display: none;" title="Lật gương camera nếu chữ biển số bị ngược">
+                <i class="fa-solid fa-arrows-left-right" style="color: #6366f1;"></i>
+                <span>Lật gương</span>
+              </button>
               <button type="button" class="btn btn-secondary" id="btnCaptureWebcam" style="display: none;">
                 <i class="fa-solid fa-camera" style="color: #2563eb;"></i>
                 <span>Chụp ảnh</span>
@@ -277,7 +362,7 @@
             <div class="toolbar-right">
               <button type="button" class="btn btn-recognize-main" id="btnRecognize">
                 <i class="fa-solid fa-bolt"></i>
-                <span>Nhận diện biển số AI</span>
+                <span>Nhận diện biển số</span>
               </button>
             </div>
           </section>
@@ -302,8 +387,23 @@
       <section class="card history-card">
         <div class="card-header-flex">
           <div class="card-title-group">
-            <i class="fa-solid fa-rotate-right"></i>
-            <span>Lượt xe vào gần đây</span>
+            <div class="history-icon-badge">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+              <div class="history-title-main">Lượt xe vào gần đây</div>
+              <div class="history-subtitle">Dữ liệu thời gian thực đối soát từ cổng Check-in</div>
+            </div>
+          </div>
+
+          <div class="history-header-actions">
+            <span class="live-status-pill">
+              <span class="live-dot"></span> Trực tiếp
+            </span>
+            <button type="button" class="btn-refresh-history" id="btnRefreshHistory" title="Làm mới danh sách từ CSDL">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Làm mới</span>
+            </button>
           </div>
         </div>
 
@@ -312,45 +412,17 @@
             <thead>
               <tr>
                 <th>Biển số xe</th>
-                <th>Thời gian vào</th>
-                <th>Trạng thái</th>
+                <th>Loại phương tiện</th>
+                <th>Thời gian vào cổng</th>
+                <th>Trạng thái xác thực</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
               <tr>
-                <td class="td-plate">30G-928.31</td>
-                <td class="td-time">14:32:44 - 28/10/2026</td>
-                <td>
-                  <span class="status-pill">
-                    <span class="status-bullet"></span> Ghi nhận thành công
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td class="td-plate">51K-812.90</td>
-                <td class="td-time">14:32:44 - 28/10/2026</td>
-                <td>
-                  <span class="status-pill">
-                    <span class="status-bullet"></span> Ghi nhận thành công
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td class="td-plate">29A-673.45</td>
-                <td class="td-time">14:28:19 - 28/10/2026</td>
-                <td>
-                  <span class="status-pill">
-                    <span class="status-bullet"></span> Ghi nhận thành công
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td class="td-plate">29A-673.45</td>
-                <td class="td-time">14:28:19 - 28/10/2026</td>
-                <td>
-                  <span class="status-pill">
-                    <span class="status-bullet"></span> Ghi nhận thành công
-                  </span>
+                <td colspan="4" style="text-align: center; color: #94a3b8; padding: 24px;">
+                  <i class="fa-solid fa-inbox" style="font-size: 20px; margin-bottom: 6px; display: block;"></i>
+                  Chưa có lượt xe vào nào được ghi nhận trong ca làm việc này
                 </td>
               </tr>
             </tbody>
@@ -362,6 +434,6 @@
   </div>
 
   <!-- JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/checkin.js"></script>
+  <script src="../../js/Employee/checkin.js?v=8.0"></script>
 </body>
 </html>

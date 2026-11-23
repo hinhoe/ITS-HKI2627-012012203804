@@ -47,11 +47,11 @@ class GeminiStructuredOutput(BaseModel):
     )
     plate_number: Optional[str] = Field(
         default=None,
-        description="The license plate characters as visually read, or null if any character is unclear."
+        description="The exact license plate characters and symbols visibly printed on the plate (letters, digits, '-' and '.' if present, without inventing symbols that are not present), or null if any character is unclear."
     )
     raw_text: Optional[str] = Field(
         default=None,
-        description="Raw characters in visual reading order. Use '?' for uncertain characters."
+        description="Raw characters and symbols exactly as seen on the plate in visual reading order. Use '?' for uncertain characters."
     )
     status: str = Field(
         description="'recognized', 'needs_review', or 'unreadable'."

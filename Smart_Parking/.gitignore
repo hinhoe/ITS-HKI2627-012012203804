@@ -47,3 +47,8 @@ uploads/*
 results/*
 !results/.gitkeep
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+

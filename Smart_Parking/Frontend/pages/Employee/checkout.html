@@ -6,7 +6,7 @@
   <title>Ghi nhận xe ra & Tính phí - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Ghi nhận xe ra -->
-  <link rel="stylesheet" href="../../css/Employee/checkout.css">
+  <link rel="stylesheet" href="../../css/Employee/checkout.css?v=2.0">
   
   <!-- Font chữ Inter (Đồng bộ tuyệt đối với hệ thống) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,25 +43,25 @@
         <div class="section-label" style="padding-left: 14px;">Nghiệp vụ bãi xe</div>
         <ul class="nav-menu">
           <li>
-            <a href="checkin.html" class="nav-item-link">
+            <a href="checkin.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-arrow-right-to-bracket"></i>
               <span>Ghi nhận xe vào bãi</span>
             </a>
           </li>
           <li>
-            <a href="checkout.html" class="nav-item-link active">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              <span>Ghi nhận xe ra & Tính phí</span>
-            </a>
-          </li>
-          <li>
-            <a href="current-parking.html" class="nav-item-link">
+            <a href="current-parking.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-square-parking"></i>
               <span>Xe đang gửi trong bãi</span>
             </a>
           </li>
           <li>
-            <a href="history.html" class="nav-item-link">
+            <a href="checkout.html?v=5.0" class="nav-item-link active">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Ghi nhận xe ra & Tính phí</span>
+            </a>
+          </li>
+          <li>
+            <a href="history.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Lịch sử vào/ra & Tra cứu</span>
             </a>
@@ -74,14 +74,14 @@
     <div class="capacity-card">
       <div class="capacity-header">
         <span class="capacity-title">Sức chứa thời gian thực</span>
-        <span class="capacity-percent" id="capacityPercent">82.4%</span>
+        <span class="capacity-percent" id="capacityPercent">0.0%</span>
       </div>
       <div class="capacity-progress-bg">
-        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 82.4%;"></div>
+        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 0%;"></div>
       </div>
       <div class="capacity-footer">
-        <span class="capacity-count" id="capacityCount">412 / 500</span>
-        <span class="capacity-available" id="capacityAvailable">88 chỗ trống</span>
+        <span class="capacity-count" id="capacityCount">0 / 500</span>
+        <span class="capacity-available" id="capacityAvailable">500 chỗ trống</span>
       </div>
     </div>
   </aside>
@@ -98,12 +98,12 @@
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
         </div>
         <div class="header-text">
-          <h1>Ghi nhận xe ra & Tính phí</h1>
+          <h1>Ghi nhận xe ra &amp; Tính phí</h1>
           <p>Tự động nhận diện biển số ra, đối soát lượt gửi và tính phí dịch vụ</p>
         </div>
       </div>
 
-      <!-- Dropdown Profile Nhân viên ở góc phải -->
+      <!-- Dropdown Profile Nhân viên -->
       <div class="user-menu-wrapper">
         <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
           <div class="avatar-circle">
@@ -137,162 +137,240 @@
     <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
 
-      <!-- Lưới 2 cột: Khung hình ảnh xe ra & Kết quả nhận diện & Tính phí -->
-      <section class="grid-recognition-row">
+      <!-- BỐ CỤC KHUNG CHÍNH 3 CỘT ĐỒNG BỘ CHECKIN THEO QUY CHUẨN -->
+      <div class="workspace-grid-layout">
         
-        <!-- Cột trái: Khung hình ảnh xe ra -->
-        <article class="card camera-card">
-          <div>
-            <div class="card-header-flex">
-              <div class="card-title-group">
-                <i class="fa-solid fa-image"></i>
-                <span>Hình ảnh xe ra</span>
+        <!-- Cột 1: Ảnh Phương Tiện Ra Ban Đầu -->
+        <article class="pipeline-card col-original">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">1</span>
+              <span>Ảnh Phương Tiện Ra</span>
+            </div>
+            <span class="card-badge-info">Cổng CAM 02</span>
+          </div>
+          <div class="viewport-box" id="viewportOriginalBox">
+            <div class="empty-viewport-placeholder" id="emptyViewportPlaceholder">
+              <i class="fa-regular fa-image fa-2x"></i>
+              <span>Chưa có ảnh xe ra</span>
+              <small>Bấm "Chọn ảnh từ máy" hoặc mở Camera</small>
+            </div>
+            <img id="vehiclePreviewImg" class="viewport-img" alt="Ảnh phương tiện ra bãi" style="display: none;">
+            <video id="webcamVideo" class="viewport-img" autoplay playsinline muted style="display: none;"></video>
+            <canvas id="captureCanvas" style="display: none;"></canvas>
+
+            <!-- Khung căn chỉnh và Nút chụp trực tiếp đè lên Camera -->
+            <div class="webcam-live-controls" id="webcamLiveControls" style="display: none;">
+              <div class="camera-aim-box">
+                <div class="aim-corner top-left"></div>
+                <div class="aim-corner top-right"></div>
+                <div class="aim-corner bottom-left"></div>
+                <div class="aim-corner bottom-right"></div>
+                <span class="aim-label">ĐẶT BIỂN SỐ VÀO KHUNG NÀY</span>
               </div>
-              <div class="file-status-badge">
-                <i class="fa-solid fa-circle-check"></i>
-                <span id="fileStatusText">Đã tải: xe_ra_lane1.jpg (2.6 MB)</span>
-              </div>
+              <button type="button" class="btn-shutter-live" id="btnShutterLive">
+                <i class="fa-solid fa-camera"></i>
+                <span>Chụp &amp; Đối soát ngay</span>
+              </button>
             </div>
 
-            <!-- Viewport mô phỏng camera hoặc ảnh xe ra tải lên / webcam trực tiếp -->
-            <div class="viewport-container">
-              <img id="vehiclePreviewImg" class="vehicle-preview-img" alt="Ảnh phương tiện ra bãi">
-              <video id="webcamVideo" class="vehicle-preview-img" autoplay playsinline muted style="display: none; object-fit: cover;"></video>
-              <canvas id="captureCanvas" style="display: none;"></canvas>
+            <div class="viewport-tag">
+              <span class="live-dot" id="camStatusDot"></span>
+              <span id="camStatusText">CAM 02 -- CỔNG RA</span>
+            </div>
+          </div>
+        </article>
 
-              <!-- Thẻ nhãn camera mô phỏng -->
-              <div class="viewport-overlay-tag">
-                <span class="live-dot" id="camStatusDot"></span>
-                <span id="camStatusText">CAM 02 - CỔNG RA LANE 1</span>
+        <!-- Cột 2: Khoanh Vùng Biển Số Ra -->
+        <article class="pipeline-card col-yolo">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">2</span>
+              <span>Khoanh Vùng Biển Số</span>
+            </div>
+            <span class="card-badge-info" id="yoloModelBadge">Tự động phát hiện</span>
+          </div>
+          <div class="viewport-box" id="viewportAnnotatedBox">
+            <div class="empty-viewport-placeholder" id="emptyAnnotatedPlaceholder">
+              <i class="fa-solid fa-crosshairs fa-2x"></i>
+              <span>Vùng khoanh biển số</span>
+              <small>Tự động xuất hiện sau khi nhận diện</small>
+            </div>
+            <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh khoanh vùng biển số" style="display: none;">
+            <div class="viewport-tag tag-ai">
+              <i class="fa-solid fa-vector-square"></i>
+              <span>KHUNG BIỂN SỐ RA</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Cột 3: Kết Quả Nhận Diện & Tính Phí Hài Hòa -->
+        <article class="pipeline-card col-results results-pipeline-card">
+          <div class="card-header-flex">
+            <div class="card-title-group">
+              <span class="step-number">3</span>
+              <span>Kết Quả &amp; Tính Phí</span>
+            </div>
+            <span class="badge-status-pill waiting" id="aiStatusPill">
+              <span class="status-bullet"></span> <span id="aiStatusText">Chờ xử lý</span>
+            </span>
+          </div>
+
+          <!-- Khối hiển thị ảnh cắt biển số (Crop Box) -->
+          <div class="crop-section">
+            <div class="crop-header-flex">
+              <span class="crop-title"><i class="fa-regular fa-clone"></i> Ảnh cắt biển số (Crop)</span>
+              <span class="crop-dims" id="cropDimsText">Tỷ lệ chuẩn</span>
+            </div>
+            <div class="crop-image-placeholder" id="cropPlaceholder">
+              <i class="fa-solid fa-camera"></i>
+              <span>Chưa có ảnh crop</span>
+            </div>
+          </div>
+
+          <!-- Khung biển số chuẩn Việt Nam (Hỗ trợ Nhận diện & Nhập tay thủ công) -->
+          <div class="license-plate-card" id="licensePlateCard">
+            <span class="plate-number-display" id="resultPlateText" title="Nhấn để chỉnh sửa bằng tay">---</span>
+            <input type="text" class="plate-number-input" id="plateManualInput" placeholder="Nhập biển số..." style="display: none;" maxlength="15" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn-clear-plate" id="btnClearPlateInput" title="Xóa trắng để nhập lại ký tự" style="display: none;">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+            <button type="button" class="btn-edit-plate" id="btnToggleEditPlate" title="Nhập / Sửa biển số bằng tay">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+          </div>
+
+          <!-- Thông báo hỗ trợ đối soát/nhập tay khi độ tin cậy < 90% -->
+          <div class="manual-entry-hint" id="manualEntryHint" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="manualEntryHintText">Độ tin cậy &lt; 90% — Vui lòng kiểm tra lại</span>
+          </div>
+
+          <!-- Bảng thông số chi tiết đối soát lượt vào/ra -->
+          <div class="meta-details-grid">
+            <div class="meta-item">
+              <span class="meta-label">Loại phương tiện:</span>
+              <div class="vehicle-type-switch-group">
+                <span class="meta-val" id="vehicleTypeText">Chưa xác định</span>
+                <button type="button" class="btn-switch-type" id="btnSwitchVehicleType" title="Nhấn để đổi Ô tô / Xe máy" style="display: none;">
+                  <i class="fa-solid fa-repeat"></i>
+                </button>
               </div>
-
-              <!-- Hộp Bounding Box nhận diện biển số của AI -->
-              <div class="ai-detection-box" id="aiPlateBox">
-                <span class="ai-tag-label">AI phát hiện biển số</span>
-                <span class="ai-plate-preview" id="aiPlateText">[ 30G-928.31 ]</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Biểu phí áp dụng:</span>
+              <span class="meta-val" id="feeTypeText">--</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Thời gian vào bãi:</span>
+              <span class="meta-val font-mono" id="timeInText">--:--:-- - --/--/----</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Thời gian ra bãi:</span>
+              <span class="meta-val font-mono" id="timeOutText">--:--:-- - --/--/----</span>
+            </div>
+            <div class="meta-item full-width">
+              <div class="duration-highlight-row">
+                <span class="meta-label">Tổng thời gian gửi:</span>
+                <span class="meta-val duration-badge" id="durationText">--</span>
               </div>
             </div>
           </div>
 
-          <!-- Nút điều khiển bên dưới khung ảnh -->
-          <div class="camera-controls-bar">
-            <div class="left-controls">
-              <!-- Input file ẩn để chọn ảnh thực tế từ máy tính -->
-              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg" style="display: none;">
-              <button type="button" class="btn btn-secondary" id="btnSelectImage">
-                <i class="fa-regular fa-image" style="color: #2563eb;"></i>
-                <span>Chọn ảnh xe</span>
-              </button>
+          <!-- Khu vực tính phí dịch vụ hài hòa, bắt mắt -->
+          <div class="fee-card-harmonized">
+            <div class="fee-info-group">
+              <span class="fee-subtitle"><i class="fa-solid fa-receipt"></i> Phí gửi xe phải thu</span>
+              <div class="fee-big-amount" id="feeAmountText">0 VNĐ</div>
+            </div>
+            <div class="fee-status-badge unpaid" id="feeStatusBadge">
+              <i class="fa-solid fa-clock"></i>
+              <span>Chờ thanh toán</span>
+            </div>
+          </div>
 
-              <!-- Nút Bật / Tắt Webcam Camera trực tiếp -->
+          <!-- Nút Xác nhận xe ra & Mở Barrier -->
+          <button type="button" class="btn-confirm-checkout" id="btnConfirmCheckout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Ghi nhận xe ra bãi (Mở Barrier)</span>
+          </button>
+        </article>
+
+        <!-- Hàng 2 - Nằm dưới Cột 1 & Cột 2: Thanh công cụ tác vụ -->
+        <div class="toolbar-bottom-container">
+          <section class="action-toolbar-card">
+            <div class="toolbar-left">
+              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg, image/webp" style="display: none;">
+              <button type="button" class="btn btn-secondary" id="btnSelectImage">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: #2563eb;"></i>
+                <span>Chọn ảnh từ máy</span>
+              </button>
               <button type="button" class="btn btn-secondary" id="btnToggleWebcam">
                 <i class="fa-solid fa-video" style="color: #10b981;"></i>
-                <span id="webcamBtnText">Camera</span>
+                <span id="webcamBtnText">Mở Camera</span>
               </button>
-            </div>
-
-            <div class="right-controls">
-              <!-- Nút Chụp từ Camera khi đang bật webcam -->
+              <button type="button" class="btn btn-secondary" id="btnFlipWebcam" style="display: none;" title="Lật gương camera nếu chữ biển số bị ngược">
+                <i class="fa-solid fa-arrows-left-right" style="color: #6366f1;"></i>
+                <span>Lật gương</span>
+              </button>
               <button type="button" class="btn btn-secondary" id="btnCaptureWebcam" style="display: none;">
                 <i class="fa-solid fa-camera" style="color: #2563eb;"></i>
                 <span>Chụp ảnh</span>
               </button>
+            </div>
 
-              <button type="button" class="btn btn-primary" id="btnRecognize">
-                <i class="fa-solid fa-expand"></i>
-                <span>Nhận diện biển số</span>
+            <div class="toolbar-center">
+              <div class="file-status-badge" id="fileStatusBadge">
+                <i class="fa-solid fa-circle-check"></i>
+                <span id="fileStatusText">Sẵn sàng nhận diện xe ra cổng</span>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <button type="button" class="btn btn-recognize-main" id="btnRecognize">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Nhận diện biển số ra</span>
               </button>
             </div>
-          </div>
-        </article>
+          </section>
+        </div>
 
-        <!-- Cột phải: Kết quả nhận diện & Tính phí -->
-        <article class="card results-card">
-          <div>
-            <div class="card-title-group" style="margin-bottom: 10px;">
-              <span>Kết quả nhận diện & Tính phí</span>
-            </div>
-
-            <!-- Khối hiển thị ảnh cắt biển số (Crop Box) -->
-            <div class="crop-preview-box">
-              <div class="crop-label">Ảnh cắt biển số & nhận diện AI</div>
-              <div class="crop-image-placeholder" id="cropPlaceholder">
-                <i class="fa-solid fa-camera fa-2x"></i>
-              </div>
-
-              <!-- Kết quả ký tự nhận diện (OCR) -->
-              <div class="plate-result-display">
-                <span class="plate-number-text" id="resultPlateText">30G-928.31</span>
-              </div>
-              <div class="ocr-confidence-text">
-                Độ tin cậy OCR: <strong id="ocrConfidenceText">99.8%</strong>
-              </div>
-            </div>
-
-            <!-- Danh sách chi tiết lượt gửi xe đối soát -->
-            <div class="meta-details-list">
-              <div class="meta-row">
-                <span class="meta-label">Thời gian vào:</span>
-                <span class="meta-value font-mono" id="timeInText">14:35:10 - 28/10/2026</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Thời gian ra:</span>
-                <span class="meta-value font-mono" id="timeOutText">16:45:20 - 28/10/2026</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Tổng thời gian:</span>
-                <span class="meta-value" id="durationText">2 giờ 10 phút</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Loại xe:</span>
-                <!-- Đúng quy tắc: Chỉ có Ô tô hoặc Xe máy -->
-                <span class="meta-value" id="vehicleTypeText">Ô tô</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Loại phí:</span>
-                <!-- Đúng quy tắc: Bình thường, Qua đêm, Ban ngày -->
-                <span class="meta-value" id="feeTypeText">Ban ngày</span>
-              </div>
-            </div>
-
-            <!-- Khu vực tính phí gửi xe -->
-            <div class="fee-summary-container">
-              <div>
-                <div class="fee-title">Phí gửi xe phải thu</div>
-                <div class="fee-amount-display" id="feeAmountText">25.000 VNĐ</div>
-              </div>
-              <div class="fee-status-badge">Đã thu phí</div>
-            </div>
-
-            <!-- Nút hành động chính: Ghi nhận xe ra bãi -->
-            <div class="checkout-action-wrapper" style="margin-top: 14px;">
-              <button type="button" class="btn btn-primary" id="btnConfirmCheckout" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 13px;">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span>Ghi nhận xe ra bãi</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Khung thông báo thành công màu xanh lá (ẩn ban đầu, chỉ hiện sau khi nhấn Ghi nhận xe ra bãi thành công) -->
-          <div class="checkout-notification-box" id="checkoutSuccessBanner" style="display: none; margin-top: 12px;">
-            <div class="checkout-check-icon">
+        <!-- Hàng 2 - Nằm dưới Cột 3: Banner Ghi nhận thành công -->
+        <div class="banner-bottom-container">
+          <div class="success-banner" id="checkoutSuccessBanner" style="display: none;">
+            <div class="success-icon-badge">
               <i class="fa-solid fa-check"></i>
             </div>
             <div>
-              <div class="checkout-btn-title">Ghi nhận xe ra thành công</div>
-              <div class="checkout-btn-sub">Xe đã hoàn tất thủ tục ra bãi</div>
+              <div class="success-text-title">Hoàn tất xe ra bãi</div>
+              <div class="success-text-desc">Barrier tự động mở • Đã thu phí &amp; kết thúc lượt gửi</div>
             </div>
           </div>
-        </article>
+        </div>
 
-      </section>
+      </div>
 
-      <!-- 3. Khối Bảng: Lượt xe ra gần đây (tối đa 5 lượt mới nhất) -->
+      <!-- Khối Bảng: Lượt xe ra gần đây -->
       <section class="card history-card">
         <div class="card-header-flex">
           <div class="card-title-group">
-            <i class="fa-solid fa-rotate-right"></i>
-            <span>Lượt xe ra gần đây</span>
+            <div class="history-icon-badge checkout-badge-icon">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+              <div class="history-title-main">Lượt xe ra gần đây</div>
+              <div class="history-subtitle">Dữ liệu thời gian thực đối soát từ cổng Check-out</div>
+            </div>
+          </div>
+
+          <div class="history-header-actions">
+            <span class="live-status-pill">
+              <span class="live-dot"></span> Trực tiếp
+            </span>
+            <button type="button" class="btn-refresh-history" id="btnRefreshHistory" title="Làm mới danh sách từ CSDL">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Làm mới</span>
+            </button>
           </div>
         </div>
 
@@ -301,13 +379,19 @@
             <thead>
               <tr>
                 <th>Biển số xe</th>
-                <th>Thời gian ra</th>
+                <th>Loại phương tiện</th>
+                <th>Thời gian ra cổng</th>
                 <th>Phí gửi xe</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
-              <!-- Sẽ được render động đúng tối đa 5 bản ghi mới nhất bởi checkout.js -->
+              <tr>
+                <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">
+                  <i class="fa-solid fa-inbox" style="font-size: 20px; margin-bottom: 6px; display: block;"></i>
+                  Chưa có lượt xe ra nào được ghi nhận trong ca làm việc này
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -316,7 +400,7 @@
     </main>
   </div>
 
-  <!-- JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/checkout.js"></script>
+  <!-- JavaScript xử lý tương tác nghiệp vụ Check-out -->
+  <script src="../../js/Employee/checkout.js?v=7.0"></script>
 </body>
 </html>

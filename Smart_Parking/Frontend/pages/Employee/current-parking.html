@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +6,151 @@
   <title>Xe đang gửi trong bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Quản lý xe đang gửi -->
-  <link rel="stylesheet" href="../../css/Employee/current-parking.css">
+  <link rel="stylesheet" href="../../css/Employee/current-parking.css?v=11.0">
+  
+  <style>
+    /* Styling màu sắc cho nút Thao tác Sửa và Xóa */
+    .table-actions-cell {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .btn-action-edit {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      border: 1px solid #bfdbfe !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-edit:hover {
+      background-color: #dbeafe !important;
+      color: #1d4ed8 !important;
+      border-color: #93c5fd !important;
+    }
+    .btn-action-delete {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #fef2f2 !important;
+      color: #ef4444 !important;
+      border: 1px solid #fecaca !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-delete:hover {
+      background-color: #fee2e2 !important;
+      color: #dc2626 !important;
+      border-color: #fca5a5 !important;
+    }
+
+    /* Styling cho bộ lọc Custom Dropdown Hiện Đại & Đẹp Mắt */
+    .custom-select-wrapper {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    .custom-select-trigger {
+      height: 36px !important;
+      padding: 0 12px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      font-family: inherit !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      background-color: #ffffff !important;
+      color: #1e293b !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      white-space: nowrap !important;
+    }
+    .custom-select-trigger:hover {
+      border-color: #94a3b8 !important;
+    }
+    .custom-select-trigger.active, .custom-select-trigger:focus {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+    }
+    .select-chevron {
+      color: #64748b !important;
+      font-size: 10px !important;
+      margin-left: 2px !important;
+      transition: transform 0.2s ease !important;
+    }
+    .custom-select-trigger.active .select-chevron {
+      transform: rotate(180deg) !important;
+    }
+    .custom-select-dropdown {
+      position: absolute !important;
+      top: calc(100% + 6px) !important;
+      right: 0 !important;
+      min-width: 165px !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.05) !important;
+      display: none !important;
+      z-index: 1000 !important;
+      padding: 5px !important;
+      flex-direction: column !important;
+      gap: 2px !important;
+    }
+    .custom-select-dropdown.show {
+      display: flex !important;
+    }
+    .select-option {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 7px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      color: #334155 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .select-option:hover {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    .select-option.active {
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      font-weight: 600 !important;
+    }
+    .opt-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    .opt-icon {
+      font-size: 12px !important;
+      width: 14px !important;
+      text-align: center !important;
+    }
+    .opt-check {
+      font-size: 11px !important;
+      color: #2563eb !important;
+      display: none !important;
+    }
+    .select-option.active .opt-check {
+      display: block !important;
+    }
+  </style>
   
   <!-- Font chữ Inter chuẩn của toàn hệ thống -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,25 +187,25 @@
         <div class="section-label" style="padding-left: 14px;">Nghiệp vụ bãi xe</div>
         <ul class="nav-menu">
           <li>
-            <a href="checkin.html" class="nav-item-link">
+            <a href="checkin.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-arrow-right-to-bracket"></i>
               <span>Ghi nhận xe vào bãi</span>
             </a>
           </li>
           <li>
-            <a href="checkout.html" class="nav-item-link">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              <span>Ghi nhận xe ra & Tính phí</span>
-            </a>
-          </li>
-          <li>
-            <a href="current-parking.html" class="nav-item-link active">
+            <a href="current-parking.html?v=5.0" class="nav-item-link active">
               <i class="fa-solid fa-square-parking"></i>
               <span>Xe đang gửi trong bãi</span>
             </a>
           </li>
           <li>
-            <a href="history.html" class="nav-item-link">
+            <a href="checkout.html?v=5.0" class="nav-item-link">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Ghi nhận xe ra & Tính phí</span>
+            </a>
+          </li>
+          <li>
+            <a href="history.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Lịch sử vào/ra & Tra cứu</span>
             </a>
@@ -74,14 +218,14 @@
     <div class="capacity-card">
       <div class="capacity-header">
         <span class="capacity-title">Sức chứa thời gian thực</span>
-        <span class="capacity-percent" id="capacityPercent">82.4%</span>
+        <span class="capacity-percent" id="capacityPercent">0.0%</span>
       </div>
       <div class="capacity-progress-bg">
-        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 82.4%;"></div>
+        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 0%;"></div>
       </div>
       <div class="capacity-footer">
-        <span class="capacity-count" id="capacityCount">412 / 500</span>
-        <span class="capacity-available" id="capacityAvailable">88 chỗ trống</span>
+        <span class="capacity-count" id="capacityCount">0 / 500</span>
+        <span class="capacity-available" id="capacityAvailable">500 chỗ trống</span>
       </div>
     </div>
   </aside>
@@ -97,13 +241,13 @@
       <div class="header-left">
         <div class="icon-badge-p">P</div>
         <h1 class="page-main-title">Xe đang gửi trong bãi</h1>
-        <span class="stat-pill stat-pill-blue">
+        <span class="stat-pill stat-pill-blue" id="totalVehiclesBadge">
           <i class="fa-solid fa-car"></i>
-          <span>412 xe đang trong bãi</span>
+          <span id="totalVehiclesCount">0 xe đang trong bãi</span>
         </span>
-        <span class="stat-pill stat-pill-danger">
+        <span class="stat-pill stat-pill-danger" id="overdueVehiclesBadge">
           <i class="fa-regular fa-clock"></i>
-          <span>3 xe đã gửi quá 24h</span>
+          <span id="overdueVehiclesCount">0 xe đã gửi quá 24h</span>
         </span>
       </div>
 
@@ -155,24 +299,74 @@
           >
         </div>
 
-        <!-- Bộ lọc Loại xe -->
-        <div class="filter-select-wrapper">
-          <select id="filterTypeSelect" class="filter-select">
-            <option value="all">Loại xe: Tất cả</option>
-            <option value="Ô tô">Ô tô</option>
-            <option value="Xe máy">Xe máy</option>
-          </select>
-          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
+        <!-- Bộ lọc Loại xe Custom Đẹp Mắt Hiện Đại -->
+        <div class="custom-select-wrapper" id="vehicleTypeSelectWrapper">
+          <button type="button" class="custom-select-trigger" id="vehicleTypeTrigger" aria-expanded="false">
+            <i class="fa-solid fa-layer-group select-icon" id="vehicleTypeIcon" style="color: #64748b; font-size: 12px;"></i>
+            <span id="vehicleTypeLabel">Loại xe: Tất cả</span>
+            <i class="fa-solid fa-chevron-down select-chevron"></i>
+          </button>
+          <input type="hidden" id="filterTypeSelect" value="all">
+
+          <!-- Dropdown danh sách loại xe -->
+          <div class="custom-select-dropdown" id="vehicleTypeDropdown">
+            <div class="select-option active" data-value="all" data-label="Loại xe: Tất cả" data-icon="fa-solid fa-layer-group" data-color="#64748b">
+              <div class="opt-left">
+                <i class="fa-solid fa-layer-group opt-icon" style="color: #64748b;"></i>
+                <span>Tất cả loại xe</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="Ô tô" data-label="Loại xe: Ô tô" data-icon="fa-solid fa-car" data-color="#2563eb">
+              <div class="opt-left">
+                <i class="fa-solid fa-car opt-icon" style="color: #2563eb;"></i>
+                <span>Ô tô</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="Xe máy" data-label="Loại xe: Xe máy" data-icon="fa-solid fa-motorcycle" data-color="#0d9488">
+              <div class="opt-left">
+                <i class="fa-solid fa-motorcycle opt-icon" style="color: #0d9488;"></i>
+                <span>Xe máy</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+          </div>
         </div>
 
-        <!-- Bộ lọc Thời gian gửi -->
-        <div class="filter-select-wrapper">
-          <select id="filterDurationSelect" class="filter-select">
-            <option value="all">Thời gian gửi: Tất cả</option>
-            <option value="under24">Dưới 24 giờ</option>
-            <option value="overdue">Đậu quá 24 giờ</option>
-          </select>
-          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
+        <!-- Bộ lọc Thời gian gửi Custom Đẹp Mắt Hiện Đại -->
+        <div class="custom-select-wrapper" id="durationSelectWrapper">
+          <button type="button" class="custom-select-trigger" id="durationTrigger" aria-expanded="false">
+            <i class="fa-regular fa-clock select-icon" id="durationIcon" style="color: #64748b; font-size: 12px;"></i>
+            <span id="durationLabel">Thời gian gửi: Tất cả</span>
+            <i class="fa-solid fa-chevron-down select-chevron"></i>
+          </button>
+          <input type="hidden" id="filterDurationSelect" value="all">
+
+          <!-- Dropdown danh sách thời gian gửi -->
+          <div class="custom-select-dropdown" id="durationDropdown">
+            <div class="select-option active" data-value="all" data-label="Thời gian gửi: Tất cả" data-icon="fa-regular fa-clock" data-color="#64748b">
+              <div class="opt-left">
+                <i class="fa-regular fa-clock opt-icon" style="color: #64748b;"></i>
+                <span>Tất cả thời gian gửi</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="under24" data-label="Dưới 24 giờ" data-icon="fa-solid fa-hourglass-start" data-color="#2563eb">
+              <div class="opt-left">
+                <i class="fa-solid fa-hourglass-start opt-icon" style="color: #2563eb;"></i>
+                <span>Dưới 24 giờ</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="overdue" data-label="Đậu quá 24 giờ" data-icon="fa-solid fa-triangle-exclamation" data-color="#ef4444">
+              <div class="opt-left">
+                <i class="fa-solid fa-triangle-exclamation opt-icon" style="color: #ef4444;"></i>
+                <span>Đậu quá 24 giờ</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+          </div>
         </div>
 
         <!-- Nút Đặt lại bộ lọc -->
@@ -194,7 +388,7 @@
                 <th>Thời gian gửi</th>
                 <th>Cổng vào</th>
                 <th>Trạng thái</th>
-                <th>Xem ảnh vào</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody id="vehiclesTableBody">
@@ -206,7 +400,7 @@
         <!-- 4. Thanh phân trang (Pagination Footer) -->
         <div class="table-pagination-footer">
           <div class="pagination-info" id="paginationInfo">
-            Hiển thị 1–20 trên tổng 412 xe
+            Hiển thị 0 xe
           </div>
           <div class="pagination-controls" id="paginationControls">
             <!-- Render động và có tương tác click bởi current-parking.js -->
@@ -232,7 +426,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="modal-image-preview">
+        <div class="modal-image-preview" id="modalImagePreview">
           <!-- Placeholder camera chụp xe lúc vào -->
           <div style="text-align: center; color: #94a3b8;">
             <i class="fa-solid fa-camera fa-2x" style="margin-bottom: 8px;"></i>
@@ -261,7 +455,48 @@
     </div>
   </div>
 
+  <!-- MODAL: SỬA THÔNG TIN XE ĐANG GỬI (BIỂN SỐ / LOẠI XE) -->
+  <div class="modal-backdrop" id="editVehicleModalBackdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-pen-to-square" style="color: #2563eb; margin-right: 6px;"></i>
+          Sửa thông tin xe đang gửi
+        </div>
+        <button type="button" class="modal-close-btn" id="modalCloseEditBtn" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <input type="hidden" id="editVehicleId">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Biển số xe:</label>
+          <div style="position: relative;">
+            <input type="text" id="editVehiclePlate" class="search-input" style="width: 100%; font-family: monospace; font-size: 16px; font-weight: 700; text-transform: uppercase; padding-right: 36px;" maxlength="15" placeholder="VD: 51F-866.88">
+            <button type="button" id="btnClearEditPlate" title="Xóa trắng để nhập lại" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 15px;">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+          </div>
+          <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Nhập đúng ký tự thực tế trên biển số để đối soát chính xác</span>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Loại phương tiện:</label>
+          <select id="editVehicleType" class="filter-select" style="width: 100%;">
+            <option value="Ô tô">Ô tô</option>
+            <option value="Xe máy">Xe máy</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" id="btnCancelEditVehicle" style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer;">Hủy bỏ</button>
+          <button type="button" id="btnSaveEditVehicle" style="background: #2563eb; color: #fff; padding: 8px 18px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- File JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/current-parking.js"></script>
+  <script src="../../js/Employee/current-parking.js?v=11.0"></script>
 </body>
 </html>

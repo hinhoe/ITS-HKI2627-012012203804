@@ -19,25 +19,63 @@ Chức năng chính:
 
 from __future__ import annotations
 
+from datetime import datetime
 import logging
 from pathlib import Path
 import time
-from typing import Optional
+from typing import Any, Optional
 import uuid
 
 import cv2
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 import numpy as np
+from pydantic import BaseModel, Field
+import sqlite3
 
 from AI.detect import crop_plate, detect_plates, draw_bboxes, save_crop, validate_crop
 from AI.ocr import default_reader, preprocess_plate, GeminiServiceError
 from AI.schemas import PlateResult, RecognitionStatus, RecognizeResponse
 from Backend.config import settings
+from Backend.database.connection import get_db
 
 logger = logging.getLogger("smart_parking.backend.checkin")
 
 # Router riêng biệt cho nghiệp vụ Check-in
 router = APIRouter(tags=["Checkin - Ghi nhận xe vào"])
+
+
+# ==========================================================================
+# CÁC SCHEMA DỮ LIỆU NGHIỆP VỤ CHECK-IN
+# ==========================================================================
+class CheckinConfirmRequest(BaseModel):
+    plate_number: str = Field(..., description="Biển số xe cần ghi nhận vào bãi")
+    vehicle_type: str = Field(default="Ô tô", description="Loại xe: 'Ô tô' hoặc 'Xe máy'")
+    checkin_image_url: Optional[str] = Field(default=None, description="Đường dẫn ảnh xe lúc vào")
+    checkin_crop_url: Optional[str] = Field(default=None, description="Đường dẫn ảnh crop biển số lúc vào")
+    confidence: Optional[float] = Field(default=99.5, description="Độ tin cậy nhận diện (%)")
+    is_manual: bool = Field(default=False, description="Nhân viên nhập tay hay AI đọc tự động")
+    staff_checkin: Optional[str] = Field(default="Trần Bảo Anh", description="Tên nhân viên trực ca")
+
+
+class CheckinRecordOut(BaseModel):
+    id: int
+    session_code: str
+    plate_number: str
+    vehicle_type: str
+    checkin_time: str
+    confidence: float
+    is_manual: int
+    status: str
+    staff_checkin: Optional[str] = None
+    checkin_crop_url: Optional[str] = None
+
+
+class CheckinStatsOut(BaseModel):
+    total_capacity: int
+    current_count: int
+    available_spots: int
+    moto_count: int
+    car_count: int
 
 
 def decode_checkin_image(filename: str, raw_bytes: bytes) -> np.ndarray:
@@ -240,3 +278,218 @@ async def process_checkin_recognition(
         plates=results_out,
         processing_time_ms=total_time_ms,
     )
+
+
+# ==========================================================================
+# CÁC ENDPOINT NGHIỆP VỤ CHECK-IN VỚI DATABASE
+# ==========================================================================
+
+@router.post("/api/checkin/confirm")
+async def confirm_checkin_session(
+    payload: CheckinConfirmRequest,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """
+    Nghiệp vụ khi nhân viên nhấn "Ghi nhận xe vào bãi (Mở Barrier)":
+    1. Chuẩn hóa biển số xe và loại xe.
+    2. Sinh mã phiên lượt gửi (session_code) duy nhất.
+    3. Lưu lượt xe vào bảng `parking_sessions` với trạng thái 'PARKED'.
+    4. Trả về thông tin phiên vừa tạo kèm thống kê sức chứa bãi xe mới nhất.
+    """
+    clean_plate = payload.plate_number.strip().upper()
+    if not clean_plate or clean_plate == "---":
+        raise HTTPException(status_code=400, detail="Biển số xe không được để trống.")
+
+    # Thời gian vào bãi hiện tại theo chuẩn YYYY-MM-DD HH:MM:SS
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    date_code = datetime.now().strftime("%Y%m%d")
+    random_suffix = uuid.uuid4().hex[:6].upper()
+    session_code = f"SES-{date_code}-{random_suffix}"
+
+    try:
+        cur = db.cursor()
+        cur.execute(
+            """
+            INSERT INTO parking_sessions (
+                session_code, plate_number, vehicle_type, checkin_time,
+                checkin_image_url, checkin_crop_url, confidence, is_manual,
+                status, staff_checkin
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PARKED', ?)
+            """,
+            (
+                session_code,
+                clean_plate,
+                payload.vehicle_type,
+                now_str,
+                payload.checkin_image_url,
+                payload.checkin_crop_url,
+                payload.confidence or 99.5,
+                1 if payload.is_manual else 0,
+                payload.staff_checkin or "Trần Bảo Anh",
+            ),
+        )
+        db.commit()
+        session_id = cur.lastrowid
+
+        # Đọc lại thông tin phiên vừa tạo
+        cur.execute("SELECT * FROM parking_sessions WHERE id = ?", (session_id,))
+        row = cur.fetchone()
+
+        # Tính toán thống kê bãi xe mới nhất
+        cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED'")
+        parked_count = cur.fetchone()[0]
+
+        total_cap = 500
+        cur.execute("SELECT total_capacity FROM parking_lots WHERE lot_code = 'LOT-A'")
+        lot_row = cur.fetchone()
+        if lot_row:
+            total_cap = lot_row["total_capacity"]
+
+        return {
+            "success": True,
+            "message": "Ghi nhận xe vào bãi thành công. Barrier đã mở!",
+            "session": {
+                "id": row["id"],
+                "session_code": row["session_code"],
+                "plate_number": row["plate_number"],
+                "vehicle_type": row["vehicle_type"],
+                "checkin_time": row["checkin_time"],
+                "confidence": row["confidence"],
+                "is_manual": row["is_manual"],
+                "status": "Ghi nhận (Nhập tay)" if row["is_manual"] else "Ghi nhận thành công",
+                "staff_checkin": row["staff_checkin"],
+            },
+            "stats": {
+                "total_capacity": total_cap,
+                "current_count": parked_count,
+                "available_spots": max(0, total_cap - parked_count),
+            },
+        }
+    except Exception as exc:
+        logger.error("Lỗi khi lưu lượt check-in: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Lỗi cơ sở dữ liệu khi ghi nhận xe vào bãi: {exc}")
+
+
+@router.get("/api/checkin/history")
+async def get_checkin_history(
+    limit: int = 10,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """
+    Lấy danh sách các lượt xe vào bãi gần nhất từ CSDL thật để hiển thị lên bảng.
+    """
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT id, session_code, plate_number, vehicle_type, checkin_time, confidence, is_manual, status, staff_checkin, checkin_crop_url
+        FROM parking_sessions
+        ORDER BY checkin_time DESC, id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )
+    rows = cur.fetchall()
+    results = []
+    for r in rows:
+        results.append({
+            "id": r["id"],
+            "session_code": r["session_code"],
+            "plate": r["plate_number"],
+            "type": r["vehicle_type"],
+            "time": r["checkin_time"],
+            "confidence": f"{r['confidence']:.1f}%" if r["confidence"] else "--%",
+            "is_manual": bool(r["is_manual"]),
+            "status": "Ghi nhận (Nhập tay)" if r["is_manual"] else "Ghi nhận thành công",
+            "staff": r["staff_checkin"],
+            "crop_url": r["checkin_crop_url"],
+        })
+    return results
+
+
+@router.get("/api/checkin/stats")
+async def get_checkin_stats(
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """
+    Trả về số liệu thống kê công suất sức chứa bãi xe từ Database thực tế.
+    """
+    cur = db.cursor()
+    
+    total_cap = 500
+    cur.execute("SELECT total_capacity FROM parking_lots WHERE lot_code = 'LOT-A'")
+    lot_row = cur.fetchone()
+    if lot_row:
+        total_cap = lot_row["total_capacity"]
+
+    cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED'")
+    parked_count = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED' AND vehicle_type = 'Ô tô'")
+    car_count = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED' AND vehicle_type = 'Xe máy'")
+    moto_count = cur.fetchone()[0]
+
+    return {
+        "total_capacity": total_cap,
+        "current_count": parked_count,
+        "available_spots": max(0, total_cap - parked_count),
+        "car_count": car_count,
+        "moto_count": moto_count,
+    }
+
+
+class UpdateCheckinPayload(BaseModel):
+    plate_number: str
+    vehicle_type: Optional[str] = None
+
+
+@router.put("/api/checkin/sessions/{session_id}")
+async def update_checkin_session(
+    session_id: int,
+    payload: UpdateCheckinPayload,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Sửa biển số xe hoặc loại xe của lượt vừa check-in nếu bị nhập sai."""
+    clean_plate = payload.plate_number.strip().upper()
+    if not clean_plate:
+        raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
+
+    cur = db.cursor()
+    cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Không tìm thấy lượt xe cần sửa")
+
+    if payload.vehicle_type:
+        cur.execute(
+            "UPDATE parking_sessions SET plate_number = ?, vehicle_type = ?, is_manual = 1 WHERE id = ?",
+            (clean_plate, payload.vehicle_type, session_id),
+        )
+    else:
+        cur.execute(
+            "UPDATE parking_sessions SET plate_number = ?, is_manual = 1 WHERE id = ?",
+            (clean_plate, session_id),
+        )
+    db.commit()
+
+    return {"success": True, "message": f"Đã cập nhật biển số thành: {clean_plate}", "plate": clean_plate}
+
+
+@router.delete("/api/checkin/sessions/{session_id}")
+async def delete_checkin_session(
+    session_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Xóa lượt xe vừa check-in nếu nhân viên bấm nhầm hoặc phát hiện sai sót."""
+    cur = db.cursor()
+    cur.execute("SELECT id, plate_number FROM parking_sessions WHERE id = ?", (session_id,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lượt xe cần xóa")
+
+    plate = row["plate_number"]
+    cur.execute("DELETE FROM parking_sessions WHERE id = ?", (session_id,))
+    db.commit()
+
+    return {"success": True, "message": f"Đã xóa lượt xe biển số {plate}", "session_id": session_id}

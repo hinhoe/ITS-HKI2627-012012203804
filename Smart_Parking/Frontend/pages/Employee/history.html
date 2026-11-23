@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +6,454 @@
   <title>Lịch sử gửi xe & Tra cứu - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Lịch sử & Tra cứu -->
-  <link rel="stylesheet" href="../../css/Employee/history.css">
+  <link rel="stylesheet" href="../../css/Employee/history.css?v=12.0">
+  
+  <style>
+    /* Styling màu sắc cho nút Thao tác Sửa và Xóa chuẩn như thiết kế */
+    .table-actions-cell {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .btn-action-edit {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      border: 1px solid #bfdbfe !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-edit:hover {
+      background-color: #dbeafe !important;
+      color: #1d4ed8 !important;
+      border-color: #93c5fd !important;
+    }
+    .btn-action-delete {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #fef2f2 !important;
+      color: #ef4444 !important;
+      border: 1px solid #fecaca !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-action-delete:hover {
+      background-color: #fee2e2 !important;
+      color: #b91c1c !important;
+      border-color: #fca5a5 !important;
+    }
+    .btn-view-photo {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      background-color: #f0fdfa !important;
+      color: #0f766e !important;
+      border: 1px solid #99f6e4 !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .btn-view-photo:hover {
+      background-color: #ccfbf1 !important;
+      color: #115e59 !important;
+    }
+    /* Styling cho bộ lọc Lịch Datepicker - Tỉ lệ nhỏ gọn, chuyên nghiệp & không dính mép phải */
+    .datepicker-wrapper {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    .datepicker-trigger-btn {
+      height: 36px !important;
+      padding: 0 12px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      font-family: inherit !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      background-color: #ffffff !important;
+      color: #1e293b !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      white-space: nowrap !important;
+    }
+    .datepicker-trigger-btn:hover {
+      border-color: #94a3b8 !important;
+    }
+    .datepicker-trigger-btn.active, .datepicker-trigger-btn:focus {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+    }
+    .datepicker-btn-icon {
+      color: #2563eb !important;
+      font-size: 12px !important;
+    }
+    .datepicker-btn-chevron {
+      color: #64748b !important;
+      font-size: 10px !important;
+      margin-left: 2px !important;
+      transition: transform 0.2s ease !important;
+    }
+    .datepicker-trigger-btn.active .datepicker-btn-chevron {
+      transform: rotate(180deg) !important;
+    }
+    .datepicker-popover {
+      position: absolute !important;
+      top: calc(100% + 6px) !important;
+      right: 0 !important;
+      left: auto !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.05) !important;
+      display: none !important;
+      z-index: 1000 !important;
+      overflow: hidden !important;
+    }
+    .datepicker-popover.show {
+      display: flex !important;
+    }
+    .datepicker-sidebar {
+      width: 130px !important;
+      background-color: #f8fafc !important;
+      border-right: 1px solid #e2e8f0 !important;
+      padding: 10px 8px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 2px !important;
+    }
+    .datepicker-sidebar-title {
+      font-size: 9.5px !important;
+      font-weight: 700 !important;
+      color: #64748b !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      padding: 3px 6px !important;
+    }
+    .preset-option-btn {
+      width: 100% !important;
+      text-align: left !important;
+      padding: 5px 8px !important;
+      font-size: 11.5px !important;
+      font-weight: 500 !important;
+      color: #334155 !important;
+      border: none !important;
+      background: transparent !important;
+      border-radius: 5px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      white-space: nowrap !important;
+    }
+    .preset-option-btn:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    .preset-option-btn.active {
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      font-weight: 600 !important;
+    }
+    .datepicker-sidebar-divider {
+      height: 1px !important;
+      background-color: #e2e8f0 !important;
+      margin: 4px 0 !important;
+    }
+    .datepicker-calendar {
+      width: 220px !important;
+      padding: 10px 12px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #ffffff !important;
+    }
+    .cal-header {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-bottom: 8px !important;
+    }
+    .cal-title {
+      font-size: 13.5px !important;
+      font-weight: 600 !important;
+      color: #0f172a !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      padding: 2px 4px !important;
+      border-radius: 5px !important;
+      user-select: none !important;
+      transition: background 0.15s !important;
+    }
+    .cal-title:hover {
+      background-color: #f1f5f9 !important;
+    }
+    .cal-arrows {
+      display: flex !important;
+      gap: 3px !important;
+    }
+    .cal-arrow-btn {
+      width: 24px !important;
+      height: 24px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: none !important;
+      background: transparent !important;
+      cursor: pointer !important;
+      color: #475569 !important;
+      border-radius: 5px !important;
+      font-size: 10px !important;
+      transition: all 0.15s !important;
+    }
+    .cal-arrow-btn:hover {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    .cal-weekdays {
+      display: grid !important;
+      grid-template-columns: repeat(7, 1fr) !important;
+      text-align: center !important;
+      margin-bottom: 4px !important;
+    }
+    .cal-weekdays span {
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      color: #64748b !important;
+      text-transform: lowercase !important;
+      height: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .cal-days-grid {
+      display: grid !important;
+      grid-template-columns: repeat(7, 1fr) !important;
+      row-gap: 2px !important;
+      column-gap: 1px !important;
+      justify-items: center !important;
+    }
+    .cal-day-cell {
+      width: 27px !important;
+      height: 27px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 11.5px !important;
+      font-weight: 500 !important;
+      cursor: pointer !important;
+      border-radius: 50% !important;
+      color: #1e293b !important;
+      user-select: none !important;
+      transition: all 0.15s ease !important;
+    }
+    .cal-day-cell:hover {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    .cal-day-cell.other-month {
+      color: #94a3b8 !important;
+      font-weight: 400 !important;
+    }
+    .cal-day-cell.today {
+      border: 1px solid #93c5fd !important;
+      font-weight: 600 !important;
+      color: #2563eb !important;
+    }
+    .cal-day-cell.selected {
+      background-color: #2563eb !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35) !important;
+    }
+    .cal-footer {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-top: 8px !important;
+      padding-top: 6px !important;
+      border-top: 1px solid #f1f5f9 !important;
+      font-size: 11px !important;
+    }
+    .cal-footer-link {
+      background: none !important;
+      border: none !important;
+      color: #64748b !important;
+      cursor: pointer !important;
+      padding: 3px 6px !important;
+      border-radius: 4px !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+    }
+    .cal-footer-link:hover {
+      color: #ef4444 !important;
+      background: #fef2f2 !important;
+    }
+    .cal-footer-today-btn {
+      background: #eff6ff !important;
+      border: 1px solid #bfdbfe !important;
+      color: #2563eb !important;
+      cursor: pointer !important;
+      padding: 3px 8px !important;
+      border-radius: 5px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+    }
+    .cal-footer-today-btn:hover {
+      background: #dbeafe !important;
+    }
+    .cal-quick-selector {
+      padding: 6px 0 !important;
+    }
+    .quick-year-nav {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-bottom: 8px !important;
+    }
+    .quick-months-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 4px !important;
+    }
+    .quick-month-btn {
+      padding: 6px 3px !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 5px !important;
+      background: #fff !important;
+      cursor: pointer !important;
+      text-align: center !important;
+      color: #334155 !important;
+      transition: all 0.15s !important;
+    }
+    .quick-month-btn:hover {
+      background: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+    .quick-month-btn.active {
+      background: #eff6ff !important;
+      border-color: #2563eb !important;
+      color: #2563eb !important;
+      font-weight: 700 !important;
+    }
+
+    /* Styling cho bộ lọc Loại xe Custom Đẹp Mắt */
+    .custom-select-wrapper {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    .custom-select-trigger {
+      height: 36px !important;
+      padding: 0 12px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      font-family: inherit !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      background-color: #ffffff !important;
+      color: #1e293b !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      white-space: nowrap !important;
+    }
+    .custom-select-trigger:hover {
+      border-color: #94a3b8 !important;
+    }
+    .custom-select-trigger.active, .custom-select-trigger:focus {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+    }
+    .select-chevron {
+      color: #64748b !important;
+      font-size: 10px !important;
+      margin-left: 2px !important;
+      transition: transform 0.2s ease !important;
+    }
+    .custom-select-trigger.active .select-chevron {
+      transform: rotate(180deg) !important;
+    }
+    .custom-select-dropdown {
+      position: absolute !important;
+      top: calc(100% + 6px) !important;
+      right: 0 !important;
+      min-width: 155px !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.05) !important;
+      display: none !important;
+      z-index: 1000 !important;
+      padding: 5px !important;
+      flex-direction: column !important;
+      gap: 2px !important;
+    }
+    .custom-select-dropdown.show {
+      display: flex !important;
+    }
+    .select-option {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 7px 10px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      color: #334155 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .select-option:hover {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    .select-option.active {
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
+      font-weight: 600 !important;
+    }
+    .opt-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    .opt-icon {
+      font-size: 12px !important;
+      width: 14px !important;
+      text-align: center !important;
+    }
+    .opt-check {
+      font-size: 11px !important;
+      color: #2563eb !important;
+      display: none !important;
+    }
+    .select-option.active .opt-check {
+      display: block !important;
+    }
+  </style>
   
   <!-- Font chữ Inter chuẩn của toàn hệ thống -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,25 +490,25 @@
         <div class="section-label" style="padding-left: 14px;">Nghiệp vụ bãi xe</div>
         <ul class="nav-menu">
           <li>
-            <a href="checkin.html" class="nav-item-link">
+            <a href="checkin.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-arrow-right-to-bracket"></i>
               <span>Ghi nhận xe vào bãi</span>
             </a>
           </li>
           <li>
-            <a href="checkout.html" class="nav-item-link">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              <span>Ghi nhận xe ra & Tính phí</span>
-            </a>
-          </li>
-          <li>
-            <a href="current-parking.html" class="nav-item-link">
+            <a href="current-parking.html?v=5.0" class="nav-item-link">
               <i class="fa-solid fa-square-parking"></i>
               <span>Xe đang gửi trong bãi</span>
             </a>
           </li>
           <li>
-            <a href="history.html" class="nav-item-link active">
+            <a href="checkout.html?v=5.0" class="nav-item-link">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Ghi nhận xe ra & Tính phí</span>
+            </a>
+          </li>
+          <li>
+            <a href="history.html?v=5.0" class="nav-item-link active">
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Lịch sử vào/ra & Tra cứu</span>
             </a>
@@ -74,14 +521,14 @@
     <div class="capacity-card">
       <div class="capacity-header">
         <span class="capacity-title">Sức chứa thời gian thực</span>
-        <span class="capacity-percent" id="capacityPercent">82.4%</span>
+        <span class="capacity-percent" id="capacityPercent">0.0%</span>
       </div>
       <div class="capacity-progress-bg">
-        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 82.4%;"></div>
+        <div class="capacity-progress-bar" id="capacityProgressBar" style="width: 0%;"></div>
       </div>
       <div class="capacity-footer">
-        <span class="capacity-count" id="capacityCount">412 / 500</span>
-        <span class="capacity-available" id="capacityAvailable">88 chỗ trống</span>
+        <span class="capacity-count" id="capacityCount">0 / 500</span>
+        <span class="capacity-available" id="capacityAvailable">500 chỗ trống</span>
       </div>
     </div>
   </aside>
@@ -106,9 +553,9 @@
 
       <!-- Khu vực bên phải: Nút Xuất danh sách & Profile nhân viên -->
       <div class="header-right-group">
-        <button type="button" class="btn-export" id="btnExport">
-          <i class="fa-solid fa-download"></i>
-          <span>Xuất danh sách</span>
+        <button type="button" class="btn-export" id="btnExport" title="Xuất danh sách ra file Excel (.xlsx) chuẩn chỉnh">
+          <i class="fa-solid fa-file-excel" style="color: #16a34a; font-size: 14px;"></i>
+          <span>Xuất Excel</span>
         </button>
 
         <!-- Dropdown Profile Nhân viên -->
@@ -160,25 +607,125 @@
           >
         </div>
 
-        <!-- Bộ lọc Thời gian -->
-        <div class="filter-select-wrapper">
-          <select id="filterDateSelect" class="filter-select">
-            <option value="all">Thời gian: Tất cả (1.248 lượt)</option>
-            <option value="today">Thời gian: Hôm nay (15/04/2026)</option>
-            <option value="yesterday">Thời gian: Hôm qua</option>
-            <option value="week">Thời gian: 7 ngày qua</option>
-          </select>
-          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
+        <!-- Bộ lọc Thời gian với Lịch Interactive cao cấp -->
+        <div class="datepicker-wrapper" id="datePickerWrapper">
+          <button type="button" class="datepicker-trigger-btn" id="datePickerTriggerBtn" aria-expanded="false">
+            <i class="fa-regular fa-calendar-days datepicker-btn-icon"></i>
+            <span id="datePickerLabel">Thời gian: Tất cả</span>
+            <i class="fa-solid fa-chevron-down datepicker-btn-chevron"></i>
+          </button>
+          <input type="hidden" id="filterDateSelect" value="all">
+
+          <!-- Dropdown Popover Lịch theo chuẩn giao diện -->
+          <div class="datepicker-popover" id="datePickerPopover">
+            <!-- Cột trái: Các mốc chọn nhanh -->
+            <div class="datepicker-sidebar">
+              <div class="datepicker-sidebar-title">Mốc thời gian</div>
+              <button type="button" class="preset-option-btn active" data-preset="all">Tất cả thời gian</button>
+              <button type="button" class="preset-option-btn" data-preset="today">Hôm nay</button>
+              <button type="button" class="preset-option-btn" data-preset="yesterday">Hôm qua</button>
+              <button type="button" class="preset-option-btn" data-preset="week">7 ngày qua</button>
+              <button type="button" class="preset-option-btn" data-preset="month">Tháng này</button>
+              
+              <div class="datepicker-sidebar-divider"></div>
+              <div class="datepicker-sidebar-title" style="margin-top: 4px;">Theo tháng / năm</div>
+              <button type="button" class="preset-option-btn" id="btnPresetCurrentMonth">
+                <i class="fa-regular fa-calendar"></i> <span id="labelPresetCurrentMonth">Cả tháng 11, 2026</span>
+              </button>
+              <button type="button" class="preset-option-btn" id="btnPresetCurrentYear">
+                <i class="fa-solid fa-calendar-check"></i> <span id="labelPresetCurrentYear">Cả năm 2026</span>
+              </button>
+            </div>
+
+            <!-- Cột phải: Lịch theo thiết kế -->
+            <div class="datepicker-calendar">
+              <!-- Header Tháng MM, YYYY + 2 nút mũi tên < > -->
+              <div class="cal-header">
+                <div class="cal-title" id="calHeaderTitle" title="Bấm để chọn nhanh tháng hoặc năm">
+                  <span id="calTitleText">Tháng 11, 2026</span>
+                  <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 6px; color: #64748b;"></i>
+                </div>
+                <div class="cal-arrows">
+                  <button type="button" class="cal-arrow-btn" id="calPrevMonthBtn" title="Tháng trước">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <button type="button" class="cal-arrow-btn" id="calNextMonthBtn" title="Tháng sau">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lưới chọn nhanh Tháng / Năm khi bấm vào tiêu đề -->
+              <div class="cal-quick-selector" id="calQuickSelector" style="display: none;">
+                <div class="quick-year-nav">
+                  <button type="button" class="cal-arrow-btn" id="quickYearPrev"><i class="fa-solid fa-chevron-left"></i></button>
+                  <span id="quickYearLabel" style="font-weight: 700; font-size: 14px; color: #1e293b;">2026</span>
+                  <button type="button" class="cal-arrow-btn" id="quickYearNext"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="quick-months-grid" id="quickMonthsGrid"></div>
+              </div>
+
+              <!-- View Lịch ngày thông thường -->
+              <div id="calDaysView">
+                <!-- Hàng thứ trong tuần: t2, t3, t4, t5, t6, t7, cn -->
+                <div class="cal-weekdays">
+                  <span>t2</span>
+                  <span>t3</span>
+                  <span>t4</span>
+                  <span>t5</span>
+                  <span>t6</span>
+                  <span>t7</span>
+                  <span>cn</span>
+                </div>
+
+                <!-- Lưới ngày: 7 cột -->
+                <div class="cal-days-grid" id="calDaysGrid">
+                  <!-- Được render bằng JavaScript -->
+                </div>
+              </div>
+
+              <!-- Footer của Lịch -->
+              <div class="cal-footer">
+                <button type="button" class="cal-footer-link" id="calBtnClearFilter">Xóa lọc</button>
+                <button type="button" class="cal-footer-today-btn" id="calBtnGoToday">Hôm nay</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Bộ lọc Loại xe -->
-        <div class="filter-select-wrapper">
-          <select id="filterTypeSelect" class="filter-select">
-            <option value="all">Loại xe: Tất cả</option>
-            <option value="Ô tô">Ô tô</option>
-            <option value="Xe máy">Xe máy</option>
-          </select>
-          <i class="fa-solid fa-chevron-down filter-select-icon"></i>
+        <!-- Bộ lọc Loại xe Custom Đẹp Mắt Hiện Đại -->
+        <div class="custom-select-wrapper" id="vehicleTypeSelectWrapper">
+          <button type="button" class="custom-select-trigger" id="vehicleTypeTrigger" aria-expanded="false">
+            <i class="fa-solid fa-layer-group select-icon" id="vehicleTypeIcon" style="color: #64748b; font-size: 12px;"></i>
+            <span id="vehicleTypeLabel">Loại xe: Tất cả</span>
+            <i class="fa-solid fa-chevron-down select-chevron"></i>
+          </button>
+          <input type="hidden" id="filterTypeSelect" value="all">
+
+          <!-- Dropdown danh sách loại xe -->
+          <div class="custom-select-dropdown" id="vehicleTypeDropdown">
+            <div class="select-option active" data-value="all" data-label="Loại xe: Tất cả" data-icon="fa-solid fa-layer-group" data-color="#64748b">
+              <div class="opt-left">
+                <i class="fa-solid fa-layer-group opt-icon" style="color: #64748b;"></i>
+                <span>Tất cả loại xe</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="Ô tô" data-label="Loại xe: Ô tô" data-icon="fa-solid fa-car" data-color="#2563eb">
+              <div class="opt-left">
+                <i class="fa-solid fa-car opt-icon" style="color: #2563eb;"></i>
+                <span>Ô tô</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+            <div class="select-option" data-value="Xe máy" data-label="Loại xe: Xe máy" data-icon="fa-solid fa-motorcycle" data-color="#0d9488">
+              <div class="opt-left">
+                <i class="fa-solid fa-motorcycle opt-icon" style="color: #0d9488;"></i>
+                <span>Xe máy</span>
+              </div>
+              <i class="fa-solid fa-check opt-check"></i>
+            </div>
+          </div>
         </div>
 
         <!-- Nút Đặt lại bộ lọc -->
@@ -200,7 +747,7 @@
                 <th>Thời gian ra</th>
                 <th>Thời gian gửi</th>
                 <th>Phí gửi xe</th>
-                <th>Xem ảnh</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
@@ -212,7 +759,7 @@
         <!-- 3. Thanh phân trang (Pagination Footer) -->
         <div class="table-pagination-footer">
           <div class="pagination-info" id="paginationInfo">
-            Hiển thị 1–20 trên tổng 1.248 lượt gửi xe đã hoàn tất
+            Hiển thị 0 lượt gửi xe
           </div>
           <div class="pagination-controls" id="paginationControls">
             <!-- Render động và có tương tác click bởi history.js -->
@@ -245,7 +792,7 @@
               <i class="fa-solid fa-arrow-right-to-bracket" style="color: #2563eb;"></i>
               <span>Ảnh lúc vào bãi</span>
             </div>
-            <div class="photo-box">
+            <div class="photo-box" id="modalCheckinPhotoBox">
               <div style="text-align: center;">
                 <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
                 <span>CAM CỔNG VÀO</span>
@@ -257,7 +804,7 @@
               <i class="fa-solid fa-arrow-right-from-bracket" style="color: #10b981;"></i>
               <span>Ảnh lúc ra bãi</span>
             </div>
-            <div class="photo-box">
+            <div class="photo-box" id="modalCheckoutPhotoBox">
               <div style="text-align: center;">
                 <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
                 <span>CAM CỔNG RA</span>
@@ -289,7 +836,48 @@
     </div>
   </div>
 
+  <!-- MODAL: SỬA BẢN GHI LỊCH SỬ NẾU NHẬP SAI KÝ TỰ -->
+  <div class="modal-backdrop" id="editHistoryModalBackdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-pen-to-square" style="color: #2563eb; margin-right: 6px;"></i>
+          Sửa thông tin lượt gửi xe
+        </div>
+        <button type="button" class="modal-close-btn" id="modalCloseEditHistBtn" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <input type="hidden" id="editHistoryId">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Biển số xe:</label>
+          <div style="position: relative;">
+            <input type="text" id="editHistoryPlate" class="search-input" style="width: 100%; font-family: monospace; font-size: 16px; font-weight: 700; text-transform: uppercase; padding-right: 36px;" maxlength="15" placeholder="VD: 51F-866.88">
+            <button type="button" id="btnClearEditHistPlate" title="Xóa trắng để nhập lại" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 15px;">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+          </div>
+          <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Chỉnh sửa lại nếu nhân viên hoặc người dùng nhập sai ký tự</span>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Loại phương tiện:</label>
+          <select id="editHistoryType" class="filter-select" style="width: 100%;">
+            <option value="Ô tô">Ô tô</option>
+            <option value="Xe máy">Xe máy</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" id="btnCancelEditHist" style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer;">Hủy bỏ</button>
+          <button type="button" id="btnSaveEditHist" style="background: #2563eb; color: #fff; padding: 8px 18px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- File JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/history.js"></script>
+  <script src="../../js/Employee/history.js?v=12.0"></script>
 </body>
 </html>

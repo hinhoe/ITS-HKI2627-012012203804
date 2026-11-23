@@ -54,8 +54,16 @@ STRICT RULES (NON-NEGOTIABLE):
 5. NEVER convert letter 'O' to digit '0' or '0' to 'O'. Transcribe the exact glyph you visually see.
 6. NEVER convert letter 'I' to digit '1' or '1' to 'I'.
 7. Pay careful attention to visually similar pairs: B/8, S/5, Z/2, D/0, Q/0, G/6, A/4, T/1 — do NOT confuse or force-swap them.
-8. Do NOT skip small characters or characters near the border.
-9. Do NOT insert dots (.), hyphens (-), or spaces in `plate_number` if they are not visibly present or clear on the plate.
+8. FAITHFUL CHARACTER & SYMBOL TRANSCRIPTION (NO RIGID TEMPLATES):
+   - Transcribe strictly what is visibly printed on the physical plate: letters, digits, and any visible separator symbols such as hyphens ('-') and dots ('.').
+   - Do NOT insert spaces around '-' or '.' (e.g. format tightly as "51F-866.88" or "51F-997.80", NOT "51F - 997.80" or "51F - 997 . 80").
+   - If the license plate contains a hyphen '-' or dot '.' (for example "51F-866.88" or "51H-999.88"), you MUST transcribe those exact symbols into `plate_number` and `raw_text`.
+   - If the license plate does NOT contain a dot '.' or does NOT contain a hyphen '-' (for example 4-digit plates like "83-N1 1216" or "64-H4 4807"), DO NOT insert or invent one.
+   - CRITICAL RULE FOR 4-DIGIT PLATES (NO DOT EVER): In Vietnam, 4-digit number plates (e.g. "1216", "4632", "4807", "0033") NEVER have a dot. NEVER output a dot inside a 4-digit number (e.g. "121.6" or "12.16" is STRICTLY FORBIDDEN and physically impossible in Vietnam). If there are 4 digits, they are contiguous numbers without any dot!
+   - Only 5-digit number sequences have a dot, and it is ALWAYS followed by 2 digits ("xxx.xx", e.g. "866.88", "997.80", "041.17"). There is NEVER a dot followed by only 1 digit (".x").
+   - NEVER mistake screw holes, bolts, rivets, paint chips, shadows, or spacing between digits for a dot ('.').
+   - Do NOT force all plates into a fixed pattern. In the license plate, whatever characters and symbols exist, transcribe them exactly as they are.
+9. Do NOT omit or drop small separator symbols (hyphens, dots) when they are visibly present on the plate.
 10. NO-GUESSING RULE: If ANY character is blurry, overexposed, glared, occluded, cut off, shadowed, or cannot be identified with visual certainty:
     - Set `status` to "needs_review" (or "unreadable" if the plate cannot be read at all).
     - Set `plate_number` to null.
@@ -233,6 +241,38 @@ _CAR_PATTERN = re.compile(r"^[0-9]{2}[A-Z]{1,2}[0-9]{4,5}$")
 _SPECIAL_PATTERN = re.compile(r"^[A-Z]{2}[0-9]{4,6}$")
 
 
+def normalize_plate_spacing(plate: Optional[str]) -> Optional[str]:
+    """
+    Chuẩn hóa khoảng cách hiển thị mà KHÔNG dập khuôn hay tự ý thêm/bớt ký tự:
+    - Trong biển số có ký tự gì (chữ, số, '-', '.') thì giữ nguyên ký tự đó.
+    - Tuyệt đối KHÔNG tự ý chèn thêm dấu '.' nếu trên biển số thực tế không có.
+    - LỌAI BỎ DẤU CHẤM ẢO: Biển số 4 số (như 1216) không bao giờ có dấu chấm.
+      Nếu bị nhận diện nhầm thành dạng 'xxx.x' (như 121.6), loại bỏ dấu chấm để trả về đúng 1216.
+    - Bỏ khoảng trống quanh dấu gạch ngang '-' và dấu chấm '.'.
+    - Tách khoảng cách giữa dòng 1 và dòng 2 của biển xe máy nếu bị dính liền (83-N11216 -> 83-N1 1216).
+    """
+    if not plate:
+        return plate
+    cleaned = plate.strip()
+
+    # 1. Loại bỏ dấu chấm ảo nếu sau dấu chấm chỉ có 1 chữ số duy nhất (.x)
+    # Luật VN: Biển 5 số bắt buộc là xxx.xx (2 số sau dấu chấm). Biển 4 số không có dấu chấm.
+    cleaned = re.sub(r"\.(\d)(?!\d)", r"\1", cleaned)
+
+    # 2. Loại bỏ dấu chấm nếu đứng cạnh ký tự không phải số
+    cleaned = re.sub(r"(?<!\d)\.|\.(?!\d)", "", cleaned)
+
+    # 3. Loại bỏ khoảng trống quanh các ký tự phân cách '-' và '.'
+    cleaned = re.sub(r"\s*-\s*", "-", cleaned)
+    cleaned = re.sub(r"\s*\.\s*", ".", cleaned)
+
+    # 4. Tách khoảng cách giữa sê-ri xe máy 2 dòng và khối số nếu bị dính liền (vd 83-N11216 -> 83-N1 1216)
+    cleaned = re.sub(r"^([0-9]{2}-[A-Z][A-Z0-9])([0-9]{4,5})$", r"\1 \2", cleaned)
+
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
 def validate_recognition_result(result: GeminiReadResult) -> GeminiReadResult:
     """Validate result without mutating or guessing characters."""
     validated = result.model_copy(deep=True)
@@ -256,6 +296,12 @@ def validate_recognition_result(result: GeminiReadResult) -> GeminiReadResult:
     if validated.status == RecognitionStatus.RECOGNIZED and not validated.plate_number:
         warnings.append("Trạng thái nhận diện ghi nhận thành công nhưng thiếu chuỗi biển số.")
         validated.status = RecognitionStatus.NEEDS_REVIEW
+
+    # Chuẩn hóa khoảng cách nhẹ nhàng (không dập khuôn, giữ nguyên ký tự gốc của biển)
+    if validated.plate_number:
+        validated.plate_number = normalize_plate_spacing(validated.plate_number)
+    if validated.raw_text and "?" not in validated.raw_text:
+        validated.raw_text = normalize_plate_spacing(validated.raw_text)
 
     candidate = validated.plate_number or validated.raw_text
     if candidate and validated.status != RecognitionStatus.UNREADABLE:

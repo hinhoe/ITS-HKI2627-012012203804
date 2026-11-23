@@ -1,82 +1,24 @@
 // ==========================================================================
 // HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE - PARKTECH / PARKAIVISION
 // File JavaScript: Quản lý xe đang gửi trong bãi (current-parking.js)
+// Kết nối trực tiếp Cơ sở dữ liệu SQLite qua Backend FastAPI (/api/current-parking/...)
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 20 xe gốc ban đầu chuẩn theo thiết kế thực tế ở trang 1
-  const base20Vehicles = [
-    { plate: '30E-892.41', type: 'Ô tô', timeIn: '08:15:20 - 14/04/2026', duration: '1 ngày 06 giờ', gate: 'Cổng A', status: 'Đậu quá 24h', isOverdue: true },
-    { plate: '29A-688.88', type: 'Ô tô', timeIn: '07:20:11 - 15/04/2026', duration: '7 giờ 12 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '29-V1 552.19', type: 'Xe máy', timeIn: '12:14:45 - 15/04/2026', duration: '2 giờ 17 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '30-P8 441.90', type: 'Xe máy', timeIn: '10:45:00 - 15/04/2026', duration: '3 giờ 47 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '51K-294.63', type: 'Ô tô', timeIn: '06:50:33 - 15/04/2026', duration: '7 giờ 41 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '29C-712.35', type: 'Ô tô', timeIn: '13:05:12 - 15/04/2026', duration: '1 giờ 27 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '29-H1 839.12', type: 'Xe máy', timeIn: '09:12:44 - 15/04/2026', duration: '5 giờ 19 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '30-F4 118.02', type: 'Xe máy', timeIn: '11:00:19 - 13/04/2026', duration: '2 ngày 03 giờ', gate: 'Cổng B', status: 'Đậu quá 24h', isOverdue: true },
-    { plate: '30G-456.78', type: 'Ô tô', timeIn: '11:30:40 - 15/04/2026', duration: '3 giờ 01 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '29-X5 901.23', type: 'Xe máy', timeIn: '13:50:18 - 15/04/2026', duration: '0 giờ 42 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '30F-331.89', type: 'Ô tô', timeIn: '12:05:30 - 15/04/2026', duration: '2 giờ 26 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '29B-128.55', type: 'Xe máy', timeIn: '08:35:10 - 15/04/2026', duration: '5 giờ 56 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '51A-982.11', type: 'Ô tô', timeIn: '09:15:00 - 14/04/2026', duration: '1 ngày 05 giờ', gate: 'Cổng A', status: 'Đậu quá 24h', isOverdue: true },
-    { plate: '30H-112.54', type: 'Xe máy', timeIn: '10:20:45 - 15/04/2026', duration: '4 giờ 11 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '29D-665.32', type: 'Ô tô', timeIn: '07:40:22 - 15/04/2026', duration: '6 giờ 51 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '30A-778.99', type: 'Ô tô', timeIn: '11:15:10 - 15/04/2026', duration: '3 giờ 16 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '51G-332.18', type: 'Xe máy', timeIn: '13:10:05 - 15/04/2026', duration: '1 giờ 22 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '29B-452.10', type: 'Xe máy', timeIn: '08:50:30 - 15/04/2026', duration: '5 giờ 41 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false },
-    { plate: '30K-889.01', type: 'Ô tô', timeIn: '12:40:12 - 15/04/2026', duration: '1 giờ 51 phút', gate: 'Cổng A', status: 'Đang gửi', isOverdue: false },
-    { plate: '29-S2 678.90', type: 'Xe máy', timeIn: '09:55:00 - 15/04/2026', duration: '4 giờ 37 phút', gate: 'Cổng B', status: 'Đang gửi', isOverdue: false }
-  ];
-
-  // Hàm sinh dữ liệu giả lập chuẩn xác đủ 412 xe (21 trang, trang 1-20 mỗi trang 20 xe, trang 21 có 12 xe)
-  function buildAllCurrentVehicles(total = 412) {
-    const list = [...base20Vehicles];
-    const carPrefixes = ['30E', '29A', '51K', '29C', '30G', '30F', '51A', '29D', '30A', '30K'];
-    const motorPrefixes = ['29-V1', '30-P8', '29-H1', '30-F4', '29-X5', '29-B1', '30-H1', '51G', '29B', '29-S2'];
-
-    for (let i = 21; i <= total; i++) {
-      const isCar = (i % 2 !== 0);
-      const prefixList = isCar ? carPrefixes : motorPrefixes;
-      const prefix = prefixList[(i - 1) % prefixList.length];
-      const part1 = String(100 + (i % 899)).padStart(3, '0');
-      const part2 = String((i * 9) % 99).padStart(2, '0');
-      const plate = `${prefix} ${part1}.${part2}`;
-
-      const type = isCar ? 'Ô tô' : 'Xe máy';
-      const gate = (i % 2 === 0) ? 'Cổng B' : 'Cổng A';
-      const durationHours = (i % 9) + 1;
-      const durationMinutes = (i * 13) % 60;
-      const duration = `${durationHours} giờ ${durationMinutes.toString().padStart(2, '0')} phút`;
-
-      const hourIn = String(6 + (i % 8)).padStart(2, '0');
-      const minIn = String((i * 11) % 60).padStart(2, '0');
-      const secIn = String((i * 17) % 60).padStart(2, '0');
-
-      list.push({
-        plate: plate,
-        type: type,
-        timeIn: `${hourIn}:${minIn}:${secIn} - 15/04/2026`,
-        duration: duration,
-        gate: gate,
-        status: 'Đang gửi',
-        isOverdue: false
-      });
-    }
-
-    return list;
-  }
-
   // 1. Quản lý trạng thái và Dữ liệu
   const state = {
     totalCapacity: 500,
-    currentCount: 412,
-    overdueCount: 3,
-    vehicles: buildAllCurrentVehicles(412),
+    currentCount: 0,
+    overdueCount: 0,
+    vehicles: [],
     currentPage: 1,
     pageSize: 20,
+    totalPages: 1,
+    totalItems: 0,
     searchKeyword: '',
     filterType: 'all',
-    filterDuration: 'all'
+    filterDuration: 'all',
+    isLoading: false
   };
 
   // 2. Tham chiếu các phần tử DOM
@@ -95,44 +37,122 @@ document.addEventListener('DOMContentLoaded', () => {
   // Widget sức chứa Sidebar
   const capacityPercentEl = document.getElementById('capacityPercent');
   const capacityProgressBar = document.getElementById('capacityProgressBar');
-  const capacityCurrentEl = document.getElementById('capacityCurrent');
-  const capacityEmptyEl = document.getElementById('capacityEmpty');
+  const capacityCountEl = document.getElementById('capacityCount');
+  const capacityAvailableEl = document.getElementById('capacityAvailable');
 
   // Dropdown Nhân viên
   const userProfileBtn = document.getElementById('userProfileBtn');
   const userDropdownMenu = document.getElementById('userDropdownMenu');
 
-  // Modal xem ảnh
+  // Modal xem ảnh lúc vào
   const photoModalBackdrop = document.getElementById('photoModalBackdrop');
   const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalImagePreview = document.getElementById('modalImagePreview');
   const modalPlate = document.getElementById('modalPlateNumber');
   const modalType = document.getElementById('modalVehicleType');
   const modalTimeIn = document.getElementById('modalTimeIn');
   const modalGate = document.getElementById('modalGateIn');
 
   // ==========================================================================
-  // HÀM TIỆN ÍCH & RENDER DỮ LIỆU
+  // HÀM TIỆN ÍCH & KẾT NỐI API BACKEND
   // ==========================================================================
 
-  // Cập nhật các chỉ số sức chứa và thống kê
-  function updateStats() {
-    const total = state.totalCapacity;
-    const current = state.currentCount;
-    const empty = Math.max(0, total - current);
-    const percent = ((current / total) * 100).toFixed(1);
+  function getApiBase() {
+    return window.location.origin.includes('8000') ? '' : 'http://127.0.0.1:8000';
+  }
 
-    if (totalVehiclesCountEl) totalVehiclesCountEl.textContent = `${current} xe đang trong bãi`;
-    if (overdueVehiclesCountEl) overdueVehiclesCountEl.textContent = `${state.overdueCount} xe đã gửi quá 24h`;
+  // Tải thống kê sức chứa và số lượng xe quá 24h
+  async function loadParkingStats() {
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/current-parking/stats`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    if (capacityPercentEl) capacityPercentEl.textContent = `${percent}%`;
-    if (capacityProgressBar) capacityProgressBar.style.width = `${percent}%`;
-    if (capacityCurrentEl) capacityCurrentEl.textContent = `${current} / ${total}`;
-    if (capacityEmptyEl) capacityEmptyEl.textContent = `${empty} chỗ trống`;
+      const data = await res.json();
+      state.totalCapacity = data.total_capacity || 500;
+      state.currentCount = data.total_parked || 0;
+      state.overdueCount = data.overdue_count || 0;
+
+      // Cập nhật Header badges
+      if (totalVehiclesCountEl) {
+        totalVehiclesCountEl.textContent = `${state.currentCount} xe đang trong bãi`;
+      }
+      if (overdueVehiclesCountEl) {
+        overdueVehiclesCountEl.textContent = `${state.overdueCount} xe đã gửi quá 24h`;
+      }
+
+      // Cập nhật Widget Sidebar
+      const percent = data.capacity_percent || ((state.currentCount / state.totalCapacity) * 100).toFixed(1);
+      const available = data.available_spots || Math.max(0, state.totalCapacity - state.currentCount);
+
+      if (capacityPercentEl) capacityPercentEl.textContent = `${percent}%`;
+      if (capacityProgressBar) capacityProgressBar.style.width = `${percent}%`;
+      if (capacityCountEl) capacityCountEl.textContent = `${state.currentCount} / ${state.totalCapacity}`;
+      if (capacityAvailableEl) capacityAvailableEl.textContent = `${available} chỗ trống`;
+
+    } catch (err) {
+      console.warn('Lỗi khi tải số liệu thống kê bãi xe:', err);
+    }
+  }
+
+  // Tải danh sách xe đang gửi từ CSDL thật (hỗ trợ tìm kiếm, lọc và phân trang)
+  async function loadVehicles() {
+    state.isLoading = true;
+    if (vehiclesTableBody) {
+      vehiclesTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding: 36px; color: #64748b;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 22px; margin-bottom: 8px; display: block; color: #2563eb;"></i>
+            Đang tải dữ liệu xe trong bãi từ CSDL...
+          </td>
+        </tr>
+      `;
+    }
+
+    try {
+      const apiBase = getApiBase();
+      const params = new URLSearchParams({
+        page: state.currentPage,
+        page_size: state.pageSize,
+        vehicle_type: state.filterType,
+        duration_filter: state.filterDuration
+      });
+
+      if (state.searchKeyword.trim()) {
+        params.append('keyword', state.searchKeyword.trim());
+      }
+
+      const res = await fetch(`${apiBase}/api/current-parking/vehicles?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      state.vehicles = data.items || [];
+      state.totalItems = data.total_items || 0;
+      state.totalPages = data.total_pages || 1;
+      state.currentPage = data.page || 1;
+
+      renderVehiclesTable();
+
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách xe đang gửi:', err);
+      if (vehiclesTableBody) {
+        vehiclesTableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center; padding: 32px; color: #ef4444;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+              Không thể kết nối đến máy chủ CSDL. Vui lòng kiểm tra lại backend!
+            </td>
+          </tr>
+        `;
+      }
+    } finally {
+      state.isLoading = false;
+    }
   }
 
   // Tạo thumbnail định danh cho biển số xe
   function createPlateThumbnail(type) {
-    const isAuto = type === 'Ô tô';
+    const isAuto = (type === 'Ô tô');
     return `
       <div class="plate-thumb" style="display:flex;align-items:center;justify-content:center;background:${isAuto ? '#1e3a8a' : '#0f766e'};color:#fff;font-family:Consolas,monospace;font-size:8px;font-weight:700;">
         ${isAuto ? 'AUTO' : 'MOTO'}
@@ -140,33 +160,113 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // Lọc dữ liệu theo điều kiện tìm kiếm và dropdown
-  function getFilteredVehicles() {
-    return state.vehicles.filter(v => {
-      // Tìm theo biển số
-      const matchesSearch = v.plate.toLowerCase().includes(state.searchKeyword.toLowerCase().trim());
+  // Render bảng danh sách xe
+  function renderVehiclesTable() {
+    if (!vehiclesTableBody) return;
 
-      // Lọc theo loại xe
-      const matchesType = (state.filterType === 'all') || (v.type === state.filterType);
+    if (state.vehicles.length === 0) {
+      const isFiltered = (state.searchKeyword || state.filterType !== 'all' || state.filterDuration !== 'all');
+      vehiclesTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding: 36px; color: #94a3b8;">
+            <i class="fa-solid fa-${isFiltered ? 'magnifying-glass' : 'inbox'}" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+            ${isFiltered ? 'Không có phương tiện nào phù hợp với điều kiện tìm kiếm' : 'Hiện chưa có phương tiện nào đang gửi trong bãi'}
+          </td>
+        </tr>
+      `;
+      if (paginationInfo) paginationInfo.textContent = 'Không có kết quả nào';
+      if (paginationControls) paginationControls.innerHTML = '';
+      return;
+    }
 
-      // Lọc theo thời gian gửi
-      let matchesDuration = true;
-      if (state.filterDuration === 'under_4h') {
-        matchesDuration = v.duration.includes('giờ') && !v.duration.includes('ngày') && parseInt(v.duration, 10) < 4;
-      } else if (state.filterDuration === '4h_to_24h') {
-        matchesDuration = v.duration.includes('giờ') && !v.duration.includes('ngày') && parseInt(v.duration, 10) >= 4;
-      } else if (state.filterDuration === 'over_24h') {
-        matchesDuration = v.isOverdue;
-      }
+    const startIndex = (state.currentPage - 1) * state.pageSize;
+    const endIndex = startIndex + state.vehicles.length;
 
-      return matchesSearch && matchesType && matchesDuration;
+    vehiclesTableBody.innerHTML = state.vehicles.map(v => `
+      <tr>
+        <td>
+          <div class="plate-cell">
+            ${createPlateThumbnail(v.type)}
+            <span class="plate-text font-mono">${v.plate}</span>
+          </div>
+        </td>
+        <td>
+          <span class="vehicle-type-cell">
+            <i class="fa-solid ${v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
+            <span>${v.type}</span>
+          </span>
+        </td>
+        <td class="td-time font-mono"><i class="fa-regular fa-clock" style="color:#94a3b8; margin-right:4px;"></i>${v.timeIn}</td>
+        <td class="td-duration ${v.isOverdue ? 'duration-overdue' : ''}">
+          ${v.isOverdue ? '<i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>' : ''}${v.duration}
+        </td>
+        <td class="td-gate">${v.gate}</td>
+        <td>
+          <span class="badge ${v.isOverdue ? 'badge-status-overdue' : 'badge-status-parking'}">
+            ${v.status}
+          </span>
+        </td>
+        <td>
+          <div class="table-actions-cell" style="display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-action-icon btn-view-photo" data-id="${v.id}" title="Xem ảnh chụp lúc vào bãi" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+              <i class="fa-regular fa-eye"></i> <span>Xem</span>
+            </button>
+            <button type="button" class="btn-action-icon btn-action-edit btn-edit-vehicle" data-id="${v.id}" title="Sửa biển số hoặc loại xe nếu sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+              <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
+            </button>
+            <button type="button" class="btn-action-icon btn-action-delete btn-delete-vehicle" data-id="${v.id}" data-plate="${v.plate}" title="Xóa lượt xe này" style="background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+              <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> <span>Xóa</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    // Cập nhật thông tin phân trang
+    if (paginationInfo) {
+      paginationInfo.textContent = `Hiển thị ${startIndex + 1}–${endIndex} trên tổng ${state.totalItems.toLocaleString('vi-VN')} xe`;
+    }
+
+    // Render cụm nút phân trang
+    renderPaginationControls();
+
+    // Gán sự kiện xem ảnh chi tiết Modal
+    document.querySelectorAll('.btn-view-photo').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const vehicle = state.vehicles.find(v => v.id === id);
+        if (vehicle) {
+          openPhotoModal(vehicle);
+        }
+      });
+    });
+
+    // Gán sự kiện Sửa thông tin xe
+    document.querySelectorAll('.btn-edit-vehicle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const vehicle = state.vehicles.find(v => v.id === id);
+        if (vehicle) {
+          openEditModal(vehicle);
+        }
+      });
+    });
+
+    // Gán sự kiện Xóa lượt xe
+    document.querySelectorAll('.btn-delete-vehicle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const plate = btn.getAttribute('data-plate');
+        handleDeleteVehicle(id, plate);
+      });
     });
   }
 
-  // Render thanh cụm nút bấm phân trang động (< 1 2 3 ... 21 >)
-  function renderPaginationControls(totalPages) {
+  // Render cụm nút phân trang thông minh
+  function renderPaginationControls() {
     if (!paginationControls) return;
 
+    const totalPages = state.totalPages;
     if (totalPages <= 1) {
       paginationControls.innerHTML = '';
       return;
@@ -182,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </button>
     `;
 
-    // Tính toán số trang hiển thị thông minh: 1, 2, 3 ... 21 hoặc lân cận trang hiện tại
+    // Tính toán số trang hiển thị
     const current = state.currentPage;
     const pages = [];
 
@@ -198,7 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Render từng nút trang
     pages.forEach(p => {
       if (p === '...') {
         html += `<span class="page-dots">...</span>`;
@@ -218,104 +317,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     paginationControls.innerHTML = html;
 
-    // Gán sự kiện click để chuyển đổi trang
+    // Gán sự kiện click chuyển trang
     paginationControls.querySelectorAll('.page-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.classList.contains('disabled') || btn.classList.contains('active')) return;
         const targetPage = parseInt(btn.getAttribute('data-page'), 10);
         if (targetPage >= 1 && targetPage <= totalPages) {
           state.currentPage = targetPage;
-          renderVehicles();
-          // Cuộn nhẹ lên đầu bảng để quan sát thuận tiện
-          const tableElement = document.querySelector('.table-wrapper');
+          loadVehicles();
+          const tableElement = document.querySelector('.table-responsive');
           if (tableElement) {
-            tableElement.scrollTop = 0;
+            tableElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
-        }
-      });
-    });
-  }
-
-  // Hiển thị danh sách xe theo đúng trang hiện tại
-  function renderVehicles() {
-    if (!vehiclesTableBody) return;
-
-    // 1. Lọc danh sách xe
-    const filtered = getFilteredVehicles();
-    const totalFiltered = filtered.length;
-    const totalPages = Math.ceil(totalFiltered / state.pageSize) || 1;
-
-    // Đảm bảo trang nằm trong khoảng hợp lệ
-    if (state.currentPage > totalPages) state.currentPage = totalPages;
-    if (state.currentPage < 1) state.currentPage = 1;
-
-    // Cắt dữ liệu 20 bản ghi cho trang hiện tại
-    const startIndex = (state.currentPage - 1) * state.pageSize;
-    const endIndex = Math.min(startIndex + state.pageSize, totalFiltered);
-    const pageItems = filtered.slice(startIndex, endIndex);
-
-    // 2. Render các dòng dữ liệu vào bảng
-    if (pageItems.length === 0) {
-      vehiclesTableBody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align:center; padding: 32px; color: #94a3b8;">
-            <i class="fa-solid fa-magnifying-glass" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            Không tìm thấy phương tiện nào phù hợp với bộ lọc
-          </td>
-        </tr>
-      `;
-    } else {
-      vehiclesTableBody.innerHTML = pageItems.map(v => `
-        <tr>
-          <td>
-            <div class="plate-cell">
-              ${createPlateThumbnail(v.type)}
-              <span class="plate-text">${v.plate}</span>
-            </div>
-          </td>
-          <td>
-            <span class="vehicle-type-cell">
-              <i class="fa-solid ${v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
-              <span>${v.type}</span>
-            </span>
-          </td>
-          <td class="td-time">${v.timeIn}</td>
-          <td class="td-duration ${v.isOverdue ? 'duration-overdue' : ''}">${v.duration}</td>
-          <td class="td-gate">${v.gate}</td>
-          <td>
-            <span class="badge ${v.isOverdue ? 'badge-status-overdue' : 'badge-status-parking'}">
-              ${v.status}
-            </span>
-          </td>
-          <td>
-            <button type="button" class="btn-view-photo" data-plate="${v.plate}">
-              <i class="fa-regular fa-eye"></i>
-              <span>Xem ảnh vào</span>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // 3. Cập nhật thông tin phân trang
-    if (paginationInfo) {
-      if (totalFiltered === 0) {
-        paginationInfo.textContent = 'Không có kết quả nào';
-      } else {
-        paginationInfo.textContent = `Hiển thị ${startIndex + 1}–${endIndex} trên tổng ${totalFiltered.toLocaleString('vi-VN')} xe`;
-      }
-    }
-
-    // 4. Render cụm nút phân trang tương tác
-    renderPaginationControls(totalPages);
-
-    // 5. Gán sự kiện xem ảnh chi tiết
-    document.querySelectorAll('.btn-view-photo').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const plate = btn.getAttribute('data-plate');
-        const vehicle = state.vehicles.find(v => v.plate === plate);
-        if (vehicle) {
-          openPhotoModal(vehicle);
         }
       });
     });
@@ -329,10 +342,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalTimeIn) modalTimeIn.textContent = vehicle.timeIn;
     if (modalGate) modalGate.textContent = vehicle.gate;
 
+    // Hiển thị ảnh chụp thực tế nếu có
+    if (modalImagePreview) {
+      const apiBase = getApiBase();
+      const imgSrc = vehicle.checkin_image_url || vehicle.checkin_crop_url;
+
+      if (imgSrc) {
+        const fullUrl = imgSrc.startsWith('http') ? imgSrc : `${apiBase}${imgSrc}`;
+        modalImagePreview.innerHTML = `
+          <img src="${fullUrl}" alt="Ảnh xe ${vehicle.plate}" style="max-width:100%; max-height:260px; object-fit:contain; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        `;
+      } else {
+        modalImagePreview.innerHTML = `
+          <div style="text-align: center; color: #94a3b8; padding: 24px;">
+            <i class="fa-solid fa-camera fa-2x" style="margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
+            <div style="font-size: 12px; font-weight: 600; color: #475569;">Biển số: ${vehicle.plate}</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Ảnh chụp được lưu trữ an toàn trong hệ thống</div>
+          </div>
+        `;
+      }
+    }
+
     photoModalBackdrop.classList.add('show');
   }
 
-  // Đóng modal
   function closePhotoModal() {
     if (photoModalBackdrop) {
       photoModalBackdrop.classList.remove('show');
@@ -340,10 +373,114 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // XỬ LÝ SỰ KIỆN TƯƠNG TÁC (EVENT LISTENERS)
+  // XỬ LÝ MODAL SỬA & XÓA THÔNG TIN XE ĐANG GỬI
+  // ==========================================================================
+  const editVehicleModalBackdrop = document.getElementById('editVehicleModalBackdrop');
+  const modalCloseEditBtn = document.getElementById('modalCloseEditBtn');
+  const btnCancelEditVehicle = document.getElementById('btnCancelEditVehicle');
+  const btnSaveEditVehicle = document.getElementById('btnSaveEditVehicle');
+  const editVehicleId = document.getElementById('editVehicleId');
+  const editVehiclePlate = document.getElementById('editVehiclePlate');
+  const editVehicleType = document.getElementById('editVehicleType');
+  const btnClearEditPlate = document.getElementById('btnClearEditPlate');
+
+  function openEditModal(vehicle) {
+    if (!editVehicleModalBackdrop) return;
+    if (editVehicleId) editVehicleId.value = vehicle.id;
+    if (editVehiclePlate) {
+      editVehiclePlate.value = vehicle.plate;
+      setTimeout(() => editVehiclePlate.focus(), 100);
+    }
+    if (editVehicleType) editVehicleType.value = vehicle.type || 'Ô tô';
+    editVehicleModalBackdrop.classList.add('show');
+  }
+
+  function closeEditModal() {
+    if (editVehicleModalBackdrop) {
+      editVehicleModalBackdrop.classList.remove('show');
+    }
+  }
+
+  if (modalCloseEditBtn) modalCloseEditBtn.addEventListener('click', closeEditModal);
+  if (btnCancelEditVehicle) btnCancelEditVehicle.addEventListener('click', closeEditModal);
+  if (editVehicleModalBackdrop) {
+    editVehicleModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === editVehicleModalBackdrop) closeEditModal();
+    });
+  }
+
+  // Nút xóa trắng ký tự trong ô sửa biển số
+  if (btnClearEditPlate && editVehiclePlate) {
+    btnClearEditPlate.addEventListener('click', () => {
+      editVehiclePlate.value = '';
+      editVehiclePlate.focus();
+    });
+  }
+
+  // Lưu thông tin biển số xe sau khi sửa
+  if (btnSaveEditVehicle) {
+    btnSaveEditVehicle.addEventListener('click', async () => {
+      const id = editVehicleId ? editVehicleId.value : null;
+      const newPlate = editVehiclePlate ? editVehiclePlate.value.trim().toUpperCase() : '';
+      const newType = editVehicleType ? editVehicleType.value : 'Ô tô';
+
+      if (!id || !newPlate) {
+        alert('Vui lòng nhập biển số xe hợp lệ!');
+        return;
+      }
+
+      try {
+        btnSaveEditVehicle.disabled = true;
+        btnSaveEditVehicle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/current-parking/sessions/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plate_number: newPlate, vehicle_type: newType })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Lỗi khi cập nhật biển số');
+
+        closeEditModal();
+        await loadParkingStats();
+        await loadVehicles();
+      } catch (err) {
+        alert(`Không thể sửa biển số: ${err.message}`);
+      } finally {
+        btnSaveEditVehicle.disabled = false;
+        btnSaveEditVehicle.innerHTML = '<i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>';
+      }
+    });
+  }
+
+  // Xóa phiên gửi xe nếu người dùng / nhân viên nhập sai hoặc xe ảo
+  async function handleDeleteVehicle(id, plate) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa lượt xe biển số ${plate} khỏi hệ thống không?\nThao tác này sẽ xóa phiên và cập nhật lại sức chứa bãi xe.`)) {
+      return;
+    }
+
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/current-parking/sessions/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Lỗi khi xóa lượt xe');
+
+      await loadParkingStats();
+      await loadVehicles();
+    } catch (err) {
+      alert(`Không thể xóa lượt xe: ${err.message}`);
+    }
+  }
+
+  // ==========================================================================
+  // XỬ LÝ SỰ KIỆN TƯƠNG TÁC (SEARCH & FILTERS)
   // ==========================================================================
 
-  // A. Bật / Tắt menu hồ sơ cá nhân của nhân viên
+  // User Dropdown
   if (userProfileBtn && userDropdownMenu) {
     userProfileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -351,40 +488,139 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('click', (e) => {
-      if (!userProfileBtn.contains(e.target)) {
+      if (!userDropdownMenu.contains(e.target) && !userProfileBtn.contains(e.target)) {
         userDropdownMenu.classList.remove('show');
       }
     });
   }
 
-  // B. Tìm kiếm biển số xe theo thời gian thực (Live Search)
+  // Tìm kiếm theo biển số xe với Debounce 300ms
+  let searchTimeout = null;
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      state.searchKeyword = e.target.value;
-      state.currentPage = 1; // Reset về trang 1 khi lọc
-      renderVehicles();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        state.searchKeyword = e.target.value;
+        state.currentPage = 1;
+        loadVehicles();
+      }, 300);
     });
   }
 
-  // C. Lọc theo Loại xe
-  if (filterTypeSelect) {
-    filterTypeSelect.addEventListener('change', (e) => {
-      state.filterType = e.target.value;
-      state.currentPage = 1; // Reset về trang 1 khi lọc
-      renderVehicles();
+  // ==========================================================================
+  // XỬ LÝ DROPDOWN CUSTOM HIỆN ĐẠI CHO LOẠI XE VÀ THỜI GIAN GỬI
+  // ==========================================================================
+
+  // 1. Dropdown Loại xe
+  const vehicleTypeSelectWrapper = document.getElementById('vehicleTypeSelectWrapper');
+  const vehicleTypeTrigger = document.getElementById('vehicleTypeTrigger');
+  const vehicleTypeIcon = document.getElementById('vehicleTypeIcon');
+  const vehicleTypeLabel = document.getElementById('vehicleTypeLabel');
+  const vehicleTypeDropdown = document.getElementById('vehicleTypeDropdown');
+
+  // 2. Dropdown Thời gian gửi
+  const durationSelectWrapper = document.getElementById('durationSelectWrapper');
+  const durationTrigger = document.getElementById('durationTrigger');
+  const durationIcon = document.getElementById('durationIcon');
+  const durationLabel = document.getElementById('durationLabel');
+  const durationDropdown = document.getElementById('durationDropdown');
+
+  function closeAllDropdowns() {
+    if (vehicleTypeDropdown) vehicleTypeDropdown.classList.remove('show');
+    if (vehicleTypeTrigger) vehicleTypeTrigger.classList.remove('active');
+    if (durationDropdown) durationDropdown.classList.remove('show');
+    if (durationTrigger) durationTrigger.classList.remove('active');
+  }
+
+  // Bật/Tắt Dropdown Loại xe
+  if (vehicleTypeTrigger && vehicleTypeDropdown) {
+    vehicleTypeTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShow = vehicleTypeDropdown.classList.contains('show');
+      closeAllDropdowns();
+      if (!isShow) {
+        vehicleTypeDropdown.classList.add('show');
+        vehicleTypeTrigger.classList.add('active');
+      }
+    });
+
+    document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = opt.getAttribute('data-value');
+        const lbl = opt.getAttribute('data-label');
+        const icon = opt.getAttribute('data-icon');
+        const color = opt.getAttribute('data-color');
+
+        state.filterType = val;
+        state.currentPage = 1;
+
+        if (filterTypeSelect) filterTypeSelect.value = val;
+        if (vehicleTypeLabel) vehicleTypeLabel.textContent = lbl;
+        if (vehicleTypeIcon) {
+          vehicleTypeIcon.className = `${icon} select-icon`;
+          vehicleTypeIcon.style.color = color;
+        }
+
+        document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+
+        closeAllDropdowns();
+        loadVehicles();
+      });
     });
   }
 
-  // D. Lọc theo Thời gian gửi
-  if (filterDurationSelect) {
-    filterDurationSelect.addEventListener('change', (e) => {
-      state.filterDuration = e.target.value;
-      state.currentPage = 1; // Reset về trang 1 khi lọc
-      renderVehicles();
+  // Bật/Tắt Dropdown Thời gian gửi
+  if (durationTrigger && durationDropdown) {
+    durationTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShow = durationDropdown.classList.contains('show');
+      closeAllDropdowns();
+      if (!isShow) {
+        durationDropdown.classList.add('show');
+        durationTrigger.classList.add('active');
+      }
+    });
+
+    document.querySelectorAll('#durationDropdown .select-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = opt.getAttribute('data-value');
+        const lbl = opt.getAttribute('data-label');
+        const icon = opt.getAttribute('data-icon');
+        const color = opt.getAttribute('data-color');
+
+        state.filterDuration = val;
+        state.currentPage = 1;
+
+        if (filterDurationSelect) filterDurationSelect.value = val;
+        if (durationLabel) durationLabel.textContent = lbl;
+        if (durationIcon) {
+          durationIcon.className = `${icon} select-icon`;
+          durationIcon.style.color = color;
+        }
+
+        document.querySelectorAll('#durationDropdown .select-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+
+        closeAllDropdowns();
+        loadVehicles();
+      });
     });
   }
 
-  // E. Nút Đặt lại bộ lọc (Reset)
+  // Đóng khi click ngoài
+  document.addEventListener('click', (e) => {
+    if (
+      (!vehicleTypeSelectWrapper || !vehicleTypeSelectWrapper.contains(e.target)) &&
+      (!durationSelectWrapper || !durationSelectWrapper.contains(e.target))
+    ) {
+      closeAllDropdowns();
+    }
+  });
+
+  // Nút đặt lại bộ lọc
   if (btnResetFilter) {
     btnResetFilter.addEventListener('click', () => {
       state.searchKeyword = '';
@@ -396,11 +632,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (filterTypeSelect) filterTypeSelect.value = 'all';
       if (filterDurationSelect) filterDurationSelect.value = 'all';
 
-      renderVehicles();
+      // Reset giao diện Dropdown Loại xe
+      if (vehicleTypeLabel) vehicleTypeLabel.textContent = 'Loại xe: Tất cả';
+      if (vehicleTypeIcon) {
+        vehicleTypeIcon.className = 'fa-solid fa-layer-group select-icon';
+        vehicleTypeIcon.style.color = '#64748b';
+      }
+      document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(o => {
+        if (o.getAttribute('data-value') === 'all') o.classList.add('active');
+        else o.classList.remove('active');
+      });
+
+      // Reset giao diện Dropdown Thời gian gửi
+      if (durationLabel) durationLabel.textContent = 'Thời gian gửi: Tất cả';
+      if (durationIcon) {
+        durationIcon.className = 'fa-regular fa-clock select-icon';
+        durationIcon.style.color = '#64748b';
+      }
+      document.querySelectorAll('#durationDropdown .select-option').forEach(o => {
+        if (o.getAttribute('data-value') === 'all') o.classList.add('active');
+        else o.classList.remove('active');
+      });
+
+      closeAllDropdowns();
+      loadVehicles();
     });
   }
 
-  // F. Đóng modal khi bấm nút X hoặc bấm ngoài màn hình mờ
+  // Đóng modal
   if (modalCloseBtn) {
     modalCloseBtn.addEventListener('click', closePhotoModal);
   }
@@ -412,7 +671,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Khởi tạo ban đầu
-  updateStats();
-  renderVehicles();
+  // ==========================================================================
+  // KHỞI CHẠY TẢI DỮ LIỆU BAN ĐẦU TỪ CSDL
+  // ==========================================================================
+  loadParkingStats();
+  loadVehicles();
 });

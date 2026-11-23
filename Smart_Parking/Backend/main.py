@@ -25,7 +25,11 @@ from fastapi.staticfiles import StaticFiles
 
 from AI.detect import load_model
 from Backend.config import settings
+from Backend.database.connection import init_db
 from Backend.checkin import router as checkin_router
+from Backend.checkout import router as checkout_router
+from Backend.current_parking import router as current_parking_router
+from Backend.history import router as history_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +44,14 @@ app = FastAPI(
     version="2.0.0",
 )
 
+@app.on_event("startup")
+async def on_startup():
+    """Khởi tạo cơ sở dữ liệu và thư mục khi khởi động ứng dụng"""
+    try:
+        init_db()
+    except Exception as exc:
+        logger.error("Không thể khởi tạo cơ sở dữ liệu: %s", exc)
+
 # Cấu hình CORS cho phép giao diện Frontend kết nối thông suốt
 app.add_middleware(
     CORSMiddleware,
@@ -48,6 +60,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Chống lưu bộ nhớ đệm (Cache) cho các file giao diện Frontend trong quá trình phát triển
+@app.middleware("http")
+async def disable_frontend_cache_middleware(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/Frontend") or request.url.path.endswith((".html", ".js", ".css")):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 # Tự động tạo thư mục và gắn đường dẫn tĩnh (Static Mounts)
 settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -62,6 +84,15 @@ if settings.FRONTEND_DIR.exists():
 # GẮN CÁC MODULE NGHIỆP VỤ (ROUTERS)
 # 1. Nghiệp vụ Check-in (Ghi nhận xe vào bãi) -> Quản lý bởi Backend/checkin.py
 app.include_router(checkin_router)
+
+# 2. Nghiệp vụ Check-out (Ghi nhận xe ra & Tính phí) -> Quản lý bởi Backend/checkout.py
+app.include_router(checkout_router)
+
+# 3. Nghiệp vụ Xe đang gửi trong bãi -> Quản lý bởi Backend/current_parking.py
+app.include_router(current_parking_router)
+
+# 4. Nghiệp vụ Lịch sử vào/ra & Tra cứu -> Quản lý bởi Backend/history.py
+app.include_router(history_router)
 
 
 @app.get("/", include_in_schema=False)

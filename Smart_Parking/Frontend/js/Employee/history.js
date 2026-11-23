@@ -1,88 +1,21 @@
 // ==========================================================================
 // HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE - PARKTECH / PARKAIVISION
 // File JavaScript: Lịch sử gửi xe & Tra cứu (history.js)
+// Kết nối trực tiếp Cơ sở dữ liệu SQLite qua Backend FastAPI (/api/history/...)
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 20 bản ghi gốc theo đúng chuẩn thiết kế thực tế ở trang 1
-  const base20Records = [
-    { plate: '30E-892.41', type: 'Ô tô', timeIn: '08:30:12 - 15/04/2026', timeOut: '12:44:26 - 15/04/2026', duration: '4 giờ 14 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '29A-688.88', type: 'Xe máy', timeIn: '07:15:02 - 15/04/2026', timeOut: '12:35:10 - 15/04/2026', duration: '5 giờ 20 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '29-V1 552.19', type: 'Ô tô', timeIn: '06:20:15 - 15/04/2026', timeOut: '12:20:01 - 15/04/2026', duration: '5 giờ 59 phút', fee: '40.000 VNĐ', dateGroup: 'today' },
-    { plate: '30-P8 441.90', type: 'Ô tô', timeIn: '10:12:40 - 15/04/2026', timeOut: '12:05:15 - 15/04/2026', duration: '1 giờ 52 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '51K-294.63', type: 'Xe máy', timeIn: '11:10:09 - 15/04/2026', timeOut: '11:58:33 - 15/04/2026', duration: '0 giờ 48 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '29C-712.35', type: 'Xe máy', timeIn: '06:45:12 - 15/04/2026', timeOut: '11:42:00 - 15/04/2026', duration: '4 giờ 56 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '29-H1 839.12', type: 'Ô tô', timeIn: '07:10:00 - 15/04/2026', timeOut: '11:30:20 - 15/04/2026', duration: '4 giờ 20 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '30-F4 118.02', type: 'Xe máy', timeIn: '08:00:15 - 15/04/2026', timeOut: '10:15:30 - 15/04/2026', duration: '2 giờ 15 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '30G-456.78', type: 'Ô tô', timeIn: '06:05:40 - 15/04/2026', timeOut: '10:10:12 - 15/04/2026', duration: '4 giờ 04 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '29-X5 901.23', type: 'Xe máy', timeIn: '07:30:10 - 15/04/2026', timeOut: '09:45:00 - 15/04/2026', duration: '2 giờ 14 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '30F-331.89', type: 'Ô tô', timeIn: '05:15:20 - 15/04/2026', timeOut: '09:30:15 - 15/04/2026', duration: '4 giờ 15 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '29B-128.55', type: 'Xe máy', timeIn: '07:05:42 - 15/04/2026', timeOut: '09:12:00 - 15/04/2026', duration: '2 giờ 06 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '51A-982.11', type: 'Ô tô', timeIn: '06:10:00 - 15/04/2026', timeOut: '09:05:40 - 15/04/2026', duration: '2 giờ 55 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '30H-112.54', type: 'Xe máy', timeIn: '07:45:18 - 15/04/2026', timeOut: '08:58:20 - 15/04/2026', duration: '1 giờ 13 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '29D-665.32', type: 'Ô tô', timeIn: '06:30:50 - 15/04/2026', timeOut: '08:50:12 - 15/04/2026', duration: '2 giờ 19 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '30A-778.99', type: 'Ô tô', timeIn: '07:22:10 - 15/04/2026', timeOut: '08:45:30 - 15/04/2026', duration: '1 giờ 23 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '51G-332.18', type: 'Xe máy', timeIn: '07:11:05 - 15/04/2026', timeOut: '08:35:10 - 15/04/2026', duration: '1 giờ 24 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '29B-452.10', type: 'Xe máy', timeIn: '07:00:30 - 15/04/2026', timeOut: '08:20:00 - 15/04/2026', duration: '1 giờ 19 phút', fee: '5.000 VNĐ', dateGroup: 'today' },
-    { plate: '30K-889.01', type: 'Ô tô', timeIn: '06:50:12 - 15/04/2026', timeOut: '08:15:45 - 15/04/2026', duration: '1 giờ 25 phút', fee: '25.000 VNĐ', dateGroup: 'today' },
-    { plate: '29-S2 678.90', type: 'Xe máy', timeIn: '06:40:00 - 15/04/2026', timeOut: '08:10:15 - 15/04/2026', duration: '1 giờ 30 phút', fee: '5.000 VNĐ', dateGroup: 'today' }
-  ];
-
-  // Hàm sinh dữ liệu giả lập chuẩn xác cho đủ 1.248 bản ghi (63 trang, mỗi trang 20 bản ghi)
-  function buildAllHistoryRecords(total = 1248) {
-    const list = [...base20Records];
-    const carPrefixes = ['30E', '29A', '30G', '51A', '30H', '29D', '30A', '51G', '30K', '29C'];
-    const motorPrefixes = ['29-V1', '51K', '29-H1', '30-F4', '29-X5', '29-B1', '30-M2', '59-S3', '29-T1', '29-S2'];
-
-    for (let i = 21; i <= total; i++) {
-      const isCar = (i % 2 !== 0);
-      const prefixList = isCar ? carPrefixes : motorPrefixes;
-      const prefix = prefixList[(i - 1) % prefixList.length];
-      const part1 = String(100 + (i % 899)).padStart(3, '0');
-      const part2 = String((i * 7) % 99).padStart(2, '0');
-      const plate = `${prefix} ${part1}.${part2}`;
-
-      const type = isCar ? 'Ô tô' : 'Xe máy';
-      const durationHours = (i % 7) + 1;
-      const durationMinutes = (i * 11) % 60;
-      const duration = `${durationHours} giờ ${durationMinutes.toString().padStart(2, '0')} phút`;
-      const fee = isCar ? (durationHours >= 5 ? '40.000 VNĐ' : '25.000 VNĐ') : '5.000 VNĐ';
-
-      // Tính giờ ra lùi dần theo thời gian trong ngày
-      const dayOffset = Math.floor((i - 1) / 80);
-      const day = String(Math.max(1, 15 - dayOffset)).padStart(2, '0');
-      const dateStr = `${day}/04/2026`;
-
-      const hourIn = String(6 + (i % 12)).padStart(2, '0');
-      const minIn = String((i * 13) % 60).padStart(2, '0');
-      const secIn = String((i * 19) % 60).padStart(2, '0');
-
-      const hourOut = String(Math.min(23, 6 + (i % 12) + durationHours)).padStart(2, '0');
-      const minOut = String((i * 17) % 60).padStart(2, '0');
-      const secOut = String((i * 23) % 60).padStart(2, '0');
-
-      list.push({
-        plate: plate,
-        type: type,
-        timeIn: `${hourIn}:${minIn}:${secIn} - ${dateStr}`,
-        timeOut: `${hourOut}:${minOut}:${secOut} - ${dateStr}`,
-        duration: duration,
-        fee: fee,
-        dateGroup: dayOffset === 0 ? 'today' : (dayOffset === 1 ? 'yesterday' : 'this_month')
-      });
-    }
-
-    return list;
-  }
-
   // 1. Quản lý trạng thái và Dữ liệu
   const state = {
-    historyData: buildAllHistoryRecords(1248),
+    historyData: [],
+    totalItems: 0,
     currentPage: 1,
     pageSize: 20,
+    totalPages: 1,
     searchKeyword: '',
     filterDate: 'all',
-    filterType: 'all'
+    filterType: 'all',
+    isLoading: false
   };
 
   // 2. Tham chiếu các phần tử DOM
@@ -95,6 +28,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const paginationInfo = document.getElementById('paginationInfo');
   const paginationControls = document.getElementById('paginationControls');
 
+  // Tham chiếu các phần tử của Lịch Datepicker
+  const datePickerWrapper = document.getElementById('datePickerWrapper');
+  const datePickerTriggerBtn = document.getElementById('datePickerTriggerBtn');
+  const datePickerLabel = document.getElementById('datePickerLabel');
+  const datePickerPopover = document.getElementById('datePickerPopover');
+  const calHeaderTitle = document.getElementById('calHeaderTitle');
+  const calTitleText = document.getElementById('calTitleText');
+  const calPrevMonthBtn = document.getElementById('calPrevMonthBtn');
+  const calNextMonthBtn = document.getElementById('calNextMonthBtn');
+  const calDaysView = document.getElementById('calDaysView');
+  const calDaysGrid = document.getElementById('calDaysGrid');
+  const calQuickSelector = document.getElementById('calQuickSelector');
+  const quickYearPrev = document.getElementById('quickYearPrev');
+  const quickYearLabel = document.getElementById('quickYearLabel');
+  const quickYearNext = document.getElementById('quickYearNext');
+  const quickMonthsGrid = document.getElementById('quickMonthsGrid');
+  const calBtnClearFilter = document.getElementById('calBtnClearFilter');
+  const calBtnGoToday = document.getElementById('calBtnGoToday');
+  const btnPresetCurrentMonth = document.getElementById('btnPresetCurrentMonth');
+  const labelPresetCurrentMonth = document.getElementById('labelPresetCurrentMonth');
+  const btnPresetCurrentYear = document.getElementById('btnPresetCurrentYear');
+  const labelPresetCurrentYear = document.getElementById('labelPresetCurrentYear');
+
+  // Widget sức chứa Sidebar
+  const capacityPercent = document.getElementById('capacityPercent');
+  const capacityProgressBar = document.getElementById('capacityProgressBar');
+  const capacityCount = document.getElementById('capacityCount');
+  const capacityAvailable = document.getElementById('capacityAvailable');
+
   // User Dropdown
   const userProfileBtn = document.getElementById('userProfileBtn');
   const userDropdownMenu = document.getElementById('userDropdownMenu');
@@ -106,10 +68,94 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalType = document.getElementById('modalType');
   const modalDuration = document.getElementById('modalDuration');
   const modalFee = document.getElementById('modalFee');
+  const modalCheckinPhotoBox = document.getElementById('modalCheckinPhotoBox');
+  const modalCheckoutPhotoBox = document.getElementById('modalCheckoutPhotoBox');
 
   // ==========================================================================
-  // HÀM TIỆN ÍCH & RENDER DỮ LIỆU
+  // HÀM TIỆN ÍCH & KẾT NỐI API BACKEND
   // ==========================================================================
+
+  function getApiBase() {
+    return window.location.origin.includes('8000') ? '' : 'http://127.0.0.1:8000';
+  }
+
+  // Tải thông tin sức chứa bãi xe ở Sidebar
+  async function loadCapacityStats() {
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/checkin/stats`);
+      if (res.ok) {
+        const data = await res.json();
+        const total = data.total_capacity || 500;
+        const current = data.current_count || 0;
+        const avail = data.available_spots || Math.max(0, total - current);
+        const pct = ((current / total) * 100).toFixed(1);
+
+        if (capacityPercent) capacityPercent.textContent = `${pct}%`;
+        if (capacityProgressBar) capacityProgressBar.style.width = `${pct}%`;
+        if (capacityCount) capacityCount.textContent = `${current} / ${total}`;
+        if (capacityAvailable) capacityAvailable.textContent = `${avail} chỗ trống`;
+      }
+    } catch (err) {
+      console.warn('Lỗi khi tải sức chứa ở thanh bên:', err);
+    }
+  }
+
+  // Tải danh sách lịch sử gửi xe từ CSDL Backend
+  async function loadHistory() {
+    state.isLoading = true;
+
+    if (historyTableBody) {
+      historyTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding: 36px; color: #64748b;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 22px; margin-bottom: 8px; display: block; color: #2563eb;"></i>
+            Đang tải dữ liệu lịch sử từ CSDL...
+          </td>
+        </tr>
+      `;
+    }
+
+    try {
+      const apiBase = getApiBase();
+      const params = new URLSearchParams({
+        page: state.currentPage,
+        page_size: state.pageSize,
+        date_filter: state.filterDate,
+        vehicle_type: state.filterType
+      });
+
+      if (state.searchKeyword.trim()) {
+        params.append('keyword', state.searchKeyword.trim());
+      }
+
+      const res = await fetch(`${apiBase}/api/history?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      state.historyData = data.items || [];
+      state.totalItems = data.total_items || 0;
+      state.totalPages = data.total_pages || 1;
+      state.currentPage = data.page || 1;
+
+      renderHistory();
+
+    } catch (err) {
+      console.error('Lỗi khi tải lịch sử gửi xe:', err);
+      if (historyTableBody) {
+        historyTableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center; padding: 32px; color: #ef4444;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+              Không thể kết nối đến máy chủ CSDL. Vui lòng kiểm tra lại backend!
+            </td>
+          </tr>
+        `;
+      }
+    } finally {
+      state.isLoading = false;
+    }
+  }
 
   // Tạo thumbnail định danh cho biển số xe
   function createPlateThumbnail(type) {
@@ -121,23 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // Lọc dữ liệu theo điều kiện tìm kiếm và dropdown
-  function getFilteredData() {
-    return state.historyData.filter(item => {
-      // Tìm kiếm biển số xe
-      const matchesSearch = item.plate.toLowerCase().includes(state.searchKeyword.toLowerCase().trim());
-
-      // Lọc theo loại xe
-      const matchesType = (state.filterType === 'all') || (item.type === state.filterType);
-
-      // Lọc theo thời gian
-      const matchesDate = (state.filterDate === 'all') || (item.dateGroup === state.filterDate);
-
-      return matchesSearch && matchesType && matchesDate;
-    });
-  }
-
-  // Render thanh cụm nút bấm phân trang động (< 1 2 3 ... 63 >)
+  // Render thanh phân trang động (< 1 2 3 ... 5 >)
   function renderPaginationControls(totalPages) {
     if (!paginationControls) return;
 
@@ -156,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </button>
     `;
 
-    // Tính toán số trang hiển thị thông minh: 1, 2, 3 ... 63 hoặc lân cận trang hiện tại
     const current = state.currentPage;
     const pages = [];
 
@@ -172,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Render từng nút trang
     pages.forEach(p => {
       if (p === '...') {
         html += `<span class="page-dots">...</span>`;
@@ -199,105 +227,153 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetPage = parseInt(btn.getAttribute('data-page'), 10);
         if (targetPage >= 1 && targetPage <= totalPages) {
           state.currentPage = targetPage;
-          renderHistory();
-          // Cuộn nhẹ lên đầu bảng để trải nghiệm xem thuận tiện
-          const tableElement = document.querySelector('.table-wrapper');
-          if (tableElement) {
-            tableElement.scrollTop = 0;
-          }
+          loadHistory();
         }
       });
     });
   }
 
-  // Hiển thị danh sách lịch sử theo đúng trang hiện tại
+  // Hiển thị danh sách lịch sử theo đúng dữ liệu CSDL nạp về
   function renderHistory() {
     if (!historyTableBody) return;
 
-    // 1. Lọc dữ liệu
-    const filtered = getFilteredData();
-    const totalFiltered = filtered.length;
-    const totalPages = Math.ceil(totalFiltered / state.pageSize) || 1;
-
-    // Đảm bảo trang nằm trong khoảng hợp lệ
-    if (state.currentPage > totalPages) state.currentPage = totalPages;
-    if (state.currentPage < 1) state.currentPage = 1;
-
-    // Cắt dữ liệu 20 bản ghi cho trang hiện tại
-    const startIndex = (state.currentPage - 1) * state.pageSize;
-    const endIndex = Math.min(startIndex + state.pageSize, totalFiltered);
-    const pageItems = filtered.slice(startIndex, endIndex);
-
-    // 2. Render các dòng dữ liệu vào bảng
-    if (pageItems.length === 0) {
+    if (state.historyData.length === 0) {
+      const isFiltered = (state.searchKeyword || state.filterDate !== 'all' || state.filterType !== 'all');
       historyTableBody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align:center; padding: 32px; color: #94a3b8;">
-            <i class="fa-solid fa-clock-rotate-left" style="font-size:24px; margin-bottom:8px; display:block;"></i>
-            Không tìm thấy lượt gửi xe nào phù hợp với bộ lọc
+          <td colspan="7" style="text-align:center; padding: 36px; color: #94a3b8;">
+            <i class="fa-solid fa-${isFiltered ? 'magnifying-glass' : 'inbox'}" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+            ${isFiltered ? 'Không tìm thấy lượt gửi xe nào phù hợp với bộ lọc' : 'Hiện chưa có lượt gửi xe nào đã hoàn tất trong hệ thống'}
           </td>
         </tr>
       `;
-    } else {
-      historyTableBody.innerHTML = pageItems.map(item => `
-        <tr>
-          <td>
-            <div class="plate-cell">
-              ${createPlateThumbnail(item.type)}
-              <span class="plate-text">${item.plate}</span>
-            </div>
-          </td>
-          <td>
-            <span class="vehicle-type-cell">
-              <i class="fa-solid ${item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
-              <span>${item.type}</span>
-            </span>
-          </td>
-          <td class="td-time">${item.timeIn}</td>
-          <td class="td-time">${item.timeOut}</td>
-          <td class="td-duration">${item.duration}</td>
-          <td class="td-fee">${item.fee}</td>
-          <td>
-            <button type="button" class="btn-view-photo" data-plate="${item.plate}">
-              <i class="fa-regular fa-eye"></i>
-              <span>Xem ảnh</span>
+
+      if (paginationInfo) paginationInfo.textContent = 'Không có kết quả nào';
+      if (paginationControls) paginationControls.innerHTML = '';
+      return;
+    }
+
+    const startIndex = (state.currentPage - 1) * state.pageSize;
+    const endIndex = startIndex + state.historyData.length;
+
+    historyTableBody.innerHTML = state.historyData.map(item => `
+      <tr>
+        <td>
+          <div class="plate-cell">
+            ${createPlateThumbnail(item.type)}
+            <span class="plate-text font-mono">${item.plate}</span>
+          </div>
+        </td>
+        <td>
+          <span class="vehicle-type-cell">
+            <i class="fa-solid ${item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
+            <span>${item.type}</span>
+          </span>
+        </td>
+        <td class="td-time font-mono">${item.timeIn}</td>
+        <td class="td-time font-mono">${item.timeOut}</td>
+        <td class="td-duration">${item.duration}</td>
+        <td class="td-fee">${item.fee}</td>
+        <td>
+          <div class="table-actions-cell" style="display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-action-icon btn-view-photo" data-id="${item.id}" title="Xem ảnh đối soát vào/ra" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+              <i class="fa-regular fa-eye"></i> <span>Xem</span>
             </button>
-          </td>
-        </tr>
-      `).join('');
-    }
+            <button type="button" class="btn-action-icon btn-action-edit btn-edit-history" data-id="${item.id}" title="Sửa biển số xe hoặc loại xe nếu sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+              <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
+            </button>
+            <button type="button" class="btn-action-icon btn-action-delete btn-delete-history" data-id="${item.id}" data-plate="${item.plate}" title="Xóa bản ghi này" style="background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+              <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> <span>Xóa</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
 
-    // 3. Cập nhật dòng chữ hiển thị phân trang
+    // Cập nhật dòng chữ hiển thị phân trang
     if (paginationInfo) {
-      if (totalFiltered === 0) {
-        paginationInfo.textContent = 'Không có kết quả nào';
-      } else {
-        paginationInfo.textContent = `Hiển thị ${startIndex + 1}–${endIndex} trên tổng ${totalFiltered.toLocaleString('vi-VN')} lượt gửi xe đã hoàn tất`;
-      }
+      paginationInfo.textContent = `Hiển thị ${startIndex + 1}–${endIndex} trên tổng ${state.totalItems.toLocaleString('vi-VN')} lượt gửi xe đã hoàn tất`;
     }
 
-    // 4. Cập nhật cụm nút phân trang tương tác
-    renderPaginationControls(totalPages);
+    // Cập nhật cụm nút phân trang
+    renderPaginationControls(state.totalPages);
 
-    // 5. Gán sự kiện xem ảnh chi tiết
+    // Gán sự kiện mở modal xem ảnh chi tiết
     document.querySelectorAll('.btn-view-photo').forEach(btn => {
       btn.addEventListener('click', () => {
-        const plate = btn.getAttribute('data-plate');
-        const record = state.historyData.find(r => r.plate === plate);
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const record = state.historyData.find(v => v.id === id);
         if (record) {
           openPhotoModal(record);
         }
       });
     });
+
+    // Gán sự kiện Sửa bản ghi
+    document.querySelectorAll('.btn-edit-history').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const record = state.historyData.find(v => v.id === id);
+        if (record) {
+          openEditModal(record);
+        }
+      });
+    });
+
+    // Gán sự kiện Xóa bản ghi
+    document.querySelectorAll('.btn-delete-history').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const plate = btn.getAttribute('data-plate');
+        handleDeleteHistory(id, plate);
+      });
+    });
   }
 
-  // Mở modal đối soát ảnh xe vào/ra
+  // Mở modal xem ảnh đối soát xe vào / xe ra
   function openPhotoModal(record) {
     if (!photoModalBackdrop) return;
+
     if (modalPlate) modalPlate.textContent = record.plate;
     if (modalType) modalType.textContent = record.type;
     if (modalDuration) modalDuration.textContent = record.duration;
     if (modalFee) modalFee.textContent = record.fee;
+
+    const apiBase = getApiBase();
+
+    // 1. Ảnh lúc vào bãi
+    if (modalCheckinPhotoBox) {
+      if (record.checkin_photo) {
+        const fullUrl = record.checkin_photo.startsWith('http') ? record.checkin_photo : `${apiBase}${record.checkin_photo}`;
+        modalCheckinPhotoBox.innerHTML = `
+          <img src="${fullUrl}" alt="Ảnh lúc vào" style="width:100%; height:100%; object-fit:contain; border-radius:6px; background:#0f172a;" onerror="this.parentElement.innerHTML='<div style=\\'text-align:center;color:#94a3b8;\\'>Ảnh vào không khả dụng</div>'">
+        `;
+      } else {
+        modalCheckinPhotoBox.innerHTML = `
+          <div style="text-align: center; color: #94a3b8;">
+            <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
+            <span>CHƯA CÓ ẢNH VÀO</span>
+          </div>
+        `;
+      }
+    }
+
+    // 2. Ảnh lúc ra bãi
+    if (modalCheckoutPhotoBox) {
+      if (record.checkout_photo) {
+        const fullUrl = record.checkout_photo.startsWith('http') ? record.checkout_photo : `${apiBase}${record.checkout_photo}`;
+        modalCheckoutPhotoBox.innerHTML = `
+          <img src="${fullUrl}" alt="Ảnh lúc ra" style="width:100%; height:100%; object-fit:contain; border-radius:6px; background:#0f172a;" onerror="this.parentElement.innerHTML='<div style=\\'text-align:center;color:#94a3b8;\\'>Ảnh ra không khả dụng</div>'">
+        `;
+      } else {
+        modalCheckoutPhotoBox.innerHTML = `
+          <div style="text-align: center; color: #94a3b8;">
+            <i class="fa-solid fa-camera fa-lg" style="margin-bottom: 4px; display: block;"></i>
+            <span>CHƯA CÓ ẢNH RA</span>
+          </div>
+        `;
+      }
+    }
 
     photoModalBackdrop.classList.add('show');
   }
@@ -308,6 +384,430 @@ document.addEventListener('DOMContentLoaded', () => {
       photoModalBackdrop.classList.remove('show');
     }
   }
+
+  // ==========================================================================
+  // XỬ LÝ MODAL SỬA & XÓA THÔNG TIN LỊCH SỬ GỬI XE
+  // ==========================================================================
+  const editHistoryModalBackdrop = document.getElementById('editHistoryModalBackdrop');
+  const modalCloseEditHistBtn = document.getElementById('modalCloseEditHistBtn');
+  const btnCancelEditHist = document.getElementById('btnCancelEditHist');
+  const btnSaveEditHist = document.getElementById('btnSaveEditHist');
+  const editHistoryId = document.getElementById('editHistoryId');
+  const editHistoryPlate = document.getElementById('editHistoryPlate');
+  const editHistoryType = document.getElementById('editHistoryType');
+  const btnClearEditHistPlate = document.getElementById('btnClearEditHistPlate');
+
+  function openEditModal(record) {
+    if (!editHistoryModalBackdrop) return;
+    if (editHistoryId) editHistoryId.value = record.id;
+    if (editHistoryPlate) {
+      editHistoryPlate.value = record.plate;
+      setTimeout(() => editHistoryPlate.focus(), 100);
+    }
+    if (editHistoryType) editHistoryType.value = record.type || 'Ô tô';
+    editHistoryModalBackdrop.classList.add('show');
+  }
+
+  function closeEditModal() {
+    if (editHistoryModalBackdrop) {
+      editHistoryModalBackdrop.classList.remove('show');
+    }
+  }
+
+  if (modalCloseEditHistBtn) modalCloseEditHistBtn.addEventListener('click', closeEditModal);
+  if (btnCancelEditHist) btnCancelEditHist.addEventListener('click', closeEditModal);
+  if (editHistoryModalBackdrop) {
+    editHistoryModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === editHistoryModalBackdrop) closeEditModal();
+    });
+  }
+
+  // Nút xóa trắng ký tự trong ô sửa biển số lịch sử
+  if (btnClearEditHistPlate && editHistoryPlate) {
+    btnClearEditHistPlate.addEventListener('click', () => {
+      editHistoryPlate.value = '';
+      editHistoryPlate.focus();
+    });
+  }
+
+  // Lưu thông tin sau khi sửa
+  if (btnSaveEditHist) {
+    btnSaveEditHist.addEventListener('click', async () => {
+      const id = editHistoryId ? editHistoryId.value : null;
+      const newPlate = editHistoryPlate ? editHistoryPlate.value.trim().toUpperCase() : '';
+      const newType = editHistoryType ? editHistoryType.value : 'Ô tô';
+
+      if (!id || !newPlate) {
+        alert('Vui lòng nhập biển số xe hợp lệ!');
+        return;
+      }
+
+      try {
+        btnSaveEditHist.disabled = true;
+        btnSaveEditHist.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/history/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plate_number: newPlate, vehicle_type: newType })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Lỗi khi cập nhật bản ghi');
+
+        closeEditModal();
+        await loadHistory();
+      } catch (err) {
+        alert(`Không thể sửa bản ghi: ${err.message}`);
+      } finally {
+        btnSaveEditHist.disabled = false;
+        btnSaveEditHist.innerHTML = '<i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>';
+      }
+    });
+  }
+
+  // Xóa bản ghi lịch sử
+  async function handleDeleteHistory(id, plate) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa bản ghi lượt gửi xe biển số ${plate} khỏi hệ thống không?`)) {
+      return;
+    }
+
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/history/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Lỗi khi xóa bản ghi');
+
+      await loadHistory();
+    } catch (err) {
+      alert(`Không thể xóa bản ghi: ${err.message}`);
+    }
+  }
+
+  // ==========================================================================
+  // XỬ LÝ LỊCH VÀ CHỌN THỜI GIAN THEO NGÀY / THÁNG / NĂM
+  // ==========================================================================
+
+  let calViewDate = new Date(); // Tháng và năm đang được hiển thị trên lịch
+  let selectedSpecificDate = null; // Ngày cụ thể được chọn: 'YYYY-MM-DD' hoặc null
+
+  // Cập nhật lại giao diện lịch tháng
+  function renderCalendar() {
+    if (!calDaysGrid || !calTitleText) return;
+
+    const year = calViewDate.getFullYear();
+    const month = calViewDate.getMonth(); // 0-indexed (0: Tháng 1, 10: Tháng 11)
+
+    // Tiêu đề tháng năm chuẩn: "Tháng 11, 2026"
+    calTitleText.textContent = `Tháng ${month + 1}, ${year}`;
+
+    // Cập nhật nhãn nút "Cả tháng..." và "Cả năm..." ở thanh bên
+    if (labelPresetCurrentMonth) {
+      labelPresetCurrentMonth.textContent = `Cả tháng ${month + 1}, ${year}`;
+    }
+    if (labelPresetCurrentYear) {
+      labelPresetCurrentYear.textContent = `Cả năm ${year}`;
+    }
+
+    calDaysGrid.innerHTML = '';
+
+    // Xác định ngày đầu tiên của tháng rơi vào thứ mấy
+    // Trong JS: 0=Chủ nhật, 1=Thứ 2, ..., 6=Thứ 7
+    // Header của ta là: t2(0), t3(1), t4(2), t5(3), t6(4), t7(5), cn(6)
+    const firstDay = new Date(year, month, 1).getDay();
+    const startOffset = (firstDay === 0) ? 6 : (firstDay - 1);
+
+    // Số ngày trong tháng trước và tháng hiện tại
+    const prevMonthLastDate = new Date(year, month, 0).getDate();
+    const currentMonthLastDate = new Date(year, month + 1, 0).getDate();
+
+    // 1. Điền các ngày cuối của tháng trước (màu mờ)
+    for (let i = startOffset - 1; i >= 0; i--) {
+      const dayNum = prevMonthLastDate - i;
+      const cell = document.createElement('div');
+      cell.className = 'cal-day-cell other-month';
+      cell.textContent = dayNum;
+      calDaysGrid.appendChild(cell);
+    }
+
+    // 2. Điền các ngày trong tháng hiện tại
+    const realToday = new Date();
+    const isCurrentRealMonth = (realToday.getFullYear() === year && realToday.getMonth() === month);
+    const realTodayDate = realToday.getDate();
+
+    for (let d = 1; d <= currentMonthLastDate; d++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-day-cell';
+      cell.textContent = d;
+
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const displayStr = `${String(d).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+
+      // Highlight ngày hôm nay
+      if (isCurrentRealMonth && realTodayDate === d) {
+        cell.classList.add('today');
+      }
+
+      // Highlight ngày đang được chọn (hình tròn xanh lam như thiết kế)
+      if (selectedSpecificDate === dateStr) {
+        cell.classList.add('selected');
+      }
+
+      // Sự kiện chọn ngày cụ thể
+      cell.addEventListener('click', () => {
+        applySpecificDateFilter(dateStr, displayStr);
+      });
+
+      calDaysGrid.appendChild(cell);
+    }
+
+    // 3. Điền các ngày đầu của tháng sau để hoàn thiện bảng (35 hoặc 42 ô)
+    const totalFilled = startOffset + currentMonthLastDate;
+    const targetTotal = totalFilled <= 35 ? 35 : 42;
+    const nextMonthDays = targetTotal - totalFilled;
+
+    for (let n = 1; n <= nextMonthDays; n++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-day-cell other-month';
+      cell.textContent = n;
+      calDaysGrid.appendChild(cell);
+    }
+  }
+
+  // Chọn ngày cụ thể
+  function applySpecificDateFilter(dateStr, displayStr) {
+    selectedSpecificDate = dateStr;
+    state.filterDate = dateStr;
+    state.currentPage = 1;
+
+    if (datePickerLabel) {
+      datePickerLabel.textContent = `Ngày: ${displayStr}`;
+    }
+    if (filterDateSelect) {
+      filterDateSelect.value = dateStr;
+    }
+
+    // Đánh dấu bỏ active các preset
+    document.querySelectorAll('.preset-option-btn').forEach(b => b.classList.remove('active'));
+
+    // Đóng dropdown và render lại
+    closeDatePicker();
+    renderCalendar();
+    loadHistory();
+  }
+
+  // Chọn mốc thời gian nhanh hoặc cả tháng / cả năm
+  function applyPresetFilter(presetKey, labelText) {
+    selectedSpecificDate = null;
+    state.filterDate = presetKey;
+    state.currentPage = 1;
+
+    if (datePickerLabel) {
+      datePickerLabel.textContent = labelText;
+    }
+    if (filterDateSelect) {
+      filterDateSelect.value = presetKey;
+    }
+
+    // Cập nhật trạng thái active cho nút preset
+    document.querySelectorAll('.preset-option-btn').forEach(btn => {
+      const p = btn.getAttribute('data-preset');
+      if (p === presetKey) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    closeDatePicker();
+    renderCalendar();
+    loadHistory();
+  }
+
+  // Mở / Đóng Datepicker
+  function toggleDatePicker() {
+    if (!datePickerPopover) return;
+    const isShowing = datePickerPopover.classList.contains('show');
+    if (isShowing) {
+      closeDatePicker();
+    } else {
+      openDatePicker();
+    }
+  }
+
+  function openDatePicker() {
+    if (!datePickerPopover) return;
+    // Đóng dropdown loại xe nếu đang mở
+    const vtDrop = document.getElementById('vehicleTypeDropdown');
+    const vtTrig = document.getElementById('vehicleTypeTrigger');
+    if (vtDrop) vtDrop.classList.remove('show');
+    if (vtTrig) vtTrig.classList.remove('active');
+
+    datePickerPopover.classList.add('show');
+    if (datePickerTriggerBtn) datePickerTriggerBtn.classList.add('active');
+    // Reset view ngày
+    if (calDaysView) calDaysView.style.display = 'block';
+    if (calQuickSelector) calQuickSelector.style.display = 'none';
+    renderCalendar();
+  }
+
+  function closeDatePicker() {
+    if (!datePickerPopover) return;
+    datePickerPopover.classList.remove('show');
+    if (datePickerTriggerBtn) datePickerTriggerBtn.classList.remove('active');
+  }
+
+  // Khởi tạo các sự kiện cho Datepicker
+  if (datePickerTriggerBtn) {
+    datePickerTriggerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDatePicker();
+    });
+  }
+
+  // Điều hướng tháng trước / tháng sau
+  if (calPrevMonthBtn) {
+    calPrevMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewDate.setMonth(calViewDate.getMonth() - 1);
+      renderCalendar();
+    });
+  }
+
+  if (calNextMonthBtn) {
+    calNextMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewDate.setMonth(calViewDate.getMonth() + 1);
+      renderCalendar();
+    });
+  }
+
+  // Bấm vào tiêu đề "Tháng MM, YYYY" để mở bảng chọn nhanh tháng / năm
+  let quickYear = calViewDate.getFullYear();
+  if (calHeaderTitle) {
+    calHeaderTitle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!calQuickSelector || !calDaysView) return;
+      
+      const isQuickOpen = calQuickSelector.style.display !== 'none';
+      if (isQuickOpen) {
+        calQuickSelector.style.display = 'none';
+        calDaysView.style.display = 'block';
+      } else {
+        calQuickSelector.style.display = 'block';
+        calDaysView.style.display = 'none';
+        quickYear = calViewDate.getFullYear();
+        renderQuickSelector();
+      }
+    });
+  }
+
+  function renderQuickSelector() {
+    if (!quickYearLabel || !quickMonthsGrid) return;
+    quickYearLabel.textContent = quickYear;
+    quickMonthsGrid.innerHTML = '';
+
+    const currentSelectedMonth = calViewDate.getMonth();
+    const currentSelectedYear = calViewDate.getFullYear();
+
+    for (let m = 0; m < 12; m++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'quick-month-btn';
+      if (m === currentSelectedMonth && quickYear === currentSelectedYear) {
+        btn.classList.add('active');
+      }
+      btn.textContent = `Tháng ${m + 1}`;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        calViewDate.setFullYear(quickYear);
+        calViewDate.setMonth(m);
+        calQuickSelector.style.display = 'none';
+        calDaysView.style.display = 'block';
+        renderCalendar();
+      });
+      quickMonthsGrid.appendChild(btn);
+    }
+  }
+
+  if (quickYearPrev) {
+    quickYearPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      quickYear--;
+      renderQuickSelector();
+    });
+  }
+
+  if (quickYearNext) {
+    quickYearNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      quickYear++;
+      renderQuickSelector();
+    });
+  }
+
+  // Các nút chọn nhanh (Preset Options)
+  document.querySelectorAll('.preset-option-btn[data-preset]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const preset = btn.getAttribute('data-preset');
+      const text = btn.textContent.trim();
+      applyPresetFilter(preset, `Thời gian: ${text}`);
+    });
+  });
+
+  // Chọn cả tháng hiện tại đang xem
+  if (btnPresetCurrentMonth) {
+    btnPresetCurrentMonth.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const year = calViewDate.getFullYear();
+      const month = calViewDate.getMonth() + 1;
+      const monthFilter = `${year}-${String(month).padStart(2, '0')}`;
+      applyPresetFilter(monthFilter, `Tháng ${month}/${year}`);
+    });
+  }
+
+  // Chọn cả năm hiện tại đang xem
+  if (btnPresetCurrentYear) {
+    btnPresetCurrentYear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const year = calViewDate.getFullYear();
+      applyPresetFilter(String(year), `Năm ${year}`);
+    });
+  }
+
+  // Nút Xóa lọc trong lịch
+  if (calBtnClearFilter) {
+    calBtnClearFilter.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyPresetFilter('all', 'Thời gian: Tất cả');
+    });
+  }
+
+  // Nút nhảy về ngày Hôm nay
+  if (calBtnGoToday) {
+    calBtnGoToday.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = new Date();
+      calViewDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const displayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+      applySpecificDateFilter(todayStr, displayStr);
+    });
+  }
+
+  // Đóng Datepicker khi click ngoài
+  document.addEventListener('click', (e) => {
+    if (datePickerWrapper && !datePickerWrapper.contains(e.target)) {
+      closeDatePicker();
+    }
+  });
+
+  // Khởi tạo hiển thị lịch
+  renderCalendar();
 
   // ==========================================================================
   // XỬ LÝ SỰ KIỆN TƯƠNG TÁC (EVENT LISTENERS)
@@ -327,12 +827,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // B. Tìm kiếm biển số theo thời gian thực (Live Search)
+  // B. Tìm kiếm biển số theo thời gian thực (Debounce 300ms)
+  let searchDebounce = null;
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      state.searchKeyword = e.target.value;
-      state.currentPage = 1; // Đưa về trang 1 khi gõ tìm kiếm
-      renderHistory();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        state.searchKeyword = e.target.value;
+        state.currentPage = 1;
+        loadHistory();
+      }, 300);
     });
   }
 
@@ -340,17 +844,59 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterDateSelect) {
     filterDateSelect.addEventListener('change', (e) => {
       state.filterDate = e.target.value;
-      state.currentPage = 1; // Đưa về trang 1 khi đổi bộ lọc
-      renderHistory();
+      state.currentPage = 1;
+      loadHistory();
     });
   }
 
-  // D. Lọc theo Loại xe
-  if (filterTypeSelect) {
-    filterTypeSelect.addEventListener('change', (e) => {
-      state.filterType = e.target.value;
-      state.currentPage = 1; // Đưa về trang 1 khi đổi loại xe
-      renderHistory();
+  // D. Lọc theo Loại xe Custom Đẹp Mắt Hiện Đại
+  const vehicleTypeSelectWrapper = document.getElementById('vehicleTypeSelectWrapper');
+  const vehicleTypeTrigger = document.getElementById('vehicleTypeTrigger');
+  const vehicleTypeIcon = document.getElementById('vehicleTypeIcon');
+  const vehicleTypeLabel = document.getElementById('vehicleTypeLabel');
+  const vehicleTypeDropdown = document.getElementById('vehicleTypeDropdown');
+
+  if (vehicleTypeTrigger && vehicleTypeDropdown) {
+    vehicleTypeTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeDatePicker(); // Đóng lịch nếu đang mở
+      const isShow = vehicleTypeDropdown.classList.toggle('show');
+      vehicleTypeTrigger.classList.toggle('active', isShow);
+    });
+
+    document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = opt.getAttribute('data-value');
+        const lbl = opt.getAttribute('data-label');
+        const icon = opt.getAttribute('data-icon');
+        const color = opt.getAttribute('data-color');
+
+        state.filterType = val;
+        state.currentPage = 1;
+
+        if (filterTypeSelect) filterTypeSelect.value = val;
+        if (vehicleTypeLabel) vehicleTypeLabel.textContent = lbl;
+        if (vehicleTypeIcon) {
+          vehicleTypeIcon.className = `${icon} select-icon`;
+          vehicleTypeIcon.style.color = color;
+        }
+
+        document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+
+        vehicleTypeDropdown.classList.remove('show');
+        vehicleTypeTrigger.classList.remove('active');
+
+        loadHistory();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (vehicleTypeSelectWrapper && !vehicleTypeSelectWrapper.contains(e.target)) {
+        vehicleTypeDropdown.classList.remove('show');
+        vehicleTypeTrigger.classList.remove('active');
+      }
     });
   }
 
@@ -361,19 +907,60 @@ document.addEventListener('DOMContentLoaded', () => {
       state.filterDate = 'all';
       state.filterType = 'all';
       state.currentPage = 1;
+      selectedSpecificDate = null;
 
       if (searchInput) searchInput.value = '';
       if (filterDateSelect) filterDateSelect.value = 'all';
       if (filterTypeSelect) filterTypeSelect.value = 'all';
+      if (datePickerLabel) datePickerLabel.textContent = 'Thời gian: Tất cả';
+      if (vehicleTypeLabel) vehicleTypeLabel.textContent = 'Loại xe: Tất cả';
+      if (vehicleTypeIcon) {
+        vehicleTypeIcon.className = 'fa-solid fa-layer-group select-icon';
+        vehicleTypeIcon.style.color = '#64748b';
+      }
 
-      renderHistory();
+      // Reset active cho dropdown Loại xe
+      document.querySelectorAll('#vehicleTypeDropdown .select-option').forEach(o => {
+        if (o.getAttribute('data-value') === 'all') {
+          o.classList.add('active');
+        } else {
+          o.classList.remove('active');
+        }
+      });
+
+      // Reset active preset
+      document.querySelectorAll('.preset-option-btn').forEach(btn => {
+        if (btn.getAttribute('data-preset') === 'all') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      renderCalendar();
+      loadHistory();
     });
   }
 
-  // F. Nút Xuất danh sách (Mock Export)
+  // F. Nút Xuất danh sách ra file Microsoft Excel (.xlsx) chuẩn chỉnh chuyên nghiệp
   if (btnExport) {
     btnExport.addEventListener('click', () => {
-      alert('Hệ thống đang xuất danh sách lịch sử gửi xe ra file Excel (.xlsx)...\nVui lòng kiểm tra thư mục tải xuống!');
+      const apiBase = getApiBase();
+      const params = new URLSearchParams({
+        keyword: state.searchKeyword,
+        date_filter: state.filterDate,
+        vehicle_type: state.filterType
+      });
+
+      const exportUrl = `${apiBase}/api/history/export?${params.toString()}`;
+      
+      // Tạo thẻ download ẩn để tải file Excel trực tiếp về máy tính
+      const a = document.createElement('a');
+      a.href = exportUrl;
+      a.setAttribute('download', '');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     });
   }
 
@@ -389,6 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Khởi tạo hiển thị ban đầu
-  renderHistory();
+  // Khởi tạo hiển thị ban đầu từ CSDL
+  loadCapacityStats();
+  loadHistory();
 });
