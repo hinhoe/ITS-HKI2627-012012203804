@@ -26,10 +26,10 @@ from fastapi.staticfiles import StaticFiles
 from AI.detect import load_model
 from Backend.config import settings
 from Backend.database.connection import init_db
-from Backend.checkin import router as checkin_router
-from Backend.checkout import router as checkout_router
-from Backend.current_parking import router as current_parking_router
-from Backend.history import router as history_router
+from Backend.Employee.checkin import router as checkin_router
+from Backend.Employee.checkout import router as checkout_router
+from Backend.Employee.current_parking import router as current_parking_router
+from Backend.Employee.history import router as history_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -81,17 +81,17 @@ app.mount("/results", StaticFiles(directory=str(settings.RESULTS_DIR)), name="re
 if settings.FRONTEND_DIR.exists():
     app.mount("/Frontend", StaticFiles(directory=str(settings.FRONTEND_DIR)), name="frontend")
 
-# GẮN CÁC MODULE NGHIỆP VỤ (ROUTERS)
-# 1. Nghiệp vụ Check-in (Ghi nhận xe vào bãi) -> Quản lý bởi Backend/checkin.py
+# GẮN CÁC MODULE NGHIỆP VỤ NHÂN VIÊN (EMPLOYEE ROUTERS)
+# 1. Nghiệp vụ Check-in (Ghi nhận xe vào bãi) -> Quản lý bởi Backend/Employee/checkin.py
 app.include_router(checkin_router)
 
-# 2. Nghiệp vụ Check-out (Ghi nhận xe ra & Tính phí) -> Quản lý bởi Backend/checkout.py
+# 2. Nghiệp vụ Check-out (Ghi nhận xe ra & Tính phí) -> Quản lý bởi Backend/Employee/checkout.py
 app.include_router(checkout_router)
 
-# 3. Nghiệp vụ Xe đang gửi trong bãi -> Quản lý bởi Backend/current_parking.py
+# 3. Nghiệp vụ Xe đang gửi trong bãi -> Quản lý bởi Backend/Employee/current_parking.py
 app.include_router(current_parking_router)
 
-# 4. Nghiệp vụ Lịch sử vào/ra & Tra cứu -> Quản lý bởi Backend/history.py
+# 4. Nghiệp vụ Lịch sử vào/ra & Tra cứu -> Quản lý bởi Backend/Employee/history.py
 app.include_router(history_router)
 
 
