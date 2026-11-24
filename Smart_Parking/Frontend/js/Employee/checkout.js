@@ -159,6 +159,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (capacityAvailable) capacityAvailable.textContent = `${avail} chỗ trống`;
   }
 
+  // Kiểm tra tính hợp lệ của biển số xe theo quy chuẩn Việt Nam
+  function validateVietnamesePlate(plateStr) {
+    if (!plateStr || typeof plateStr !== 'string') {
+      return { valid: false, message: 'Chưa có biển số xe!' };
+    }
+    const clean = plateStr.trim().toUpperCase();
+    if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO') {
+      return { valid: false, message: 'Chưa có biển số xe!' };
+    }
+    const stripped = clean.replace(/[\s\.\-_]/g, '');
+    if (stripped.length < 6 || stripped.length > 11) {
+      return { valid: false, message: `Biển số "${clean}" có độ dài không hợp lệ (cần từ 6-10 ký tự)!` };
+    }
+    const digits = stripped.match(/\d/g) || [];
+    if (digits.length < 4) {
+      return { valid: false, message: `Biển số "${clean}" không hợp lệ (bắt buộc phải có chữ số, không được chỉ nhập chữ tùm lum)!` };
+    }
+    const letters = stripped.match(/[A-Z]/g) || [];
+    if (letters.length < 1) {
+      return { valid: false, message: `Biển số "${clean}" không hợp lệ (thiếu ký tự chữ cái seri)!` };
+    }
+    return { valid: true, cleanPlate: clean };
+  }
+
   // Bật/tắt chế độ nhập biển số bằng tay
   function toggleManualEdit(enable, focus = true) {
     isManualEditMode = (enable !== undefined) ? enable : !isManualEditMode;
@@ -615,6 +639,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const chk = state.currentCheckout;
       if (!chk || !chk.plate || chk.plate === '---') {
         alert('Vui lòng nhận diện biển số xe ra trước khi ghi nhận mở barrier!');
+        return;
+      }
+
+      const valCheck = validateVietnamesePlate(chk.plate);
+      if (!valCheck.valid) {
+        alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${valCheck.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        toggleManualEdit(true, true);
         return;
       }
 

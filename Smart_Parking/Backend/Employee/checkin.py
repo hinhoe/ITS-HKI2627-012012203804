@@ -22,6 +22,7 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 from pathlib import Path
+import re
 import time
 from typing import Any, Optional
 import uuid
@@ -280,6 +281,29 @@ async def process_checkin_recognition(
     )
 
 
+def validate_vietnamese_plate(plate: str) -> tuple[bool, str]:
+    """Kiểm tra hợp lệ quy chuẩn biển số xe Việt Nam."""
+    clean = plate.strip().upper()
+    if not clean or clean in ("---", "CHƯA RÕ", "CHUA RO"):
+        return False, "Biển số xe không được để trống."
+
+    stripped = re.sub(r"[\s\.\-_]", "", clean)
+    if len(stripped) < 6 or len(stripped) > 11:
+        return False, f"Biển số '{clean}' có độ dài không hợp lệ (cần từ 6-10 ký tự, ví dụ: 51F-866.88)."
+
+    # Bắt buộc phải có ít nhất 4 chữ số (chống trường hợp nhân viên nhập toàn chữ, chữ tùm lum)
+    digits = sum(1 for c in stripped if c.isdigit())
+    if digits < 4:
+        return False, f"Biển số '{clean}' không hợp lệ (bắt buộc phải có chữ số, ví dụ: 51F-866.88, 29A-123.45)."
+
+    # Bắt buộc phải có ít nhất 1 chữ cái seri
+    letters = sum(1 for c in stripped if c.isalpha())
+    if letters < 1:
+        return False, f"Biển số '{clean}' không hợp lệ (phải có ký tự chữ seri, ví dụ: 51F, 29A, 59S1)."
+
+    return True, ""
+
+
 # ==========================================================================
 # CÁC ENDPOINT NGHIỆP VỤ CHECK-IN VỚI DATABASE
 # ==========================================================================
@@ -292,13 +316,18 @@ async def confirm_checkin_session(
     """
     Nghiệp vụ khi nhân viên nhấn "Ghi nhận xe vào bãi (Mở Barrier)":
     1. Chuẩn hóa biển số xe và loại xe.
-    2. Sinh mã phiên lượt gửi (session_code) duy nhất.
-    3. Lưu lượt xe vào bảng `parking_sessions` với trạng thái 'PARKED'.
-    4. Trả về thông tin phiên vừa tạo kèm thống kê sức chứa bãi xe mới nhất.
+    2. Kiểm tra tính hợp lệ biển số (bắt buộc có chữ số, đúng quy chuẩn).
+    3. Sinh mã phiên lượt gửi (session_code) duy nhất.
+    4. Lưu lượt xe vào bảng `parking_sessions` với trạng thái 'PARKED'.
+    5. Trả về thông tin phiên vừa tạo kèm thống kê sức chứa bãi xe mới nhất.
     """
     clean_plate = payload.plate_number.strip().upper()
-    if not clean_plate or clean_plate == "---":
-        raise HTTPException(status_code=400, detail="Biển số xe không được để trống.")
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Biển số xe không hợp lệ: {error_msg} Yêu cầu nhân viên nhập lại, không thể mở barrier!"
+        )
 
     # Thời gian vào bãi hiện tại theo chuẩn YYYY-MM-DD HH:MM:SS
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

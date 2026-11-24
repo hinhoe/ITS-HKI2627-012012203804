@@ -1141,11 +1141,38 @@ body {
   font-weight: 600;
   padding: 6px 10px;
   border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .manual-entry-hint i {
   color: #f59e0b;
   flex-shrink: 0;
+}
+
+.manual-entry-hint.danger {
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  animation: shakeAlert 0.35s ease-in-out;
+}
+
+.manual-entry-hint.danger i {
+  color: #ef4444 !important;
+}
+
+.license-plate-card.error-mode {
+  border-color: #ef4444 !important;
+  background-color: #fff5f5 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+  animation: shakeAlert 0.35s ease-in-out;
+}
+
+@keyframes shakeAlert {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
 }
 
 .vehicle-type-switch-group {
