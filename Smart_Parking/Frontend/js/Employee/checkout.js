@@ -732,7 +732,17 @@ document.addEventListener('DOMContentLoaded', () => {
           plateManualInput.select();
         }
 
-        alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${valCheck.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: '🚨 BIỂN SỐ XE RA KHÔNG ĐÚNG QUY CHUẨN!',
+            message: valCheck.message,
+            hint: '❌ Hệ thống đã CHẶN MỞ BARRIER xuất bãi. Vui lòng đối soát và nhập biển số chuẩn (VD: 51F-888.88 hoặc 29A-12345).',
+            type: 'error',
+            confirmText: 'Tôi hiểu rồi, để tôi nhập lại'
+          });
+        } else {
+          alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${valCheck.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        }
         return; // CHẶN LẠI HOÀN TOÀN
       }
 
@@ -744,13 +754,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const chk = state.currentCheckout;
       if (!chk) {
-        alert('Vui lòng nhận diện biển số xe ra trước khi ghi nhận mở barrier!');
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'CHƯA NHẬN DIỆN XE RA',
+            message: 'Vui lòng nhận diện biển số xe ra trước khi ghi nhận mở barrier.',
+            type: 'warning'
+          });
+        } else {
+          alert('Vui lòng nhận diện biển số xe ra trước khi ghi nhận mở barrier!');
+        }
         return;
       }
       chk.plate = currentPlate;
 
       if (chk.isProcessed) {
-        alert('Lượt gửi này đã được ghi nhận hoàn tất!');
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'LƯỢT XE ĐÃ XỬ LÝ',
+            message: 'Lượt gửi này đã được ghi nhận hoàn tất trước đó.',
+            type: 'info'
+          });
+        } else {
+          alert('Lượt gửi này đã được ghi nhận hoàn tất!');
+        }
         return;
       }
 
@@ -813,9 +839,25 @@ document.addEventListener('DOMContentLoaded', () => {
         state.checkoutHistory.unshift(newRecord);
         renderHistoryTable();
 
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: 'Xuất bãi thành công!',
+            message: `Xe ${currentPlate} đã hoàn tất thủ tục và mở barrier.`,
+            type: 'success'
+          });
+        }
+
       } catch (err) {
         console.error('Lỗi khi ghi nhận xe ra:', err);
-        alert(`Ghi nhận xe ra thất bại: ${err.message}`);
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'GHI NHẬN XE RA THẤT BẠI',
+            message: err.message,
+            type: 'error'
+          });
+        } else {
+          alert(`Ghi nhận xe ra thất bại: ${err.message}`);
+        }
       } finally {
         btnConfirmCheckout.disabled = false;
         btnConfirmCheckout.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Ghi nhận xe ra bãi (Mở Barrier)</span>';

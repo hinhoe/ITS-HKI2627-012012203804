@@ -534,13 +534,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldPlate = btn.getAttribute('data-plate');
         const oldType = btn.getAttribute('data-type') || 'Ô tô';
 
-        const newPlate = prompt(`Nhập lại biển số đúng cho lượt xe (hiện tại: ${oldPlate}):`, oldPlate);
+        let newPlate = null;
+        if (window.showAppPrompt) {
+          newPlate = await window.showAppPrompt({
+            title: 'CHỈNH SỬA BIỂN SỐ LƯỢT XE',
+            subtitle: `Sửa lại biển số đúng cho lượt vừa vào (Hiện tại: ${oldPlate}):`,
+            defaultValue: oldPlate,
+            placeholder: 'VD: 51F-888.88 hoặc 29A-12345',
+            validateFn: (val) => {
+              const res = validateVietnamesePlate(val);
+              return { valid: res.valid, reason: res.message || res.reason, clean: res.clean };
+            }
+          });
+        } else {
+          newPlate = prompt(`Nhập lại biển số đúng cho lượt xe (hiện tại: ${oldPlate}):`, oldPlate);
+        }
+
         if (!newPlate || newPlate.trim().toUpperCase() === oldPlate) return;
 
         const clean = newPlate.trim().toUpperCase();
         const check = validateVietnamesePlate(clean);
         if (!check.valid) {
-          alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${check.reason}\n\nVui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+          if (window.showAppAlert) {
+            await window.showAppAlert({
+              title: 'BIỂN SỐ KHÔNG HỢP LỆ!',
+              message: check.message || check.reason,
+              hint: 'Vui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).',
+              type: 'error',
+              confirmText: 'Tôi sẽ nhập lại'
+            });
+          } else {
+            alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${check.reason || check.message}\n\nVui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+          }
           return;
         }
         try {
@@ -564,8 +589,23 @@ document.addEventListener('DOMContentLoaded', () => {
             rec.status = 'Ghi nhận (Đã sửa)';
           }
           renderRecentEntries();
+          if (window.showAppToast) {
+            window.showAppToast({
+              title: 'Cập nhật thành công!',
+              message: `Đã đổi biển số lượt vừa vào thành: ${clean}`,
+              type: 'success'
+            });
+          }
         } catch (err) {
-          alert(`Không thể sửa biển số: ${err.message}`);
+          if (window.showAppAlert) {
+            await window.showAppAlert({
+              title: 'LỖI CẬP NHẬT',
+              message: err.message,
+              type: 'error'
+            });
+          } else {
+            alert(`Không thể sửa biển số: ${err.message}`);
+          }
         }
       });
     });
@@ -1069,7 +1109,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Bật cảnh báo popup yêu cầu nhân viên nhập lại ngay lập tức
-        alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${validation.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: '🚨 BIỂN SỐ KHÔNG ĐÚNG QUY CHUẨN!',
+            message: validation.message,
+            hint: '❌ Hệ thống đã CHẶN MỞ BARRIER để tránh sai lệch dữ liệu bãi đỗ xe. Vui lòng đối soát và nhập biển số chuẩn (VD: 51F-888.88 hoặc 29A-12345).',
+            type: 'error',
+            confirmText: 'Tôi hiểu rồi, để tôi nhập lại'
+          });
+        } else {
+          alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${validation.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        }
         return; // CHẶN LẠI HOÀN TOÀN, KHÔNG GỌI BACKEND VÀ KHÔNG MỞ BARRIER
       }
 

@@ -393,12 +393,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const editVehiclePlate = document.getElementById('editVehiclePlate');
   const editVehicleType = document.getElementById('editVehicleType');
   const btnClearEditPlate = document.getElementById('btnClearEditPlate');
+  const editVehicleErrorBanner = document.getElementById('editVehicleErrorBanner');
+  const editVehicleErrorText = document.getElementById('editVehicleErrorText');
 
   function openEditModal(vehicle) {
     if (!editVehicleModalBackdrop) return;
     if (editVehicleId) editVehicleId.value = vehicle.id;
+    if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
     if (editVehiclePlate) {
       editVehiclePlate.value = vehicle.plate;
+      editVehiclePlate.style.borderColor = '';
       setTimeout(() => editVehiclePlate.focus(), 100);
     }
     if (editVehicleType) editVehicleType.value = vehicle.type || 'Ô tô';
@@ -409,6 +413,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editVehicleModalBackdrop) {
       editVehicleModalBackdrop.classList.remove('show');
     }
+    if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
+    if (editVehiclePlate) editVehiclePlate.style.borderColor = '';
   }
 
   if (modalCloseEditBtn) modalCloseEditBtn.addEventListener('click', closeEditModal);
@@ -423,7 +429,32 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnClearEditPlate && editVehiclePlate) {
     btnClearEditPlate.addEventListener('click', () => {
       editVehiclePlate.value = '';
+      if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
+      editVehiclePlate.style.borderColor = '';
       editVehiclePlate.focus();
+    });
+  }
+
+  // Kiểm tra thời gian thực khi nhân viên gõ biển số trong modal sửa
+  if (editVehiclePlate) {
+    editVehiclePlate.addEventListener('input', () => {
+      const val = editVehiclePlate.value.trim().toUpperCase();
+      if (!val) {
+        if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
+        editVehiclePlate.style.borderColor = '';
+        return;
+      }
+      const check = validateVietnamesePlate(val);
+      if (!check.valid) {
+        if (editVehicleErrorBanner && editVehicleErrorText) {
+          editVehicleErrorText.textContent = check.reason;
+          editVehicleErrorBanner.style.display = 'block';
+        }
+        editVehiclePlate.style.borderColor = '#ef4444';
+      } else {
+        if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
+        editVehiclePlate.style.borderColor = '#10b981';
+      }
     });
   }
 
@@ -435,14 +466,46 @@ document.addEventListener('DOMContentLoaded', () => {
       const newType = editVehicleType ? editVehicleType.value : 'Ô tô';
 
       if (!id || !newPlate) {
-        alert('Vui lòng nhập biển số xe hợp lệ!');
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'THIẾU BIỂN SỐ XE!',
+            message: 'Vui lòng nhập biển số xe trước khi lưu.',
+            hint: 'Không được để trống ô biển số.',
+            type: 'warning',
+            confirmText: 'Nhập lại ngay'
+          });
+        } else {
+          alert('Vui lòng nhập biển số xe hợp lệ!');
+        }
         if (editVehiclePlate) editVehiclePlate.focus();
         return;
       }
 
       const plateCheck = validateVietnamesePlate(newPlate);
       if (!plateCheck.valid) {
-        alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${plateCheck.reason}\n\nVui lòng kiểm tra và nhập đúng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+        const card = editVehicleModalBackdrop.querySelector('.modal-card');
+        if (card) {
+          card.classList.remove('shake');
+          void card.offsetWidth;
+          card.classList.add('shake');
+        }
+        if (editVehicleErrorBanner && editVehicleErrorText) {
+          editVehicleErrorText.textContent = plateCheck.reason;
+          editVehicleErrorBanner.style.display = 'block';
+        }
+        if (editVehiclePlate) editVehiclePlate.style.borderColor = '#ef4444';
+
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'BIỂN SỐ KHÔNG HỢP LỆ!',
+            message: plateCheck.reason,
+            hint: 'Quy chuẩn biển số xe Việt Nam: Gồm mã tỉnh (VD: 51, 29, 60...) + sê-ri đăng ký (A, B, F...) + các chữ số (VD: 51F-888.88 hoặc 29A-12345). Không được nhập toàn chữ cái.',
+            type: 'error',
+            confirmText: 'Tôi hiểu rồi, để tôi sửa lại'
+          });
+        } else {
+          alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${plateCheck.reason}\n\nVui lòng kiểm tra và nhập đúng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+        }
         if (editVehiclePlate) editVehiclePlate.focus();
         return;
       }
@@ -462,10 +525,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error(data.detail || 'Lỗi khi cập nhật biển số');
 
         closeEditModal();
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: 'Cập nhật thành công!',
+            message: `Biển số xe đã được cập nhật thành: ${newPlate}`,
+            type: 'success'
+          });
+        }
         await loadParkingStats();
         await loadVehicles();
       } catch (err) {
-        alert(`Không thể sửa biển số: ${err.message}`);
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'KHÔNG THỂ CẬP NHẬT',
+            message: err.message,
+            hint: 'Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.',
+            type: 'error'
+          });
+        } else {
+          alert(`Không thể sửa biển số: ${err.message}`);
+        }
       } finally {
         btnSaveEditVehicle.disabled = false;
         btnSaveEditVehicle.innerHTML = '<i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>';

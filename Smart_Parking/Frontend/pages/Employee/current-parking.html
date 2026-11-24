@@ -7,6 +7,7 @@
   
   <!-- File CSS riêng biệt cho trang Quản lý xe đang gửi -->
   <link rel="stylesheet" href="../../css/Employee/current-parking.css?v=12.0">
+  <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=1.0">
   
   <!-- Font chữ Inter chuẩn của toàn hệ thống -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -334,6 +335,11 @@
             </button>
           </div>
           <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Nhập đúng ký tự thực tế trên biển số để đối soát chính xác</span>
+          <!-- Inline Error Banner -->
+          <div id="editVehicleErrorBanner" style="display:none; margin-top:8px; padding:10px 14px; background:#fff5f5; border:1px solid #fecaca; border-left:4px solid #ef4444; border-radius:8px; color:#b91c1c; font-size:12.5px; line-height:1.4;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>
+            <span id="editVehicleErrorText"></span>
+          </div>
         </div>
         <div style="margin-bottom: 20px;">
           <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Loại phương tiện:</label>
@@ -353,6 +359,7 @@
   </div>
 
   <!-- File JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/current-parking.js?v=14.0"></script>
+  <script src="../../js/Employee/notification-modal.js?v=1.0"></script>
+  <script src="../../js/Employee/current-parking.js?v=15.0"></script>
 </body>
 </html>
