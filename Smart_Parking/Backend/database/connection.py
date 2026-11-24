@@ -20,6 +20,8 @@ logger = logging.getLogger("smart_parking.database")
 # Đường dẫn file CSDL SQLite lưu trữ trong Backend/database/smart_parking.db
 DATABASE_DIR = Path(__file__).resolve().parent
 DATABASE_PATH = DATABASE_DIR / "smart_parking.db"
+DB_PATH = DATABASE_PATH
+
 
 # Đường dẫn file kịch bản SQL khởi tạo
 PROJECT_ROOT = DATABASE_DIR.parent.parent
@@ -75,3 +77,7 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
         yield conn
     finally:
         conn.close()
+
+
+get_db_context = get_db
+

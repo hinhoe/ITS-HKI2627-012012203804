@@ -474,3 +474,9 @@ class GeminiPlateReader:
 
 # Singleton reader
 default_reader = GeminiPlateReader()
+
+
+def read_license_plate(crop: np.ndarray, preprocessed: Optional[np.ndarray] = None) -> GeminiReadResult:
+    """Hàm tiện ích nhận diện biển số xe sử dụng default_reader."""
+    return default_reader.read_plate(crop, preprocessed)
+
