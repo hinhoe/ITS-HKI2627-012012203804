@@ -37,6 +37,7 @@ from AI.ocr import default_reader, normalize_plate_spacing, preprocess_plate, Ge
 from AI.schemas import PlateResult, RecognitionStatus
 from Backend.config import settings
 from Backend.database.connection import get_db
+from Backend.Employee.checkin import validate_vietnamese_plate
 
 logger = logging.getLogger("smart_parking.backend.checkout")
 
@@ -313,6 +314,13 @@ async def confirm_checkout_session(
     4. Trả về thông tin hoàn tất để giao diện mở barrier và cập nhật bảng lịch sử xe ra.
     """
     clean_plate = payload.plate_number.strip().upper()
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Biển số xe không hợp lệ: {error_msg} Yêu cầu nhân viên nhập lại, không thể mở barrier!"
+        )
+
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur = db.cursor()
 

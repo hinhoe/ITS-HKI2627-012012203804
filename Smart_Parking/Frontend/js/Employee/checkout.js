@@ -162,24 +162,58 @@ document.addEventListener('DOMContentLoaded', () => {
   // Kiểm tra tính hợp lệ của biển số xe theo quy chuẩn Việt Nam
   function validateVietnamesePlate(plateStr) {
     if (!plateStr || typeof plateStr !== 'string') {
-      return { valid: false, message: 'Chưa có biển số xe!' };
+      return {
+        valid: false,
+        message: 'Chưa có biển số xe. Nhân viên vui lòng nhập biển số trước khi xác nhận mở barrier!'
+      };
     }
     const clean = plateStr.trim().toUpperCase();
-    if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO') {
-      return { valid: false, message: 'Chưa có biển số xe!' };
+    if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO' || clean === 'KHÔNG TÌM THẤY') {
+      return {
+        valid: false,
+        message: 'Chưa có biển số xe. Nhân viên vui lòng nhập biển số bằng tay để mở barrier!'
+      };
     }
+
+    // Loại bỏ ký tự phân cách khoảng trắng, dấu chấm, gạch ngang
     const stripped = clean.replace(/[\s\.\-_]/g, '');
+
+    // 1. Phải có độ dài từ 6 đến 11 ký tự
     if (stripped.length < 6 || stripped.length > 11) {
-      return { valid: false, message: `Biển số "${clean}" có độ dài không hợp lệ (cần từ 6-10 ký tự)!` };
+      return {
+        valid: false,
+        message: `Biển số "${clean}" sai độ dài (cần từ 6-10 ký tự, ví dụ: 51F-866.88, 29A-123.45). Vui lòng nhập lại gấp!`
+      };
     }
+
+    // 2. Bắt buộc phải có chữ số (chống trường hợp chỉ nhập chữ tùm lum, không có số)
     const digits = stripped.match(/\d/g) || [];
     if (digits.length < 4) {
-      return { valid: false, message: `Biển số "${clean}" không hợp lệ (bắt buộc phải có chữ số, không được chỉ nhập chữ tùm lum)!` };
+      return {
+        valid: false,
+        message: `Biển số "${clean}" KHÔNG HỢP LỆ (thiếu chữ số hoặc chỉ nhập chữ tùm lum)! Biển số xe bắt buộc phải có chữ số (Ví dụ: 51F-866.88, 59S1-123.45). Yêu cầu nhập lại gấp!`
+      };
     }
+
+    // 3. Bắt buộc phải có chữ cái seri (chống trường hợp chỉ toàn số)
     const letters = stripped.match(/[A-Z]/g) || [];
     if (letters.length < 1) {
-      return { valid: false, message: `Biển số "${clean}" không hợp lệ (thiếu ký tự chữ cái seri)!` };
+      return {
+        valid: false,
+        message: `Biển số "${clean}" KHÔNG HỢP LỆ (thiếu ký tự chữ cái seri, ví dụ: 51F, 29A, 59S1). Vui lòng nhập lại!`
+      };
     }
+
+    // 4. Kiểm tra cấu trúc chuẩn Việt Nam:
+    // Bắt đầu bằng 2 số mã tỉnh (11-99) hoặc 2 chữ cái (quân đội/ngoại giao), theo sau là seri và dãy 4-5 số
+    const isVnStandard = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/.test(stripped);
+    if (!isVnStandard) {
+      return {
+        valid: false,
+        message: `Biển số "${clean}" không đúng định dạng quy chuẩn Việt Nam (Ví dụ đúng: 51F-866.88, 29A-123.45, 59S1-123.45). Yêu cầu nhập lại gấp!`
+      };
+    }
+
     return { valid: true, cleanPlate: clean };
   }
 
@@ -248,6 +282,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (plateManualInput) {
+    plateManualInput.addEventListener('input', (e) => {
+      const val = normalizePlateSpacing(e.target.value.toUpperCase());
+      e.target.value = val;
+      if (resultPlateText) resultPlateText.textContent = val || '---';
+      if (!state.currentCheckout) {
+        state.currentCheckout = {
+          plate: val,
+          type: 'Ô tô',
+          isProcessed: false
+        };
+      } else {
+        state.currentCheckout.plate = val;
+      }
+
+      // Kiểm tra hợp lệ thời gian thực khi nhân viên đang gõ ở Checkout
+      if (val.length >= 3) {
+        const check = validateVietnamesePlate(val);
+        if (!check.valid) {
+          if (manualEntryHint && manualEntryHintText) {
+            manualEntryHint.className = 'manual-entry-hint danger';
+            manualEntryHint.style.display = 'flex';
+            manualEntryHintText.textContent = check.message;
+          }
+          if (licensePlateCard) licensePlateCard.classList.add('error-mode');
+        } else {
+          if (manualEntryHint && manualEntryHintText) {
+            manualEntryHint.className = 'manual-entry-hint';
+            manualEntryHint.style.display = 'flex';
+            manualEntryHintText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#10b981; margin-right:4px;"></i> Biển số hợp lệ (${val}) — Sẵn sàng tính phí và mở barrier!`;
+          }
+          if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
+        }
+      } else {
+        if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
+        if (manualEntryHint && manualEntryHint.classList.contains('danger')) {
+          manualEntryHint.className = 'manual-entry-hint';
+          if (manualEntryHintText) manualEntryHintText.textContent = 'Vui lòng nhập đầy đủ biển số (Ví dụ: 51F-866.88)...';
+        }
+      }
+    });
+
     plateManualInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -631,23 +706,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnConfirmCheckout) {
     btnConfirmCheckout.addEventListener('click', async () => {
-      // Đảm bảo lưu giá trị nếu đang ở chế độ nhập tay
-      if (isManualEditMode) {
+      // 1. Đồng bộ biển số từ ô nhập tay nếu đang mở
+      let currentPlate = '';
+      if (isManualEditMode && plateManualInput) {
+        currentPlate = normalizePlateSpacing(plateManualInput.value.trim().toUpperCase());
         toggleManualEdit(false);
+      } else if (state.currentCheckout && state.currentCheckout.plate) {
+        currentPlate = state.currentCheckout.plate.trim().toUpperCase();
+      }
+
+      // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE TRƯỚC KHI TÍNH PHÍ & MỞ BARRIER
+      const valCheck = validateVietnamesePlate(currentPlate);
+      if (!valCheck.valid) {
+        if (manualEntryHint && manualEntryHintText) {
+          manualEntryHint.className = 'manual-entry-hint danger';
+          manualEntryHint.style.display = 'flex';
+          manualEntryHintText.textContent = `❌ ${valCheck.message}`;
+        }
+        if (licensePlateCard) {
+          licensePlateCard.className = 'license-plate-card error-mode';
+        }
+        toggleManualEdit(true, true);
+        if (plateManualInput) {
+          plateManualInput.focus();
+          plateManualInput.select();
+        }
+
+        alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${valCheck.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+        return; // CHẶN LẠI HOÀN TOÀN
+      }
+
+      // Đã hợp lệ -> Xóa bỏ trạng thái lỗi nếu có
+      if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
+      if (manualEntryHint && manualEntryHint.classList.contains('danger')) {
+        manualEntryHint.style.display = 'none';
       }
 
       const chk = state.currentCheckout;
-      if (!chk || !chk.plate || chk.plate === '---') {
+      if (!chk) {
         alert('Vui lòng nhận diện biển số xe ra trước khi ghi nhận mở barrier!');
         return;
       }
-
-      const valCheck = validateVietnamesePlate(chk.plate);
-      if (!valCheck.valid) {
-        alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${valCheck.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
-        toggleManualEdit(true, true);
-        return;
-      }
+      chk.plate = currentPlate;
 
       if (chk.isProcessed) {
         alert('Lượt gửi này đã được ghi nhận hoàn tất!');
