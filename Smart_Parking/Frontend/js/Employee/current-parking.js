@@ -5,6 +5,28 @@
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam
+  function validateVietnamesePlate(plateStr) {
+    if (!plateStr) return { valid: false, reason: 'Chưa nhập biển số xe' };
+    const clean = plateStr.toUpperCase().replace(/[\s\.\-_]/g, '');
+    if (clean.length < 6 || clean.length > 11) {
+      return { valid: false, reason: `Độ dài không hợp lệ (${clean.length} ký tự). Biển số Việt Nam thông thường từ 7 đến 10 ký tự` };
+    }
+    const digitCount = (clean.match(/\d/g) || []).length;
+    if (digitCount < 4) {
+      return { valid: false, reason: `Biển số không có đủ chữ số (${digitCount}/4 số tối thiểu). Không được nhập toàn chữ cái` };
+    }
+    const letterCount = (clean.match(/[A-Z]/g) || []).length;
+    if (letterCount < 1) {
+      return { valid: false, reason: 'Biển số phải có ít nhất 1 chữ cái sê-ri đăng ký (VD: A, B, C, F...)' };
+    }
+    const standardVnPlatePattern = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/;
+    if (!standardVnPlatePattern.test(clean)) {
+      return { valid: false, reason: 'Không đúng định dạng biển số Việt Nam (Cần có mã địa phương 2 số đầu + sê-ri + các chữ số)' };
+    }
+    return { valid: true, clean };
+  }
+
   // 1. Quản lý trạng thái và Dữ liệu
   const state = {
     totalCapacity: 500,
@@ -414,6 +436,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!id || !newPlate) {
         alert('Vui lòng nhập biển số xe hợp lệ!');
+        if (editVehiclePlate) editVehiclePlate.focus();
+        return;
+      }
+
+      const plateCheck = validateVietnamesePlate(newPlate);
+      if (!plateCheck.valid) {
+        alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${plateCheck.reason}\n\nVui lòng kiểm tra và nhập đúng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+        if (editVehiclePlate) editVehiclePlate.focus();
         return;
       }
 

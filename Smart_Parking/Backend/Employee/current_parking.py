@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from Backend.database.connection import get_db
+from Backend.Employee.checkin import validate_vietnamese_plate
 
 logger = logging.getLogger("smart_parking.backend.current_parking")
 
@@ -253,6 +254,13 @@ async def update_current_parking_session(
     clean_plate = payload.plate_number.strip().upper()
     if not clean_plate:
         raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
+
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Biển số xe không hợp lệ: {error_msg}. Vui lòng nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345)."
+        )
 
     cur = db.cursor()
     cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))

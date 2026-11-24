@@ -53,14 +53,19 @@ if %errorlevel% neq 0 (
 )
 
 :start_server
-REM 3. Tu dong mo trinh duyet sau 2 giay
-start "" cmd /c "timeout /t 2 /nobreak >nul & start http://127.0.0.1:8000/"
+REM Giai phong port 8000 neu bi chiem boi tien trinh cu truoc khi khoi chay
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000 ^| findstr LISTENING 2^>nul') do (
+    if not "%%a"=="" taskkill /f /pid %%a >nul 2>&1
+)
+
+REM 3. Tu dong doi may chu khoi dong thanh cong roi moi mo trinh duyet (tranh loi ERR_CONNECTION_REFUSED)
+start "" powershell -NoProfile -WindowStyle Hidden -Command "$w=0; while($w -lt 40){ try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:8000/' -UseBasicParsing -TimeoutSec 1; if($r.StatusCode -lt 400 -or $r.StatusCode -eq 404){ Start-Process 'http://127.0.0.1:8000/'; break } } catch {}; Start-Sleep -Milliseconds 500; $w++ }"
 
 REM 4. Khoi chay may chu Uvicorn
 echo.
 echo ===============================================================================
 echo   Dang chay may chu tai: http://127.0.0.1:8000
-echo   Trinh duyet se tu dong mo trang web trong giay lat...
+echo   Trinh duyet se tu dong mo trang web ngay khi may chu san sang...
 echo   Nhan to hop phim Ctrl + C de dung may chu.
 echo ===============================================================================
 echo.

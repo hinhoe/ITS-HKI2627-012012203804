@@ -482,8 +482,9 @@ async def update_checkin_session(
 ):
     """Sửa biển số xe hoặc loại xe của lượt vừa check-in nếu bị nhập sai."""
     clean_plate = payload.plate_number.strip().upper()
-    if not clean_plate:
-        raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=f"Biển số xe không hợp lệ: {error_msg}")
 
     cur = db.cursor()
     cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))

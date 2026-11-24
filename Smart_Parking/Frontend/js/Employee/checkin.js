@@ -538,6 +538,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newPlate || newPlate.trim().toUpperCase() === oldPlate) return;
 
         const clean = newPlate.trim().toUpperCase();
+        const check = validateVietnamesePlate(clean);
+        if (!check.valid) {
+          alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${check.reason}\n\nVui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+          return;
+        }
         try {
           if (id) {
             const apiBase = getApiBase();
