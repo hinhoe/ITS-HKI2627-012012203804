@@ -276,14 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="td-fee">${item.fee}</td>
         <td>
           <div class="table-actions-cell" style="display:inline-flex; align-items:center; gap:6px;">
-            <button type="button" class="btn-action-icon btn-view-photo" data-id="${item.id}" title="Xem ảnh đối soát vào/ra" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-              <i class="fa-regular fa-eye"></i> <span>Xem</span>
-            </button>
-            <button type="button" class="btn-action-icon btn-action-edit btn-edit-history" data-id="${item.id}" title="Sửa biển số xe hoặc loại xe nếu sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-              <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
-            </button>
-            <button type="button" class="btn-action-icon btn-action-delete btn-delete-history" data-id="${item.id}" data-plate="${item.plate}" title="Xóa bản ghi này" style="background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-              <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> <span>Xóa</span>
+            <button type="button" class="btn-action-icon btn-view-photo" data-id="${item.id}" title="Xem ảnh đối soát vào/ra" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+              <i class="fa-regular fa-eye"></i> <span>Xem ảnh</span>
             </button>
           </div>
         </td>
@@ -298,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cập nhật cụm nút phân trang
     renderPaginationControls(state.totalPages);
 
-    // Gán sự kiện mở modal xem ảnh chi tiết
+    // Gán sự kiện mở modal xem ảnh chi tiết đối soát
     document.querySelectorAll('.btn-view-photo').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.getAttribute('data-id'), 10);
@@ -306,26 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (record) {
           openPhotoModal(record);
         }
-      });
-    });
-
-    // Gán sự kiện Sửa bản ghi
-    document.querySelectorAll('.btn-edit-history').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.getAttribute('data-id'), 10);
-        const record = state.historyData.find(v => v.id === id);
-        if (record) {
-          openEditModal(record);
-        }
-      });
-    });
-
-    // Gán sự kiện Xóa bản ghi
-    document.querySelectorAll('.btn-delete-history').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.getAttribute('data-id'), 10);
-        const plate = btn.getAttribute('data-plate');
-        handleDeleteHistory(id, plate);
       });
     });
   }

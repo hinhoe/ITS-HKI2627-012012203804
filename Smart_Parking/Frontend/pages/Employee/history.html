@@ -390,48 +390,7 @@
     </div>
   </div>
 
-  <!-- MODAL: SỬA BẢN GHI LỊCH SỬ NẾU NHẬP SAI KÝ TỰ -->
-  <div class="modal-backdrop" id="editHistoryModalBackdrop">
-    <div class="modal-card" style="max-width: 440px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <i class="fa-solid fa-pen-to-square" style="color: #2563eb; margin-right: 6px;"></i>
-          Sửa thông tin lượt gửi xe
-        </div>
-        <button type="button" class="modal-close-btn" id="modalCloseEditHistBtn" aria-label="Đóng">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="modal-body" style="padding: 20px;">
-        <input type="hidden" id="editHistoryId">
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Biển số xe:</label>
-          <div style="position: relative;">
-            <input type="text" id="editHistoryPlate" class="search-input" style="width: 100%; font-family: monospace; font-size: 16px; font-weight: 700; text-transform: uppercase; padding-right: 36px;" maxlength="15" placeholder="VD: 51F-866.88">
-            <button type="button" id="btnClearEditHistPlate" title="Xóa trắng để nhập lại" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 15px;">
-              <i class="fa-solid fa-circle-xmark"></i>
-            </button>
-          </div>
-          <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Chỉnh sửa lại nếu nhân viên hoặc người dùng nhập sai ký tự</span>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Loại phương tiện:</label>
-          <select id="editHistoryType" class="filter-select" style="width: 100%;">
-            <option value="Ô tô">Ô tô</option>
-            <option value="Xe máy">Xe máy</option>
-          </select>
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" class="btn btn-secondary" id="btnCancelEditHist" style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer;">Hủy bỏ</button>
-          <button type="button" id="btnSaveEditHist" style="background: #2563eb; color: #fff; padding: 8px 18px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- File JavaScript xử lý tương tác -->
-  <script src="../../js/Employee/history.js?v=13.0"></script>
+  <script src="../../js/Employee/history.js?v=14.0"></script>
 </body>
 </html>

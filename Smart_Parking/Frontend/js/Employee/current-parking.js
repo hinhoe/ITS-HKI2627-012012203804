@@ -209,13 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>
           <div class="table-actions-cell" style="display:inline-flex; align-items:center; gap:6px;">
             <button type="button" class="btn-action-icon btn-view-photo" data-id="${v.id}" title="Xem ảnh chụp lúc vào bãi" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-              <i class="fa-regular fa-eye"></i> <span>Xem</span>
+              <i class="fa-regular fa-eye"></i> <span>Xem ảnh</span>
             </button>
             <button type="button" class="btn-action-icon btn-action-edit btn-edit-vehicle" data-id="${v.id}" title="Sửa biển số hoặc loại xe nếu sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
               <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
-            </button>
-            <button type="button" class="btn-action-icon btn-action-delete btn-delete-vehicle" data-id="${v.id}" data-plate="${v.plate}" title="Xóa lượt xe này" style="background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-              <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> <span>Xóa</span>
             </button>
           </div>
         </td>
@@ -249,15 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (vehicle) {
           openEditModal(vehicle);
         }
-      });
-    });
-
-    // Gán sự kiện Xóa lượt xe
-    document.querySelectorAll('.btn-delete-vehicle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.getAttribute('data-id'), 10);
-        const plate = btn.getAttribute('data-plate');
-        handleDeleteVehicle(id, plate);
       });
     });
   }

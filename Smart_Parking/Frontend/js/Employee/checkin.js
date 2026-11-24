@@ -434,11 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td>
             <div class="table-actions-cell" style="display:inline-flex; align-items:center; gap:6px;">
-              <button type="button" class="btn-action-icon btn-action-edit btn-edit-checkin" data-id="${item.id || ''}" data-plate="${item.plate}" data-type="${item.type || 'Ô tô'}" title="Sửa biển số xe nếu nhập sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-                <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
-              </button>
-              <button type="button" class="btn-action-icon btn-action-delete btn-delete-checkin" data-id="${item.id || ''}" data-plate="${item.plate}" title="Xóa lượt xe này" style="background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-                <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> <span>Xóa</span>
+              <button type="button" class="btn-action-icon btn-action-edit btn-edit-checkin" data-id="${item.id || ''}" data-plate="${item.plate}" data-type="${item.type || 'Ô tô'}" title="Sửa biển số xe nếu vừa nhập nhầm" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa biển</span>
               </button>
             </div>
           </td>
@@ -446,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Gán sự kiện Sửa lượt xe vừa vào
+    // Gán sự kiện Sửa lượt xe vừa vào (cho phép nhân viên sửa ngay nếu vừa bấm nhầm)
     document.querySelectorAll('.btn-edit-checkin').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
@@ -480,40 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
           renderRecentEntries();
         } catch (err) {
           alert(`Không thể sửa biển số: ${err.message}`);
-        }
-      });
-    });
-
-    // Gán sự kiện Xóa lượt xe vừa vào
-    document.querySelectorAll('.btn-delete-checkin').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-id');
-        const plate = btn.getAttribute('data-plate');
-
-        if (!confirm(`Bạn có chắc chắn muốn xóa lượt vào của xe biển số ${plate} không?\nSức chứa bãi xe sẽ được tự động hoàn lại.`)) {
-          return;
-        }
-
-        try {
-          if (id) {
-            const apiBase = getApiBase();
-            const res = await fetch(`${apiBase}/api/checkin/sessions/${id}`, {
-              method: 'DELETE'
-            });
-            if (!res.ok) {
-              const errData = await res.json();
-              throw new Error(errData.detail || 'Lỗi khi xóa');
-            }
-          }
-
-          // Loại bỏ khỏi state
-          state.historyRecords = state.historyRecords.filter(r => (id ? r.id != id : r.plate !== plate));
-          if (state.currentCount > 0) state.currentCount -= 1;
-          updateCapacityDisplay();
-          renderRecentEntries();
-          await loadInitialDatabaseData();
-        } catch (err) {
-          alert(`Không thể xóa lượt xe: ${err.message}`);
         }
       });
     });
