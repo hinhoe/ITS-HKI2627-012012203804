@@ -1069,7 +1069,7 @@ body {
 
 /* Table Action Buttons Group */
 .table-actions-cell {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   justify-content: flex-start;
@@ -1078,10 +1078,10 @@ body {
 .btn-action-icon {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
   border: 1px solid transparent;
   cursor: pointer;
@@ -1090,23 +1090,43 @@ body {
 }
 
 .btn-action-edit {
-  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background-color: #eff6ff;
-  border-color: #bfdbfe;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .btn-action-edit:hover {
   background-color: #dbeafe;
   color: #1d4ed8;
+  border-color: #93c5fd;
 }
 
 .btn-action-delete {
-  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background-color: #fef2f2;
-  border-color: #fecaca;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .btn-action-delete:hover {
   background-color: #fee2e2;
-  color: #b91c1c;
+  color: #dc2626;
+  border-color: #fca5a5;
 }
 
 /* Thông báo gợi ý nhập tay */
