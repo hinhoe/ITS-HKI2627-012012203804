@@ -120,53 +120,47 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!plateStr || typeof plateStr !== 'string') {
       return {
         valid: false,
-        message: 'Chưa có biển số xe. Nhân viên vui lòng nhập biển số trước khi xác nhận mở barrier!'
+        message: 'Vui lòng nhập biển số xe trước khi xác nhận.'
       };
     }
     const clean = plateStr.trim().toUpperCase();
     if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO' || clean === 'KHÔNG TÌM THẤY') {
       return {
         valid: false,
-        message: 'Chưa có biển số xe. Nhân viên vui lòng nhập biển số bằng tay để mở barrier!'
+        message: 'Vui lòng nhập biển số xe hợp lệ.'
       };
     }
 
-    // Loại bỏ ký tự phân cách khoảng trắng, dấu chấm, gạch ngang
     const stripped = clean.replace(/[\s\.\-_]/g, '');
 
-    // 1. Phải có độ dài từ 6 đến 11 ký tự
     if (stripped.length < 6 || stripped.length > 11) {
       return {
         valid: false,
-        message: `Biển số "${clean}" sai độ dài (cần từ 6-10 ký tự, ví dụ: 51F-866.88, 29A-123.45). Vui lòng nhập lại gấp!`
+        message: `Biển số "${clean}" không đúng độ dài quy định (6–10 ký tự).`
       };
     }
 
-    // 2. Bắt buộc phải có chữ số (chống trường hợp chỉ nhập chữ tùm lum, không có số)
     const digits = stripped.match(/\d/g) || [];
     if (digits.length < 4) {
       return {
         valid: false,
-        message: `Biển số "${clean}" KHÔNG HỢP LỆ (thiếu chữ số hoặc chỉ nhập chữ tùm lum)! Biển số xe bắt buộc phải có chữ số (Ví dụ: 51F-866.88, 59S1-123.45). Yêu cầu nhập lại gấp!`
+        message: `Biển số "${clean}" thiếu chữ số đăng ký (cần tối thiểu 4 chữ số).`
       };
     }
 
-    // 3. Bắt buộc phải có chữ cái seri (chống trường hợp chỉ toàn số)
     const letters = stripped.match(/[A-Z]/g) || [];
     if (letters.length < 1) {
       return {
         valid: false,
-        message: `Biển số "${clean}" KHÔNG HỢP LỆ (thiếu ký tự chữ cái seri, ví dụ: 51F, 29A, 59S1). Vui lòng nhập lại!`
+        message: `Biển số "${clean}" thiếu ký tự chữ cái sê-ri (VD: 51F, 29A, 59P1).`
       };
     }
 
-    // 4. Kiểm tra cấu trúc chuẩn Việt Nam:
-    // Bắt đầu bằng 2 số mã tỉnh (11-99) hoặc 2 chữ cái (quân đội/ngoại giao), theo sau là seri và dãy 4-5 số
     const isVnStandard = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/.test(stripped);
     if (!isVnStandard) {
       return {
         valid: false,
-        message: `Biển số "${clean}" không đúng định dạng quy chuẩn Việt Nam (Ví dụ đúng: 51F-866.88, 29A-123.45, 59S1-123.45). Yêu cầu nhập lại gấp!`
+        message: `Biển số "${clean}" chưa đúng quy chuẩn biển số Việt Nam.`
       };
     }
 
@@ -278,26 +272,31 @@ document.addEventListener('DOMContentLoaded', () => {
       // Kiểm tra hợp lệ thời gian thực khi nhân viên đang gõ
       if (val.length >= 3) {
         const check = validateVietnamesePlate(val);
+        const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (!check.valid) {
           if (manualEntryHint && manualEntryHintText) {
             manualEntryHint.className = 'manual-entry-hint danger';
             manualEntryHint.style.display = 'flex';
+            if (hintIcon) hintIcon.className = 'fa-solid fa-circle-exclamation';
             manualEntryHintText.textContent = check.message;
           }
           if (licensePlateCard) licensePlateCard.classList.add('error-mode');
         } else {
           if (manualEntryHint && manualEntryHintText) {
-            manualEntryHint.className = 'manual-entry-hint';
+            manualEntryHint.className = 'manual-entry-hint valid';
             manualEntryHint.style.display = 'flex';
-            manualEntryHintText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#10b981; margin-right:4px;"></i> Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi!`;
+            if (hintIcon) hintIcon.className = 'fa-solid fa-circle-check';
+            manualEntryHintText.textContent = `Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi.`;
           }
           if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
         }
       } else {
+        const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
-        if (manualEntryHint && manualEntryHint.classList.contains('danger')) {
+        if (manualEntryHint && (manualEntryHint.classList.contains('danger') || manualEntryHint.classList.contains('valid'))) {
           manualEntryHint.className = 'manual-entry-hint';
-          if (manualEntryHintText) manualEntryHintText.textContent = 'Vui lòng nhập đầy đủ biển số (Ví dụ: 51F-866.88)...';
+          if (hintIcon) hintIcon.className = 'fa-solid fa-circle-exclamation';
+          if (manualEntryHintText) manualEntryHintText.textContent = 'Nhập đúng biển số theo quy chuẩn Việt Nam (VD: 51F-866.88)';
         }
       }
     });
@@ -557,14 +556,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!check.valid) {
           if (window.showAppAlert) {
             await window.showAppAlert({
-              title: 'BIỂN SỐ KHÔNG HỢP LỆ!',
+              title: 'Biển số xe không hợp lệ',
               message: check.message || check.reason,
-              hint: 'Vui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).',
+              hint: 'Định dạng chuẩn Việt Nam: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
               type: 'error',
-              confirmText: 'Tôi sẽ nhập lại'
+              confirmText: 'Nhập lại'
             });
           } else {
-            alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${check.reason || check.message}\n\nVui lòng kiểm tra và nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+            alert(`Biển số xe không hợp lệ: ${check.reason || check.message}`);
           }
           return;
         }
@@ -1126,11 +1125,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE TRƯỚC KHI XÁC NHẬN (BẮT BUỘC CÓ SỐ, ĐÚNG QUY CHUẨN)
       const validation = validateVietnamesePlate(currentPlate);
       if (!validation.valid) {
-        // Cảnh báo khẩn cấp và kích hoạt chế độ lỗi giao diện
+        const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (manualEntryHint && manualEntryHintText) {
           manualEntryHint.className = 'manual-entry-hint danger';
           manualEntryHint.style.display = 'flex';
-          manualEntryHintText.textContent = `❌ ${validation.message}`;
+          if (hintIcon) hintIcon.className = 'fa-solid fa-circle-exclamation';
+          manualEntryHintText.textContent = validation.message;
         }
         if (licensePlateCard) {
           licensePlateCard.className = 'license-plate-card error-mode';
@@ -1141,17 +1141,16 @@ document.addEventListener('DOMContentLoaded', () => {
           plateManualInput.select();
         }
 
-        // Bật cảnh báo popup yêu cầu nhân viên nhập lại ngay lập tức
         if (window.showAppAlert) {
           await window.showAppAlert({
-            title: '🚨 BIỂN SỐ KHÔNG ĐÚNG QUY CHUẨN!',
+            title: 'Biển số xe không hợp lệ',
             message: validation.message,
-            hint: '❌ Hệ thống đã CHẶN MỞ BARRIER để tránh sai lệch dữ liệu bãi đỗ xe. Vui lòng đối soát và nhập biển số chuẩn (VD: 51F-888.88 hoặc 29A-12345).',
+            hint: 'Hệ thống tạm khóa mở barrier để đảm bảo chính xác dữ liệu. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
             type: 'error',
-            confirmText: 'Tôi hiểu rồi, để tôi nhập lại'
+            confirmText: 'Nhập lại biển số'
           });
         } else {
-          alert(`🚨 YÊU CẦU NHẬP LẠI BIỂN SỐ GẤP!\n\n${validation.message}\n\n❌ Hệ thống KHÔNG XÁC NHẬN và KHÔNG MỞ BARRIER khi biển số sai quy chuẩn!`);
+          alert(`Biển số xe không hợp lệ: ${validation.message}`);
         }
         return; // CHẶN LẠI HOÀN TOÀN, KHÔNG GỌI BACKEND VÀ KHÔNG MỞ BARRIER
       }
@@ -1231,14 +1230,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successBanner) successBanner.style.display = 'none';
         if (window.showAppAlert) {
           await window.showAppAlert({
-            title: 'KHÔNG THỂ GHI NHẬN XE VÀO BÃI!',
+            title: 'Không thể ghi nhận xe vào bãi',
             message: err.message || 'Không thể kết nối máy chủ để ghi nhận lượt vào.',
-            hint: 'Vui lòng kiểm tra lại biển số xe (xe đang đỗ sẵn trong bãi hoặc bãi đã đầy sức chứa sẽ không thể vào thêm).',
+            hint: 'Xe đang đỗ sẵn trong bãi hoặc bãi đã đầy sức chứa sẽ không thể tiếp nhận thêm.',
             type: 'error',
-            confirmText: 'Tôi hiểu rồi'
+            confirmText: 'Đóng'
           });
         } else {
-          alert(`❌ Không thể ghi nhận xe vào bãi:\n${err.message}`);
+          alert(`Không thể ghi nhận xe vào bãi: ${err.message}`);
         }
       } finally {
         btnConfirmCheckin.disabled = false;

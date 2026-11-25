@@ -277,17 +277,15 @@ def validate_vietnamese_plate(plate: str) -> tuple[bool, str]:
 
     stripped = re.sub(r"[\s\.\-_]", "", clean)
     if len(stripped) < 6 or len(stripped) > 11:
-        return False, f"Biển số '{clean}' có độ dài không hợp lệ (cần từ 6-10 ký tự, ví dụ: 51F-866.88)."
+        return False, f"Biển số '{clean}' không đúng độ dài quy định (6–10 ký tự)."
 
-    # Bắt buộc phải có ít nhất 4 chữ số (chống trường hợp nhân viên nhập toàn chữ, chữ tùm lum)
     digits = sum(1 for c in stripped if c.isdigit())
     if digits < 4:
-        return False, f"Biển số '{clean}' không hợp lệ (bắt buộc phải có chữ số, ví dụ: 51F-866.88, 29A-123.45)."
+        return False, f"Biển số '{clean}' thiếu chữ số đăng ký (cần tối thiểu 4 chữ số)."
 
-    # Bắt buộc phải có ít nhất 1 chữ cái seri
     letters = sum(1 for c in stripped if c.isalpha())
     if letters < 1:
-        return False, f"Biển số '{clean}' không hợp lệ (phải có ký tự chữ seri, ví dụ: 51F, 29A, 59S1)."
+        return False, f"Biển số '{clean}' thiếu ký tự chữ cái sê-ri (VD: 51F, 29A, 59P1)."
 
     return True, ""
 

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   HỆ THỐNG THÔNG BÁO & MODAL CAO CẤP - PARKTECH / PARKAIVISION
+   HỆ THỐNG THÔNG BÁO & HỘP THOẠI CHUYÊN NGHIỆP - PARKTECH / PARKAIVISION
    File CSS: Frontend/css/Employee/notification-modal.css
    ========================================================================== */
 
@@ -7,16 +7,16 @@
 .park-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+  transition: opacity 0.2s ease, visibility 0.2s;
   padding: 16px;
 }
 
@@ -28,172 +28,167 @@
 /* 2. Hộp thoại Dialog Card */
 .park-modal-card {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(226, 232, 240, 0.9);
   width: 100%;
-  max-width: 460px;
+  max-width: 420px;
   padding: 28px 24px 24px;
   text-align: center;
-  transform: scale(0.92) translateY(12px);
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  transform: scale(0.95) translateY(8px);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
   position: relative;
   overflow: hidden;
 }
+
+.park-modal-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #2563eb;
+}
+
+.park-modal-card.type-error::before { background: #dc2626; }
+.park-modal-card.type-warning::before { background: #d97706; }
+.park-modal-card.type-success::before { background: #16a34a; }
+.park-modal-card.type-info::before { background: #2563eb; }
 
 .park-modal-backdrop.show .park-modal-card {
   transform: scale(1) translateY(0);
 }
 
 .park-modal-card.shake {
-  animation: parkShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: parkShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @keyframes parkShake {
-  10%, 90% { transform: translate3d(-3px, 0, 0); }
-  20%, 80% { transform: translate3d(5px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-7px, 0, 0); }
-  40%, 60% { transform: translate3d(7px, 0, 0); }
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+  40%, 60% { transform: translate3d(5px, 0, 0); }
 }
 
-/* 3. Icon huy hiệu tròn với hiệu ứng tỏa sáng (Pulse Glow) */
+/* 3. Icon tròn tinh gọn */
 .park-modal-icon-badge {
-  width: 72px;
-  height: 72px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  margin: 0 auto 18px;
+  margin: 0 auto 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  position: relative;
+  font-size: 22px;
 }
 
 .park-modal-icon-badge.error {
-  background: #fee2e2;
-  color: #ef4444;
-  box-shadow: 0 0 0 8px #fef2f2;
-  animation: pulseError 2s infinite;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .park-modal-icon-badge.warning {
-  background: #fef3c7;
-  color: #f59e0b;
-  box-shadow: 0 0 0 8px #fffbeb;
-  animation: pulseWarning 2s infinite;
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 .park-modal-icon-badge.success {
-  background: #dcfce7;
-  color: #10b981;
-  box-shadow: 0 0 0 8px #f0fdf4;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
-@keyframes pulseError {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-  70% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+.park-modal-icon-badge.info {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
 }
 
-@keyframes pulseWarning {
-  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-  70% { box-shadow: 0 0 0 16px rgba(245, 158, 11, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-}
-
-/* 4. Tiêu đề và Mô tả */
+/* 4. Tiêu đề và Nội dung chính */
 .park-modal-title {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 8px 0;
   letter-spacing: -0.01em;
 }
 
-.park-modal-subtitle {
+.park-modal-message {
   font-size: 13.5px;
-  color: #64748b;
+  color: #475569;
   margin: 0 0 16px 0;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-/* 5. Khung chi tiết lỗi (Error Detail Box) */
-.park-modal-error-box {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-left: 4px solid #ef4444;
+/* 5. Khung gợi ý ngắn gọn phía dưới */
+.park-modal-hint-strip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   text-align: left;
-  margin-bottom: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.park-modal-error-reason {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #b91c1c;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  line-height: 1.4;
-}
-
-.park-modal-error-hint {
   font-size: 12.5px;
   color: #475569;
   line-height: 1.45;
-  background: #ffffff;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px dashed #cbd5e1;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.park-modal-hint-strip i {
+  color: #64748b;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.park-modal-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 14px 0;
+  line-height: 1.5;
 }
 
 /* 6. Hàng nút bấm Hành động */
 .park-modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .park-btn-modal {
-  padding: 11px 24px;
-  border-radius: 10px;
-  font-size: 14px;
+  padding: 10px 22px;
+  border-radius: 9px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
   border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  min-width: 130px;
+  gap: 7px;
+  transition: all 0.18s ease;
+  min-width: 120px;
 }
 
 .park-btn-modal.primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: #2563eb;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .park-btn-modal.primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  background: #1d4ed8;
 }
 
 .park-btn-modal.danger {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: #dc2626;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .park-btn-modal.danger:hover {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+  background: #b91c1c;
 }
 
 .park-btn-modal.secondary {
@@ -209,32 +204,33 @@
 
 /* 7. Ô input trong Prompt Modal (Sửa nhanh biển số) */
 .park-prompt-input-group {
-  margin: 16px 0;
+  margin: 14px 0 18px;
   text-align: left;
 }
 
 .park-prompt-input {
   width: 100%;
-  padding: 12px 14px;
-  font-size: 17px;
+  padding: 11px 14px;
+  font-size: 16px;
   font-weight: 700;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   text-transform: uppercase;
-  border: 2px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
+  letter-spacing: 0.04em;
 }
 
 .park-prompt-input:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .park-prompt-input.error {
-  border-color: #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
   background-color: #fef2f2;
 }
 
@@ -243,24 +239,26 @@
   margin-top: 6px;
   min-height: 18px;
   line-height: 1.4;
-  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .park-prompt-feedback.error {
   color: #dc2626;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .park-prompt-feedback.valid {
   color: #16a34a;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* 8. Toast Thông báo nổi góc màn hình */
 .park-toast-container {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: 20px;
+  right: 20px;
   z-index: 9999999;
   display: flex;
   flex-direction: column;
@@ -270,17 +268,17 @@
 
 .park-toast-item {
   pointer-events: auto;
-  min-width: 320px;
-  max-width: 440px;
+  min-width: 300px;
+  max-width: 420px;
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  padding: 14px 18px;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px -6px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  padding: 13px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   transform: translateX(120%);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
   opacity: 0;
   border-left: 4px solid #2563eb;
 }
@@ -290,17 +288,17 @@
   opacity: 1;
 }
 
-.park-toast-item.success { border-left-color: #10b981; }
-.park-toast-item.error { border-left-color: #ef4444; }
-.park-toast-item.warning { border-left-color: #f59e0b; }
+.park-toast-item.success { border-left-color: #16a34a; }
+.park-toast-item.error { border-left-color: #dc2626; }
+.park-toast-item.warning { border-left-color: #d97706; }
 
 .park-toast-icon {
-  font-size: 22px;
+  font-size: 18px;
   flex-shrink: 0;
 }
-.park-toast-item.success .park-toast-icon { color: #10b981; }
-.park-toast-item.error .park-toast-icon { color: #ef4444; }
-.park-toast-item.warning .park-toast-icon { color: #f59e0b; }
+.park-toast-item.success .park-toast-icon { color: #16a34a; }
+.park-toast-item.error .park-toast-icon { color: #dc2626; }
+.park-toast-item.warning .park-toast-icon { color: #d97706; }
 
 .park-toast-content {
   flex: 1;

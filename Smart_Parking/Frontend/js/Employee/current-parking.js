@@ -7,22 +7,22 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Hàm kiểm tra quy chuẩn biển số xe Việt Nam
   function validateVietnamesePlate(plateStr) {
-    if (!plateStr) return { valid: false, reason: 'Chưa nhập biển số xe' };
+    if (!plateStr) return { valid: false, reason: 'Vui lòng nhập biển số xe.' };
     const clean = plateStr.toUpperCase().replace(/[\s\.\-_]/g, '');
     if (clean.length < 6 || clean.length > 11) {
-      return { valid: false, reason: `Độ dài không hợp lệ (${clean.length} ký tự). Biển số Việt Nam thông thường từ 7 đến 10 ký tự` };
+      return { valid: false, reason: `Độ dài biển số chưa hợp lệ (${clean.length} ký tự, cần 6–10 ký tự).` };
     }
     const digitCount = (clean.match(/\d/g) || []).length;
     if (digitCount < 4) {
-      return { valid: false, reason: `Biển số không có đủ chữ số (${digitCount}/4 số tối thiểu). Không được nhập toàn chữ cái` };
+      return { valid: false, reason: `Biển số thiếu chữ số đăng ký (${digitCount}/4 chữ số tối thiểu).` };
     }
     const letterCount = (clean.match(/[A-Z]/g) || []).length;
     if (letterCount < 1) {
-      return { valid: false, reason: 'Biển số phải có ít nhất 1 chữ cái sê-ri đăng ký (VD: A, B, C, F...)' };
+      return { valid: false, reason: 'Biển số phải có ít nhất 1 chữ cái sê-ri (VD: 51F, 29A, 59P1).' };
     }
     const standardVnPlatePattern = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/;
     if (!standardVnPlatePattern.test(clean)) {
-      return { valid: false, reason: 'Không đúng định dạng biển số Việt Nam (Cần có mã địa phương 2 số đầu + sê-ri + các chữ số)' };
+      return { valid: false, reason: 'Biển số chưa đúng quy chuẩn Việt Nam (VD: 51F-866.88 hoặc 29A-12345).' };
     }
     return { valid: true, clean };
   }
@@ -493,20 +493,11 @@ document.addEventListener('DOMContentLoaded', () => {
           editVehicleErrorText.textContent = plateCheck.reason;
           editVehicleErrorBanner.style.display = 'block';
         }
-        if (editVehiclePlate) editVehiclePlate.style.borderColor = '#ef4444';
-
-        if (window.showAppAlert) {
-          await window.showAppAlert({
-            title: 'BIỂN SỐ KHÔNG HỢP LỆ!',
-            message: plateCheck.reason,
-            hint: 'Quy chuẩn biển số xe Việt Nam: Gồm mã tỉnh (VD: 51, 29, 60...) + sê-ri đăng ký (A, B, F...) + các chữ số (VD: 51F-888.88 hoặc 29A-12345). Không được nhập toàn chữ cái.',
-            type: 'error',
-            confirmText: 'Tôi hiểu rồi, để tôi sửa lại'
-          });
-        } else {
-          alert(`❌ BIỂN SỐ KHÔNG HỢP LỆ!\n\n${plateCheck.reason}\n\nVui lòng kiểm tra và nhập đúng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345).`);
+        if (editVehiclePlate) {
+          editVehiclePlate.style.borderColor = '#ef4444';
+          editVehiclePlate.focus();
+          editVehiclePlate.select();
         }
-        if (editVehiclePlate) editVehiclePlate.focus();
         return;
       }
 
