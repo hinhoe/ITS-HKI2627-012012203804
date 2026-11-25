@@ -1271,7 +1271,7 @@ body {
 /* Nút xác nhận mở barrier */
 .btn-confirm-entry {
   width: 100%;
-  background: #10b981;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
@@ -1283,14 +1283,15 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
   transition: all 0.2s ease;
   font-family: var(--font-family);
 }
 
 .btn-confirm-entry:hover {
-  background: #059669;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.45);
+  transform: translateY(-1px);
 }
 
 /* Banner ghi nhận thành công */
