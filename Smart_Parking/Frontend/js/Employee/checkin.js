@@ -652,7 +652,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (camStatusDot) camStatusDot.style.backgroundColor = '#10b981';
     } catch (err) {
       console.error('Không thể mở camera:', err);
-      alert('Không thể mở camera laptop! Vui lòng kiểm tra quyền truy cập camera trên trình duyệt của bạn.');
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'KHÔNG THỂ MỞ CAMERA',
+          message: 'Không thể truy cập camera thiết bị. Vui lòng cấp quyền Camera trên trình duyệt của bạn.',
+          type: 'warning'
+        });
+      } else {
+        alert('Không thể mở camera laptop! Vui lòng kiểm tra quyền truy cập camera trên trình duyệt của bạn.');
+      }
     }
   }
 
@@ -865,7 +873,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!currentImageFile && !vehiclePreviewImg?.src) {
-        alert('Vui lòng chọn ảnh phương tiện hoặc bật Camera để chụp trước khi nhận diện!');
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'CHƯA CÓ ẢNH PHƯƠNG TIỆN',
+            message: 'Vui lòng chọn ảnh phương tiện từ máy tính hoặc bật Camera để chụp trước khi nhận diện.',
+            type: 'warning',
+            confirmText: 'Đã hiểu'
+          });
+        } else {
+          alert('Vui lòng chọn ảnh phương tiện hoặc bật Camera để chụp trước khi nhận diện!');
+        }
         return;
       }
 
@@ -911,13 +928,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Xử lý khi không phát hiện thấy biển số
         if (data.status === 'not_detected' || !data.plates || data.plates.length === 0) {
-          alert('Không phát hiện thấy biển số xe trong ảnh! Vui lòng chụp góc rõ hơn.');
           if (resultPlateText) resultPlateText.textContent = 'Không tìm thấy';
           if (aiStatusPill) {
             aiStatusPill.className = 'badge-status-pill error';
             if (aiStatusText) aiStatusText.textContent = 'Không phát hiện';
           }
           if (ocrConfidenceText) ocrConfidenceText.textContent = '0%';
+          toggleManualEdit(true, true);
+          if (window.showAppAlert) {
+            await window.showAppAlert({
+              title: 'KHÔNG PHÁT HIỆN BIỂN SỐ',
+              message: 'Không phát hiện thấy biển số xe trong ảnh! Bạn có thể chụp góc rõ hơn hoặc nhập tay biển số để cho xe vào bãi.',
+              type: 'warning',
+              confirmText: 'Nhập tay ngay'
+            });
+          } else {
+            alert('Không phát hiện thấy biển số xe trong ảnh! Vui lòng chụp góc rõ hơn.');
+          }
           return;
         }
 
@@ -930,7 +957,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const vehicleTypeDisplay = determineVehicleType(rawVehicleType, detectedPlate);
         const yoloConfPercent = (plateData.bbox.confidence * 100).toFixed(1);
 
-        const ocrConfVal = rec?.confidence ? (rec.confidence * 100) : (rec?.status === 'recognized' ? 99.5 : 85.0);
+        let ocrConfVal = 0.0;
+        if (rec?.status === 'recognized') {
+          ocrConfVal = 99.5;
+        } else if (rec?.status === 'needs_review') {
+          ocrConfVal = 78.0;
+        }
         const isLowConfidence = (ocrConfVal < 90.0) || (rec?.status && rec.status !== 'recognized');
 
         // Lưu thông tin nhận diện vào state
@@ -940,6 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
           confidence: `${yoloConfPercent}%`,
           ocrConfidence: `${ocrConfVal.toFixed(1)}%`,
           entryTime: currentTime,
+          originalImageUrl: data.original_image_url ? `${apiBase}${data.original_image_url}` : null,
           cropUrl: plateData.crop_image_url ? `${apiBase}${plateData.crop_image_url}` : null,
           status: isLowConfidence ? 'low_confidence' : (rec?.status || 'recognized')
         };
@@ -1129,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         manualEntryHint.style.display = 'none';
       }
 
-      const { plate, type, entryTime, status, cropUrl, confidence, ocrConfidence } = state.currentRecognition;
+      const { plate, type, entryTime, status, originalImageUrl, cropUrl, confidence, ocrConfidence } = state.currentRecognition;
       const isManual = (status === 'manual' || status === 'low_confidence');
 
       // Tắt nút tạm thời để tránh bấm đúp
@@ -1139,6 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const apiBase = getApiBase();
         const confNum = parseFloat(ocrConfidence || confidence || 99.5);
+        const staffName = window.getCurrentStaffName ? window.getCurrentStaffName() : 'Trần Bảo Anh';
 
         const response = await fetch(`${apiBase}/api/checkin/confirm`, {
           method: 'POST',
@@ -1146,10 +1180,11 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({
             plate_number: plate,
             vehicle_type: type || 'Ô tô',
+            checkin_image_url: originalImageUrl || null,
             checkin_crop_url: cropUrl || null,
             confidence: isNaN(confNum) ? 99.5 : confNum,
             is_manual: isManual,
-            staff_checkin: 'Trần Bảo Anh'
+            staff_checkin: staffName
           })
         });
 
@@ -1161,6 +1196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Hiển thị thông báo ghi nhận thành công / barrier tự động mở
         if (successBanner) {
           successBanner.style.display = 'flex';
+        }
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: 'Đã mở Barrier Cổng Vào!',
+            message: `Ghi nhận xe ${data.session.plate_number} (${data.session.vehicle_type}) vào bãi thành công.`,
+            type: 'success'
+          });
         }
 
         // 2. Cập nhật mảng lịch sử từ phiên CSDL trả về
@@ -1186,20 +1228,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         console.error('Lỗi khi lưu vào Database:', err);
-        // Fallback lưu tạm ở client nếu server backend chưa phản hồi
-        if (successBanner) {
-          successBanner.style.display = 'flex';
-        }
-        state.historyRecords.unshift({
-          plate: plate,
-          type: type || 'Ô tô',
-          time: entryTime,
-          status: isManual ? 'Ghi nhận (Nhập tay)' : 'Ghi nhận thành công'
-        });
-        renderRecentEntries();
-        if (state.currentCount < state.totalCapacity) {
-          state.currentCount += 1;
-          updateCapacityDisplay();
+        if (successBanner) successBanner.style.display = 'none';
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'KHÔNG THỂ GHI NHẬN XE VÀO BÃI!',
+            message: err.message || 'Không thể kết nối máy chủ để ghi nhận lượt vào.',
+            hint: 'Vui lòng kiểm tra lại biển số xe (xe đang đỗ sẵn trong bãi hoặc bãi đã đầy sức chứa sẽ không thể vào thêm).',
+            type: 'error',
+            confirmText: 'Tôi hiểu rồi'
+          });
+        } else {
+          alert(`❌ Không thể ghi nhận xe vào bãi:\n${err.message}`);
         }
       } finally {
         btnConfirmCheckin.disabled = false;

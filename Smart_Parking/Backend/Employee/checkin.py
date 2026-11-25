@@ -214,20 +214,8 @@ async def process_checkin_recognition(
         )
         cropped_entries.append((idx, pr, crop_img if is_valid else None, prep_img))
 
-    # Xử lý trường hợp có nhiều hơn 1 biển số trong ảnh
-    if len(detection.boxes) > 1 and plate_index is None and not read_all:
-        return RecognizeResponse(
-            request_id=request_id,
-            status=RecognitionStatus.MULTIPLE_DETECTED,
-            message=f"Phát hiện {len(detection.boxes)} vùng biển số trong ảnh.",
-            original_image_url=orig_url,
-            annotated_image_url=ann_url,
-            plate_count=len(detection.boxes),
-            plates=[entry[1] for entry in cropped_entries],
-            processing_time_ms=round((time.perf_counter() - start_t) * 1000, 1),
-        )
-
-    target_indices = {plate_index} if plate_index is not None else {entry[0] for entry in cropped_entries}
+    # Nếu có nhiều hơn 1 biển số và không chọn riêng chỉ số, vẫn tự động OCR biển rõ nhất (index 0)
+    target_indices = {plate_index} if plate_index is not None else ({entry[0] for entry in cropped_entries} if read_all else {0})
 
     # 3. Gọi Gemini Vision OCR nhận diện ký tự
     results_out: list[PlateResult] = []
@@ -337,6 +325,33 @@ async def confirm_checkin_session(
 
     try:
         cur = db.cursor()
+
+        # Kiểm tra 1: Không cho phép check-in trùng biển số xe hiện ĐANG ĐỖ trong bãi (status = 'PARKED')
+        compact_new = re.sub(r"[\s\.\-_]", "", clean_plate)
+        cur.execute("SELECT id, plate_number, checkin_time FROM parking_sessions WHERE status = 'PARKED'")
+        for parked_row in cur.fetchall():
+            compact_existing = re.sub(r"[\s\.\-_]", "", (parked_row["plate_number"] or "").upper())
+            if compact_existing == compact_new:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Xe biển số {parked_row['plate_number']} hiện ĐANG ĐỖ TRONG BÃI (vào lúc {parked_row['checkin_time']}). Không thể check-in trùng 2 lần!"
+                )
+
+        # Kiểm tra 2: Bãi xe đã đạt giới hạn sức chứa tối đa chưa
+        cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED'")
+        current_parked = cur.fetchone()[0]
+        total_cap_check = 500
+        cur.execute("SELECT total_capacity FROM parking_lots WHERE lot_code = 'LOT-A'")
+        lot_check = cur.fetchone()
+        if lot_check:
+            total_cap_check = lot_check["total_capacity"]
+
+        if current_parked >= total_cap_check:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bãi xe đã ĐẦY SỨC CHỨA ({current_parked}/{total_cap_check} xe)! Không thể tiếp nhận thêm phương tiện vào bãi."
+            )
+
         cur.execute(
             """
             INSERT INTO parking_sessions (
@@ -395,6 +410,8 @@ async def confirm_checkin_session(
                 "available_spots": max(0, total_cap - parked_count),
             },
         }
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Lỗi khi lưu lượt check-in: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Lỗi cơ sở dữ liệu khi ghi nhận xe vào bãi: {exc}")
@@ -504,22 +521,3 @@ async def update_checkin_session(
     db.commit()
 
     return {"success": True, "message": f"Đã cập nhật biển số thành: {clean_plate}", "plate": clean_plate}
-
-
-@router.delete("/api/checkin/sessions/{session_id}")
-async def delete_checkin_session(
-    session_id: int,
-    db: sqlite3.Connection = Depends(get_db),
-):
-    """Xóa lượt xe vừa check-in nếu nhân viên bấm nhầm hoặc phát hiện sai sót."""
-    cur = db.cursor()
-    cur.execute("SELECT id, plate_number FROM parking_sessions WHERE id = ?", (session_id,))
-    row = cur.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Không tìm thấy lượt xe cần xóa")
-
-    plate = row["plate_number"]
-    cur.execute("DELETE FROM parking_sessions WHERE id = ?", (session_id,))
-    db.commit()
-
-    return {"success": True, "message": f"Đã xóa lượt xe biển số {plate}", "session_id": session_id}

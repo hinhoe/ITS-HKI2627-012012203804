@@ -192,27 +192,6 @@ async def get_parking_history(
         elif re.match(r"^\d{4}$", date_filter):
             if not checkout_date.startswith(date_filter):
                 continue
-        elif date_filter.startswith("date:"):
-            target_date = date_filter.replace("date:", "").strip()
-            if checkout_date != target_date:
-                continue
-        elif re.match(r"^\d{4}-\d{2}-\d{2}$", date_filter):
-            if checkout_date != date_filter:
-                continue
-        elif date_filter.startswith("month:"):
-            target_month = date_filter.replace("month:", "").strip()
-            if not checkout_date.startswith(target_month):
-                continue
-        elif re.match(r"^\d{4}-\d{2}$", date_filter):
-            if not checkout_date.startswith(date_filter):
-                continue
-        elif date_filter.startswith("year:"):
-            target_year = date_filter.replace("year:", "").strip()
-            if not checkout_date.startswith(target_year):
-                continue
-        elif re.match(r"^\d{4}$", date_filter):
-            if not checkout_date.startswith(date_filter):
-                continue
 
         # Tính toán thông tin hiển thị
         duration_text, dur_min = compute_duration_text(r["checkin_time"], r["checkout_time"])
@@ -603,81 +582,3 @@ async def export_parking_history_excel(
             "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
-
-
-class UpdateHistoryPayload(BaseModel):
-    plate_number: str
-    vehicle_type: Optional[str] = None
-
-
-@router.put("/api/history/{session_id}")
-async def update_history_session(
-    session_id: int,
-    payload: UpdateHistoryPayload,
-    db: sqlite3.Connection = Depends(get_db),
-):
-    """
-    Sửa biển số xe hoặc loại xe trong lịch sử nếu bị nhập sai.
-    """
-    clean_plate = payload.plate_number.strip().upper()
-    if not clean_plate:
-        raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
-
-    cur = db.cursor()
-    cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))
-    row = cur.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi lịch sử cần sửa")
-
-    if payload.vehicle_type:
-        cur.execute(
-            """
-            UPDATE parking_sessions
-            SET plate_number = ?, vehicle_type = ?
-            WHERE id = ?
-            """,
-            (clean_plate, payload.vehicle_type, session_id),
-        )
-    else:
-        cur.execute(
-            """
-            UPDATE parking_sessions
-            SET plate_number = ?
-            WHERE id = ?
-            """,
-            (clean_plate, session_id),
-        )
-    db.commit()
-
-    return {
-        "success": True,
-        "message": f"Đã sửa thành công biển số thành: {clean_plate}",
-        "session_id": session_id,
-        "plate_number": clean_plate,
-        "vehicle_type": payload.vehicle_type,
-    }
-
-
-@router.delete("/api/history/{session_id}")
-async def delete_history_session(
-    session_id: int,
-    db: sqlite3.Connection = Depends(get_db),
-):
-    """
-    Xóa bản ghi lịch sử gửi xe bị sai hoặc không hợp lệ.
-    """
-    cur = db.cursor()
-    cur.execute("SELECT id, plate_number FROM parking_sessions WHERE id = ?", (session_id,))
-    row = cur.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi cần xóa")
-
-    plate = row["plate_number"]
-    cur.execute("DELETE FROM parking_sessions WHERE id = ?", (session_id,))
-    db.commit()
-
-    return {
-        "success": True,
-        "message": f"Đã xóa thành công bản ghi lịch sử xe {plate}",
-        "session_id": session_id,
-    }

@@ -171,6 +171,15 @@ async def process_checkout_recognition(
     # Cắt biển số thứ nhất
     bbox = detection.boxes[0]
     crop_img = crop_plate(image, bbox, pad_ratio=settings.CROP_PAD_RATIO)
+    if crop_img is None:
+        return {
+            "success": False,
+            "status": "not_detected",
+            "message": "Vùng biển số quá nhỏ hoặc sát mép ảnh, không thể cắt rõ để nhận diện!",
+            "original_image_url": orig_url,
+            "plates": [],
+        }
+
     is_valid, reason = validate_crop(crop_img)
 
     crop_filename = f"{request_id}_crop_0.jpg"
@@ -188,7 +197,12 @@ async def process_checkout_recognition(
         detected_plate = normalize_plate_spacing(raw_plate)
         raw_vtype = rec_result.vehicle_type.value if hasattr(rec_result.vehicle_type, "value") else str(rec_result.vehicle_type)
         vtype = "Xe máy" if raw_vtype == "motorbike" else "Ô tô"
-        ocr_conf = rec_result.warnings and 85.0 or 99.5
+        if rec_result.status == RecognitionStatus.UNREADABLE or not rec_result.plate_number:
+            ocr_conf = 0.0
+        elif rec_result.status == RecognitionStatus.NEEDS_REVIEW or rec_result.warnings:
+            ocr_conf = 78.0
+        else:
+            ocr_conf = 99.5
     except Exception as exc:
         logger.error("[%s] Lỗi nhận diện OCR xe ra: %s", request_id, exc)
         detected_plate = "Chưa rõ"
@@ -199,27 +213,7 @@ async def process_checkout_recognition(
     # 4. Tự động đối soát CSDL với các phiên xe đang đỗ (status = 'PARKED')
     now = datetime.now()
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
-
-    compact_detected = re.sub(r"[\s\-\.]", "", detected_plate.upper())
-    cur = db.cursor()
-
-    # Truy vấn phiên xe đang đỗ gần nhất khớp biển số
-    cur.execute(
-        """
-        SELECT id, session_code, plate_number, vehicle_type, checkin_time, checkin_image_url, checkin_crop_url, staff_checkin
-        FROM parking_sessions
-        WHERE status = 'PARKED'
-        ORDER BY checkin_time DESC
-        """
-    )
-    active_sessions = cur.fetchall()
-
-    matched_session = None
-    for sess in active_sessions:
-        compact_db = re.sub(r"[\s\-\.]", "", sess["plate_number"].upper())
-        if compact_db == compact_detected or (len(compact_detected) >= 6 and compact_detected in compact_db):
-            matched_session = sess
-            break
+    matched_session = find_active_parked_session(db, detected_plate)
 
     total_time_ms = round((time.perf_counter() - start_t) * 1000, 1)
 
@@ -301,6 +295,99 @@ async def process_checkout_recognition(
         }
 
 
+def find_active_parked_session(db: sqlite3.Connection, clean_plate: str) -> Optional[sqlite3.Row]:
+    """Tìm phiên đang gửi (status = 'PARKED') khớp biển số đã chuẩn hóa."""
+    compact_target = re.sub(r"[\s\-\.]", "", clean_plate.upper())
+    if not compact_target or len(compact_target) < 4:
+        return None
+
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT id, session_code, plate_number, vehicle_type, checkin_time, checkin_image_url, checkin_crop_url, staff_checkin
+        FROM parking_sessions
+        WHERE status = 'PARKED'
+        ORDER BY checkin_time DESC, id DESC
+        """
+    )
+    for sess in cur.fetchall():
+        compact_db = re.sub(r"[\s\-\.]", "", (sess["plate_number"] or "").upper())
+        if compact_db == compact_target or (len(compact_target) >= 6 and compact_target in compact_db):
+            return sess
+    return None
+
+
+@router.get("/api/checkout/lookup")
+async def lookup_checkout_session(
+    plate: str,
+    vehicle_type: Optional[str] = None,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """
+    Đối soát lại thông tin lượt vào & tính lại phí theo thời gian thực khi nhân viên sửa tay biển số hoặc đổi loại xe.
+    """
+    clean_plate = plate.strip().upper()
+    now = datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    matched_session = find_active_parked_session(db, clean_plate)
+    if matched_session:
+        checkin_time_str = matched_session["checkin_time"]
+        try:
+            checkin_dt = datetime.strptime(checkin_time_str, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            checkin_dt = now
+
+        diff_seconds = max(60, int((now - checkin_dt).total_seconds()))
+        duration_minutes = diff_seconds // 60
+        hours = duration_minutes // 60
+        minutes = duration_minutes % 60
+        duration_display = f"{hours} giờ {minutes:02d} phút" if hours > 0 else f"{minutes} phút"
+
+        session_vtype = vehicle_type or matched_session["vehicle_type"] or "Ô tô"
+        fee_type, fee_amount = calculate_parking_fee(db, session_vtype, checkin_dt, now)
+
+        return {
+            "matched": True,
+            "checkin_info": {
+                "session_id": matched_session["id"],
+                "session_code": matched_session["session_code"],
+                "plate_number": matched_session["plate_number"],
+                "vehicle_type": session_vtype,
+                "checkin_time": checkin_time_str,
+                "checkin_crop_url": matched_session["checkin_crop_url"],
+                "checkout_time": now_str,
+                "duration_display": duration_display,
+                "duration_minutes": duration_minutes,
+                "fee_type": fee_type,
+                "fee_amount": fee_amount,
+                "fee_display": f"{fee_amount:,.0f} VNĐ".replace(",", "."),
+                "fee_display_table": f"{fee_amount:,.0f} đ".replace(",", "."),
+            },
+        }
+
+    fallback_vtype = vehicle_type or "Ô tô"
+    fee_type, default_fee = calculate_parking_fee(db, fallback_vtype, now, now)
+    return {
+        "matched": False,
+        "checkin_info": {
+            "session_id": None,
+            "session_code": f"SES-OUT-{now.strftime('%Y%m%d%H%M%S')}",
+            "plate_number": clean_plate,
+            "vehicle_type": fallback_vtype,
+            "checkin_time": "Không xác định",
+            "checkin_crop_url": None,
+            "checkout_time": now_str,
+            "duration_display": "--",
+            "duration_minutes": 0,
+            "fee_type": f"Vãng lai / {fee_type}",
+            "fee_amount": default_fee,
+            "fee_display": f"{default_fee:,.0f} VNĐ".replace(",", "."),
+            "fee_display_table": f"{default_fee:,.0f} đ".replace(",", "."),
+        },
+    }
+
+
 @router.post("/api/checkout/confirm")
 async def confirm_checkout_session(
     payload: CheckoutConfirmRequest,
@@ -308,10 +395,9 @@ async def confirm_checkout_session(
 ):
     """
     Nghiệp vụ khi nhân viên nhấn "Ghi nhận xe ra bãi (Mở Barrier)":
-    1. Cập nhật phiên gửi trong CSDL thành `status = 'COMPLETED'`, `checkout_time = now`.
-    2. Cập nhật số tiền phí và trạng thái thanh toán `payment_status = 'PAID'`.
-    3. Giảm số lượng xe đang trong bãi.
-    4. Trả về thông tin hoàn tất để giao diện mở barrier và cập nhật bảng lịch sử xe ra.
+    1. Đối soát lại phiên gửi PARKED khớp biển số cuối cùng (tránh sai lệch nếu nhân viên vừa sửa tay biển số).
+    2. Tự tính lại chính xác `duration_minutes` và `total_fee` trên Backend theo quy tắc bảng giá CSDL.
+    3. Cập nhật phiên gửi thành `COMPLETED`, lưu đầy đủ ảnh vào/ra và giảm sức chứa bãi xe.
     """
     clean_plate = payload.plate_number.strip().upper()
     is_valid, error_msg = validate_vietnamese_plate(clean_plate)
@@ -321,35 +407,53 @@ async def confirm_checkout_session(
             detail=f"Biển số xe không hợp lệ: {error_msg} Yêu cầu nhân viên nhập lại, không thể mở barrier!"
         )
 
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
     cur = db.cursor()
 
     try:
-        session_id = payload.session_id
+        session_row = None
+        compact_plate = re.sub(r"[\s\-\.]", "", clean_plate)
 
-        # Nếu chưa có session_id, tìm kiếm phiên PARKED gần nhất khớp biển số này
-        if not session_id:
-            compact_plate = re.sub(r"[\s\-\.]", "", clean_plate)
+        # Kiểm tra session_id truyền lên có khớp với biển số cuối cùng (sau sửa tay) không
+        if payload.session_id:
             cur.execute(
-                """
-                SELECT id, plate_number FROM parking_sessions
-                WHERE status = 'PARKED'
-                ORDER BY checkin_time DESC
-                """
+                "SELECT id, plate_number, vehicle_type, checkin_time, status FROM parking_sessions WHERE id = ?",
+                (payload.session_id,),
             )
-            for cand in cur.fetchall():
-                cand_compact = re.sub(r"[\s\-\.]", "", cand["plate_number"].upper())
+            cand = cur.fetchone()
+            if cand and cand["status"] == "PARKED":
+                cand_compact = re.sub(r"[\s\-\.]", "", (cand["plate_number"] or "").upper())
                 if cand_compact == compact_plate or (len(compact_plate) >= 6 and compact_plate in cand_compact):
-                    session_id = cand["id"]
-                    break
+                    session_row = cand
 
-        # Nếu có session_id tìm thấy, cập nhật phiên đó thành COMPLETED
-        if session_id:
+        # Nếu chưa có session_row khớp, truy vấn lại theo biển số cuối cùng trong các xe đang gửi
+        if not session_row:
+            session_row = find_active_parked_session(db, clean_plate)
+
+        session_id = session_row["id"] if session_row else None
+        final_fee = payload.total_fee
+        duration_minutes = 0
+
+        if session_id and session_row:
+            final_vtype = payload.vehicle_type or session_row["vehicle_type"] or "Ô tô"
+            try:
+                checkin_dt = datetime.strptime(session_row["checkin_time"], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                checkin_dt = now
+
+            diff_seconds = max(60, int((now - checkin_dt).total_seconds()))
+            duration_minutes = diff_seconds // 60
+            _, final_fee = calculate_parking_fee(db, final_vtype, checkin_dt, now)
+
             cur.execute(
                 """
                 UPDATE parking_sessions
                 SET status = 'COMPLETED',
+                    vehicle_type = ?,
                     checkout_time = ?,
+                    duration_minutes = ?,
+                    checkout_image_url = COALESCE(?, checkout_image_url),
                     checkout_crop_url = ?,
                     total_fee = ?,
                     payment_status = ?,
@@ -357,17 +461,21 @@ async def confirm_checkout_session(
                 WHERE id = ?
                 """,
                 (
+                    final_vtype,
                     now_str,
+                    duration_minutes,
+                    payload.checkout_image_url,
                     payload.checkout_crop_url,
-                    payload.total_fee,
+                    final_fee,
                     payload.payment_status or "PAID",
                     payload.staff_checkout or "Trần Bảo Anh",
                     session_id,
                 ),
             )
         else:
-            # Nếu là xe vãng lai chưa có session_id, tạo một phiên hoàn tất mới
-            date_code = datetime.now().strftime("%Y%m%d")
+            # Nếu là xe vãng lai chưa có session_id, tính phí chuẩn và tạo phiên hoàn tất mới
+            _, final_fee = calculate_parking_fee(db, payload.vehicle_type, now, now)
+            date_code = now.strftime("%Y%m%d")
             random_suffix = uuid.uuid4().hex[:6].upper()
             session_code = f"SES-COMP-{date_code}-{random_suffix}"
 
@@ -375,9 +483,10 @@ async def confirm_checkout_session(
                 """
                 INSERT INTO parking_sessions (
                     session_code, plate_number, vehicle_type, checkin_time, checkout_time,
-                    checkout_crop_url, total_fee, payment_status, status, staff_checkout
+                    duration_minutes, checkout_image_url, checkout_crop_url,
+                    total_fee, payment_status, status, staff_checkout
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED', ?)
+                VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'COMPLETED', ?)
                 """,
                 (
                     session_code,
@@ -385,8 +494,9 @@ async def confirm_checkout_session(
                     payload.vehicle_type,
                     now_str,
                     now_str,
+                    payload.checkout_image_url,
                     payload.checkout_crop_url,
-                    payload.total_fee,
+                    final_fee,
                     payload.payment_status or "PAID",
                     payload.staff_checkout or "Trần Bảo Anh",
                 ),
@@ -405,7 +515,7 @@ async def confirm_checkout_session(
         if lot_row:
             total_cap = lot_row["total_capacity"]
 
-        fee_display_table = f"{payload.total_fee:,.0f} đ".replace(",", ".")
+        fee_display_table = f"{final_fee:,.0f} đ".replace(",", ".")
 
         return {
             "success": True,
@@ -415,7 +525,8 @@ async def confirm_checkout_session(
                 "plate_number": clean_plate,
                 "vehicle_type": payload.vehicle_type,
                 "checkout_time": now_str,
-                "total_fee": payload.total_fee,
+                "duration_minutes": duration_minutes,
+                "total_fee": final_fee,
                 "fee_display_table": fee_display_table,
                 "status": "Hoàn tất & Đã mở barrier",
             },
@@ -425,6 +536,8 @@ async def confirm_checkout_session(
                 "available_spots": max(0, total_cap - parked_count),
             },
         }
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Lỗi khi ghi nhận xe ra: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Lỗi cơ sở dữ liệu khi ghi nhận xe ra: {exc}")

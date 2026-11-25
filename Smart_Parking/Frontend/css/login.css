@@ -295,3 +295,24 @@ body {
   display: block;
   flex-shrink: 0;
 }
+
+.login-error-box {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+  animation: loginShake 0.35s ease-in-out;
+}
+
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}

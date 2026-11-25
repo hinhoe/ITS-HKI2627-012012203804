@@ -54,7 +54,15 @@ def init_db() -> None:
                 conn.executescript(schema_sql)
                 logger.info("Đã khởi tạo cấu trúc bảng CSDL từ %s", SCHEMA_FILE.name)
 
-            # 2. Đọc và thực thi dữ liệu mẫu
+            # 2. Đảm bảo cột password_hash tồn tại trên CSDL cũ (Migration an toàn)
+            cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
+            if "password_hash" not in cols:
+                conn.execute(
+                    "ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'"
+                )
+                logger.info("Đã bổ sung cột password_hash cho bảng users")
+
+            # 3. Đọc và thực thi dữ liệu mẫu
             if SAMPLE_FILE.exists():
                 sample_sql = SAMPLE_FILE.read_text(encoding="utf-8")
                 conn.executescript(sample_sql)

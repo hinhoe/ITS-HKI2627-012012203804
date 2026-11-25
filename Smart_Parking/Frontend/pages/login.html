@@ -36,7 +36,8 @@
     </header>
 
     <!-- Biểu mẫu nhập thông tin đăng nhập -->
-    <form class="login-form" action="Employee/checkin.html" method="GET">
+    <form class="login-form" id="loginForm" novalidate>
+      <div class="login-error-box" id="loginErrorBox" style="display: none;"></div>
       
       <!-- Ô nhập Tên đăng nhập -->
       <div class="form-group">

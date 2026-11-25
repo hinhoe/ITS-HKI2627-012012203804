@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
       feeDisplay: '0 VNĐ',
       feeDisplayTable: '0 đ',
       cropImageUrl: null,
+      originalImageUrl: null,
       annotatedImageUrl: null,
       isProcessed: false
     },
@@ -250,6 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
           state.currentCheckout.type = determineVehicleType(state.currentCheckout.type, val);
           if (resultPlateText) resultPlateText.textContent = val;
           renderVehicleType(state.currentCheckout.type);
+          // Tự động đối soát lại DB & tính lại phí theo biển số vừa sửa
+          const check = validateVietnamesePlate(val);
+          if (check.valid) {
+            lookupCheckoutByPlate(val, state.currentCheckout.type);
+          }
         }
         plateManualInput.style.display = 'none';
       }
@@ -260,6 +266,49 @@ document.addEventListener('DOMContentLoaded', () => {
         btnToggleEditPlate.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
         btnToggleEditPlate.title = 'Nhập / Sửa biển số bằng tay';
       }
+    }
+  }
+
+  // Hàm gọi API đối soát lại lượt xe vào & tiền phí khi nhân viên sửa tay biển số hoặc đổi loại xe
+  async function lookupCheckoutByPlate(plate, vehicleType) {
+    try {
+      const apiBase = getApiBase();
+      const params = new URLSearchParams({ plate });
+      if (vehicleType) params.append('vehicle_type', vehicleType);
+
+      const res = await fetch(`${apiBase}/api/checkout/lookup?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const chk = data.checkin_info || {};
+
+      state.currentCheckout.sessionId = chk.session_id || null;
+      state.currentCheckout.sessionCode = chk.session_code || null;
+      state.currentCheckout.checkinTime = chk.checkin_time || 'Không xác định';
+      state.currentCheckout.checkoutTime = chk.checkout_time || formatDateTime();
+      state.currentCheckout.duration = chk.duration_display || '--';
+      state.currentCheckout.durationMinutes = chk.duration_minutes || 0;
+      state.currentCheckout.feeType = chk.fee_type || 'Ban ngày';
+      state.currentCheckout.feeAmount = chk.fee_amount || 0;
+      state.currentCheckout.feeDisplay = chk.fee_display || '0 VNĐ';
+      state.currentCheckout.feeDisplayTable = chk.fee_display_table || '0 đ';
+
+      if (timeInText) timeInText.textContent = state.currentCheckout.checkinTime;
+      if (timeOutText) timeOutText.textContent = state.currentCheckout.checkoutTime;
+      if (durationText) durationText.textContent = state.currentCheckout.duration;
+      if (feeTypeText) feeTypeText.textContent = state.currentCheckout.feeType;
+      if (feeAmountText) feeAmountText.textContent = state.currentCheckout.feeDisplay;
+
+      if (aiStatusPill) {
+        if (data.matched) {
+          aiStatusPill.className = 'badge-status-pill success';
+          aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Đối soát khớp</span>';
+        } else {
+          aiStatusPill.className = 'badge-status-pill warning';
+          aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Xe vãng lai</span>';
+        }
+      }
+    } catch (err) {
+      console.warn('Không thể đối soát lại lượt gửi:', err);
     }
   }
 
@@ -280,6 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resultPlateText) {
     resultPlateText.addEventListener('click', () => toggleManualEdit(true, true));
   }
+
+  let lookupDebounceTimer = null;
 
   if (plateManualInput) {
     plateManualInput.addEventListener('input', (e) => {
@@ -313,6 +364,15 @@ document.addEventListener('DOMContentLoaded', () => {
             manualEntryHintText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#10b981; margin-right:4px;"></i> Biển số hợp lệ (${val}) — Sẵn sàng tính phí và mở barrier!`;
           }
           if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
+
+          // Tự động tra cứu lại thông tin xe đang đỗ & tiền phí khi nhập xong biển số hợp lệ
+          const detectedVtype = determineVehicleType(null, val);
+          state.currentCheckout.type = detectedVtype;
+          renderVehicleType(detectedVtype);
+          clearTimeout(lookupDebounceTimer);
+          lookupDebounceTimer = setTimeout(() => {
+            lookupCheckoutByPlate(val, detectedVtype);
+          }, 300);
         }
       } else {
         if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
@@ -348,8 +408,9 @@ document.addEventListener('DOMContentLoaded', () => {
       state.currentCheckout.type = nextType;
       renderVehicleType(nextType);
 
-      // Cập nhật lại ước tính giá nếu chưa đối soát
-      if (!state.currentCheckout.sessionId) {
+      if (state.currentCheckout.plate && state.currentCheckout.plate !== '---') {
+        lookupCheckoutByPlate(state.currentCheckout.plate, nextType);
+      } else {
         const baseFee = (nextType === 'Ô tô') ? 25000 : 5000;
         state.currentCheckout.feeAmount = baseFee;
         state.currentCheckout.feeDisplay = `${formatPrice(baseFee)} VNĐ`;
@@ -413,7 +474,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (fileStatusText) fileStatusText.textContent = 'Đang xem trực tiếp từ camera Cổng Ra';
     } catch (err) {
       console.error('Không thể truy cập Camera:', err);
-      alert('Không thể mở camera. Vui lòng cấp quyền truy cập webcam trên trình duyệt.');
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'KHÔNG THỂ MỞ CAMERA',
+          message: 'Không thể mở camera cổng ra. Vui lòng cấp quyền truy cập webcam trên trình duyệt.',
+          type: 'warning'
+        });
+      } else {
+        alert('Không thể mở camera. Vui lòng cấp quyền truy cập webcam trên trình duyệt.');
+      }
     }
   }
 
@@ -541,13 +610,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const snap = await captureWebcamSnapshot();
       stopWebcam();
       if (!snap) {
-        alert('Không thể chụp ảnh từ Camera. Vui lòng thử lại!');
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'LỖI CHỤP ẢNH',
+            message: 'Không thể chụp ảnh từ Camera. Vui lòng thử lại!',
+            type: 'warning'
+          });
+        } else {
+          alert('Không thể chụp ảnh từ Camera. Vui lòng thử lại!');
+        }
         return;
       }
     }
 
     if (!state.currentImageFile) {
-      alert('Vui lòng chọn ảnh xe ra hoặc bật Camera để chụp trước khi nhận diện!');
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'CHƯA CÓ ẢNH XE RA',
+          message: 'Vui lòng chọn ảnh xe ra từ máy tính hoặc bật Camera để chụp trước khi nhận diện!',
+          type: 'warning'
+        });
+      } else {
+        alert('Vui lòng chọn ảnh xe ra hoặc bật Camera để chụp trước khi nhận diện!');
+      }
       return;
     }
 
@@ -580,10 +665,20 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Kết quả nhận diện xe ra:', res);
 
       if (!res.success && res.status === 'not_detected') {
-        alert(res.message || 'Không phát hiện thấy biển số xe!');
         if (aiStatusPill) {
           aiStatusPill.className = 'badge-status-pill error';
           aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Không thấy biển số</span>';
+        }
+        toggleManualEdit(true, true);
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'KHÔNG PHÁT HIỆN BIỂN SỐ',
+            message: res.message || 'Không phát hiện thấy biển số xe tại cổng ra! Bạn có thể chụp lại góc rõ hơn hoặc nhập tay biển số để tính phí.',
+            type: 'warning',
+            confirmText: 'Nhập tay ngay'
+          });
+        } else {
+          alert(res.message || 'Không phát hiện thấy biển số xe!');
         }
         return;
       }
@@ -665,9 +760,15 @@ document.addEventListener('DOMContentLoaded', () => {
         feeDisplay: feeDisplay,
         feeDisplayTable: feeDisplayTable,
         cropImageUrl: res.crop_image_url,
+        originalImageUrl: res.original_image_url,
         annotatedImageUrl: res.annotated_image_url,
         isProcessed: false
       };
+
+      // Tự động bật sửa tay nếu độ tin cậy OCR thấp
+      if (confNum < 90.0) {
+        toggleManualEdit(true, true);
+      }
 
       // Đổi badge trạng thái thành công
       if (aiStatusPill) {
@@ -685,10 +786,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Lỗi khi gọi API Check-out recognize:', err);
-      alert(`Nhận diện thất bại: ${err.message}`);
       if (aiStatusPill) {
         aiStatusPill.className = 'badge-status-pill error';
         aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Lỗi kết nối</span>';
+      }
+      toggleManualEdit(true, true);
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'NHẬN DIỆN THẤT BẠI',
+          message: `${err.message}`,
+          hint: 'Hệ thống đã tự động mở chế độ nhập tay biển số để bạn xử lý cho xe ra.',
+          type: 'error',
+          confirmText: 'Nhập tay ngay'
+        });
+      } else {
+        alert(`Nhận diện thất bại: ${err.message}`);
       }
     } finally {
       btnRecognize.disabled = false;
@@ -784,14 +896,16 @@ document.addEventListener('DOMContentLoaded', () => {
       btnConfirmCheckout.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang mở barrier...</span>';
 
       try {
+        const staffName = window.getCurrentStaffName ? window.getCurrentStaffName() : 'Trần Bảo Anh';
         const payload = {
           session_id: chk.sessionId,
           plate_number: chk.plate,
           vehicle_type: chk.type,
+          checkout_image_url: chk.originalImageUrl || null,
           checkout_crop_url: chk.cropImageUrl,
           total_fee: chk.feeAmount,
           payment_status: 'PAID',
-          staff_checkout: 'Trần Bảo Anh'
+          staff_checkout: staffName
         };
 
         const apiBase = getApiBase();
@@ -810,6 +924,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Ghi nhận Checkout thành công:', data);
 
         chk.isProcessed = true;
+
+        // Đồng bộ lại tiền phí thực tế Backend đã tính toán từ DB
+        const finalFeeTable = data.session?.fee_display_table || chk.feeDisplayTable;
+        if (data.session?.total_fee !== undefined && feeAmountText) {
+          feeAmountText.textContent = `${formatPrice(data.session.total_fee)} VNĐ`;
+        }
 
         // Cập nhật trạng thái thanh toán trên thẻ phí
         if (feeStatusBadge) {
@@ -832,8 +952,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const newRecord = {
           plate: chk.plate,
           type: chk.type,
-          time: chk.checkoutTime,
-          fee: chk.feeDisplayTable,
+          time: data.session?.checkout_time || chk.checkoutTime,
+          fee: finalFeeTable,
           status: 'Hoàn tất & Đã mở barrier'
         };
         state.checkoutHistory.unshift(newRecord);

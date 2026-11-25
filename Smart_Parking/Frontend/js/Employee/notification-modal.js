@@ -347,4 +347,42 @@
     }, duration);
   };
 
+  /**
+   * Lấy tên nhân viên đang đăng nhập từ localStorage (mặc định: Trần Bảo Anh)
+   */
+  window.getCurrentStaffName = function () {
+    try {
+      const raw = localStorage.getItem('parktech_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.full_name) return u.full_name;
+      }
+    } catch (e) { /* ignore */ }
+    return 'Trần Bảo Anh';
+  };
+
+  // Tự động đồng bộ tên & vai trò nhân viên lên thanh Header và xử lý Đăng xuất
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const raw = localStorage.getItem('parktech_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.full_name) {
+          document.querySelectorAll('.user-name').forEach(el => {
+            el.textContent = u.full_name;
+          });
+          document.querySelectorAll('.user-role').forEach(el => {
+            el.textContent = u.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+          });
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    document.querySelectorAll('.dropdown-item.logout').forEach(link => {
+      link.addEventListener('click', () => {
+        localStorage.removeItem('parktech_user');
+      });
+    });
+  });
+
 })();

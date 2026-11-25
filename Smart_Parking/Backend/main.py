@@ -24,6 +24,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from AI.detect import load_model
+from Backend.auth import router as auth_router
 from Backend.config import settings
 from Backend.database.connection import init_db
 from Backend.Employee.checkin import router as checkin_router
@@ -80,6 +81,9 @@ app.mount("/results", StaticFiles(directory=str(settings.RESULTS_DIR)), name="re
 
 if settings.FRONTEND_DIR.exists():
     app.mount("/Frontend", StaticFiles(directory=str(settings.FRONTEND_DIR)), name="frontend")
+
+# GẮN CÁC MODULE NGHIỆP VỤ HỆ THỐNG
+app.include_router(auth_router)
 
 # GẮN CÁC MODULE NGHIỆP VỤ NHÂN VIÊN (EMPLOYEE ROUTERS)
 # 1. Nghiệp vụ Check-in (Ghi nhận xe vào bãi) -> Quản lý bởi Backend/Employee/checkin.py

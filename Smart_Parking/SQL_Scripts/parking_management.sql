@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS pricing_rules (
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL DEFAULT '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
     full_name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'employee', -- 'admin' hoặc 'employee'
     is_active INTEGER DEFAULT 1,
