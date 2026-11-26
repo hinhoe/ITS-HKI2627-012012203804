@@ -6,7 +6,7 @@
   <title>Ghi nhận xe vào bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt theo chuẩn dự án -->
-  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=18.0">
+  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=19.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter -->
@@ -138,70 +138,110 @@
     <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
 
-      <!-- BỐ CỤC KHUNG CHÍNH 2 HÀNG CHUẨN XÁC THEO ẢNH MẪU -->
+      <!-- BỐ CỤC KHUNG CHÍNH: KHỐI TRÁI (2 CAMERA + TOOLBAR) CĂN BẰNG CHIỀU CAO KHỐI KẾT QUẢ BÊN PHẢI -->
       <div class="workspace-grid-layout">
-        
-        <!-- Hàng 1 - Cột 1: Ảnh Phương Tiện Ban Đầu -->
-        <article class="pipeline-card col-original">
-          <div class="card-header-flex">
-            <div class="card-title-group">
-              <span class="step-number">1</span>
-              <span>Ảnh Phương Tiện Ban Đầu</span>
-            </div>
-            <span class="card-badge-info">Cổng CAM 01</span>
-          </div>
-          <div class="viewport-box" id="viewportOriginalBox">
-            <div class="empty-viewport-placeholder" id="emptyViewportPlaceholder">
-              <i class="fa-regular fa-image fa-2x"></i>
-              <span>Chưa có ảnh phương tiện</span>
-              <small>Bấm "Chọn ảnh từ máy" hoặc mở Camera</small>
-            </div>
-            <img id="vehiclePreviewImg" class="viewport-img" alt="Ảnh phương tiện vào bãi" style="display: none;">
-            <video id="webcamVideo" class="viewport-img" autoplay playsinline muted style="display: none;"></video>
-            <canvas id="captureCanvas" style="display: none;"></canvas>
 
-            <!-- Khung căn chỉnh đè lên Camera -->
-            <div class="webcam-live-controls" id="webcamLiveControls" style="display: none;">
-              <div class="camera-aim-box">
-                <div class="aim-corner top-left"></div>
-                <div class="aim-corner top-right"></div>
-                <div class="aim-corner bottom-left"></div>
-                <div class="aim-corner bottom-right"></div>
-                <span class="aim-label">ĐẶT BIỂN SỐ VÀO KHUNG NÀY</span>
+        <!-- Khung bao bọc 2 khung Camera & Thanh công cụ -->
+        <section class="camera-workspace-panel">
+          <div class="camera-cards-row">
+            <!-- Cột 1: Ảnh Phương Tiện Ban Đầu -->
+            <article class="pipeline-card col-original">
+              <div class="card-header-flex">
+                <div class="card-title-group">
+                  <span class="step-number">1</span>
+                  <span>Ảnh Phương Tiện Ban Đầu</span>
+                </div>
+                <span class="card-badge-info">Cổng CAM 01</span>
               </div>
-            </div>
+              <div class="viewport-box" id="viewportOriginalBox">
+                <div class="empty-viewport-placeholder" id="emptyViewportPlaceholder">
+                  <i class="fa-regular fa-image fa-2x"></i>
+                  <span>Chưa có ảnh phương tiện</span>
+                  <small>Bấm "Chọn ảnh từ máy" hoặc mở Camera</small>
+                </div>
+                <img id="vehiclePreviewImg" class="viewport-img" alt="Ảnh phương tiện vào bãi" style="display: none;">
+                <video id="webcamVideo" class="viewport-img" autoplay playsinline muted style="display: none;"></video>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
 
-            <div class="viewport-tag">
-              <span class="live-dot" id="camStatusDot"></span>
-              <span id="camStatusText">CAM 01 -- CỔNG VÀO</span>
-            </div>
-          </div>
-        </article>
+                <!-- Khung căn chỉnh đè lên Camera -->
+                <div class="webcam-live-controls" id="webcamLiveControls" style="display: none;">
+                  <div class="camera-aim-box">
+                    <div class="aim-corner top-left"></div>
+                    <div class="aim-corner top-right"></div>
+                    <div class="aim-corner bottom-left"></div>
+                    <div class="aim-corner bottom-right"></div>
+                    <span class="aim-label">ĐẶT BIỂN SỐ VÀO KHUNG NÀY</span>
+                  </div>
+                </div>
 
-        <!-- Hàng 1 - Cột 2: Khoanh Vùng Biển Số -->
-        <article class="pipeline-card col-yolo">
-          <div class="card-header-flex">
-            <div class="card-title-group">
-              <span class="step-number">2</span>
-              <span>Khoanh Vùng Biển Số</span>
-            </div>
-            <span class="card-badge-info" id="yoloModelBadge">Tự động phát hiện</span>
-          </div>
-          <div class="viewport-box" id="viewportAnnotatedBox">
-            <div class="empty-viewport-placeholder" id="emptyAnnotatedPlaceholder">
-              <i class="fa-solid fa-crosshairs fa-2x"></i>
-              <span>Vùng khoanh biển số</span>
-              <small>Tự động xuất hiện sau khi nhận diện</small>
-            </div>
-            <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh khoanh vùng biển số" style="display: none;">
-            <div class="viewport-tag tag-ai">
-              <i class="fa-solid fa-vector-square"></i>
-              <span>KHUNG BIỂN SỐ</span>
-            </div>
-          </div>
-        </article>
+                <div class="viewport-tag">
+                  <span class="live-dot" id="camStatusDot"></span>
+                  <span id="camStatusText">CAM 01 -- CỔNG VÀO</span>
+                </div>
+              </div>
+            </article>
 
-        <!-- Hàng 1 - Cột 3: Kết Quả Xác Thực -->
+            <!-- Cột 2: Khoanh Vùng Biển Số -->
+            <article class="pipeline-card col-yolo">
+              <div class="card-header-flex">
+                <div class="card-title-group">
+                  <span class="step-number">2</span>
+                  <span>Khoanh Vùng Biển Số</span>
+                </div>
+                <span class="card-badge-info" id="yoloModelBadge">Tự động phát hiện</span>
+              </div>
+              <div class="viewport-box" id="viewportAnnotatedBox">
+                <div class="empty-viewport-placeholder" id="emptyAnnotatedPlaceholder">
+                  <i class="fa-solid fa-crosshairs fa-2x"></i>
+                  <span>Vùng khoanh biển số</span>
+                  <small>Tự động xuất hiện sau khi nhận diện</small>
+                </div>
+                <img id="annotatedPreviewImg" class="viewport-img" alt="Ảnh khoanh vùng biển số" style="display: none;">
+                <div class="viewport-tag tag-ai">
+                  <i class="fa-solid fa-vector-square"></i>
+                  <span>KHUNG BIỂN SỐ</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Thanh công cụ tác vụ nằm gọn dưới 2 khung Camera trong cùng khung bao -->
+          <div class="toolbar-bottom-container">
+            <section class="action-toolbar-card">
+              <div class="toolbar-left">
+                <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg, image/webp" style="display: none;">
+                <button type="button" class="btn btn-secondary" id="btnSelectImage">
+                  <i class="fa-solid fa-cloud-arrow-up" style="color: #2563eb;"></i>
+                  <span>Chọn ảnh từ máy</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="btnToggleWebcam">
+                  <i class="fa-solid fa-video" style="color: #10b981;"></i>
+                  <span id="webcamBtnText">Mở Camera</span>
+                </button>
+              </div>
+
+              <div class="toolbar-center">
+                <div class="file-status-badge" id="fileStatusBadge">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <span id="fileStatusText">Sẵn sàng nhận diện phương tiện qua cổng</span>
+                </div>
+              </div>
+
+              <div class="toolbar-right" style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="btn btn-bike-ticket" id="btnBikeTicket" title="Chụp ảnh và sinh mã vé 6 chữ số cho Xe đạp / Xe đạp điện">
+                  <i class="fa-solid fa-bicycle"></i>
+                  <span>Cấp mã xe đạp (6 số)</span>
+                </button>
+                <button type="button" class="btn btn-recognize-main" id="btnRecognize">
+                  <i class="fa-solid fa-bolt"></i>
+                  <span>Nhận diện biển số</span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- Cột Phải: Kết Quả Xác Thực -->
         <article class="pipeline-card col-results results-pipeline-card">
           <div class="card-header-flex">
             <div class="card-title-group">
@@ -279,42 +319,7 @@
           </button>
         </article>
 
-        <!-- Hàng 2 - Nằm dưới Cột 1 & Cột 2: Thanh công cụ tác vụ -->
-        <div class="toolbar-bottom-container">
-          <section class="action-toolbar-card">
-            <div class="toolbar-left">
-              <input type="file" id="fileInputVehicle" accept="image/png, image/jpeg, image/webp" style="display: none;">
-              <button type="button" class="btn btn-secondary" id="btnSelectImage">
-                <i class="fa-solid fa-cloud-arrow-up" style="color: #2563eb;"></i>
-                <span>Chọn ảnh từ máy</span>
-              </button>
-              <button type="button" class="btn btn-secondary" id="btnToggleWebcam">
-                <i class="fa-solid fa-video" style="color: #10b981;"></i>
-                <span id="webcamBtnText">Mở Camera</span>
-              </button>
-            </div>
-
-            <div class="toolbar-center">
-              <div class="file-status-badge" id="fileStatusBadge">
-                <i class="fa-solid fa-circle-check"></i>
-                <span id="fileStatusText">Sẵn sàng nhận diện phương tiện qua cổng</span>
-              </div>
-            </div>
-
-            <div class="toolbar-right" style="display: flex; align-items: center; gap: 10px;">
-              <button type="button" class="btn btn-bike-ticket" id="btnBikeTicket" title="Chụp ảnh và sinh mã vé 6 chữ số cho Xe đạp / Xe đạp điện">
-                <i class="fa-solid fa-bicycle"></i>
-                <span>Cấp mã xe đạp (6 số)</span>
-              </button>
-              <button type="button" class="btn btn-recognize-main" id="btnRecognize">
-                <i class="fa-solid fa-bolt"></i>
-                <span>Nhận diện biển số</span>
-              </button>
-            </div>
-          </section>
-        </div>
-
-        <!-- Hàng 2 - Nằm dưới Cột 3: Banner Ghi nhận thành công -->
+        <!-- Hàng 2 - Banner Ghi nhận thành công -->
         <div class="banner-bottom-container">
           <div class="success-banner" id="successBanner" style="display: none;">
             <div class="success-icon-badge">
