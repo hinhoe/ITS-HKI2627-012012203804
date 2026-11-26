@@ -319,6 +319,33 @@ def find_active_parked_session(db: sqlite3.Connection, clean_plate: str) -> Opti
     return None
 
 
+@router.post("/api/checkout/upload-bike-photo")
+async def upload_bike_checkout_photo(
+    file: UploadFile = File(..., description="Ảnh chụp xe đạp / xe đạp điện tại cổng ra"),
+):
+    """
+    Lưu ảnh thực tế lúc ra của xe đạp / xe đạp điện vào uploads/ để đối soát 2 chiều với ảnh lúc vào trong Lịch sử.
+    """
+    raw_bytes = await file.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="File ảnh xe ra không hợp lệ hoặc bị rỗng.")
+
+    decode_checkout_image(file.filename or "bike_checkout.jpg", raw_bytes)
+    ext = Path(file.filename or "bike_checkout.jpg").suffix.lower()
+    if not ext or ext not in settings.ALLOWED_EXTENSIONS:
+        ext = ".jpg"
+
+    request_id = uuid.uuid4().hex[:12]
+    orig_filename = f"{request_id}_bike_out{ext}"
+    orig_path = settings.UPLOAD_DIR / orig_filename
+    orig_path.write_bytes(raw_bytes)
+
+    return {
+        "success": True,
+        "checkout_image_url": f"/uploads/{orig_filename}",
+    }
+
+
 @router.get("/api/checkout/lookup")
 async def lookup_checkout_session(
     plate: str,

@@ -549,6 +549,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (camStatusDot) camStatusDot.style.backgroundColor = '#10b981';
       if (camStatusText) camStatusText.textContent = 'CAM 02 -- CỔNG RA (LIVE)';
       if (fileStatusText) fileStatusText.textContent = 'Camera đang bật — Bấm Nhận diện';
+      if (state.currentCheckout && state.currentCheckout.type === 'Xe đạp / Xe điện') {
+        state.currentCheckout.originalImageUrl = null;
+      }
     } catch (err) {
       console.error('Không thể truy cập Camera:', err);
       if (window.showAppAlert) {
@@ -649,10 +652,39 @@ document.addEventListener('DOMContentLoaded', () => {
         fileStatusText.textContent = `Đã chọn: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
       }
 
-      // Xóa kết quả annotated cũ nếu có
-      if (annotatedPreviewImg) annotatedPreviewImg.style.display = 'none';
-      if (emptyAnnotatedPlaceholder) emptyAnnotatedPlaceholder.style.display = 'flex';
+      // Xóa kết quả annotated cũ nếu có (giữ nguyên ảnh đối chiếu lúc vào nếu đang xử lý vé xe đạp / xe điện)
+      if (state.currentCheckout && state.currentCheckout.type === 'Xe đạp / Xe điện' && state.currentCheckout.sessionId && !state.currentCheckout.isProcessed) {
+        state.currentCheckout.originalImageUrl = null;
+      } else {
+        if (annotatedPreviewImg) annotatedPreviewImg.style.display = 'none';
+        if (emptyAnnotatedPlaceholder) emptyAnnotatedPlaceholder.style.display = 'flex';
+      }
     });
+  }
+
+  // Chụp từ webcam đang mở (nếu có) và upload ảnh lúc ra cho Xe đạp / Xe điện
+  async function captureAndUploadBikeExitPhoto() {
+    if (webcamStream && (!state.currentImageFile || (webcamVideo && webcamVideo.style.display !== 'none'))) {
+      const snap = await captureWebcamSnapshot();
+      stopWebcam();
+      if (!snap) return null;
+    }
+
+    if (!state.currentImageFile) return null;
+
+    const formData = new FormData();
+    formData.append('file', state.currentImageFile);
+    const apiBase = getApiBase();
+    const res = await fetch(`${apiBase}/api/checkout/upload-bike-photo`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Không thể lưu ảnh xe đạp lúc ra.');
+    }
+    const data = await res.json();
+    return data.checkout_image_url || null;
   }
 
   if (emptyViewportPlaceholder) {
@@ -902,7 +934,21 @@ document.addEventListener('DOMContentLoaded', () => {
       btnLookupBikeTicket.disabled = true;
       btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tra cứu...</span>';
       try {
-        await lookupCheckoutByPlate(cleanCode, 'Xe đạp / Xe điện', true);
+        const matched = await lookupCheckoutByPlate(cleanCode, 'Xe đạp / Xe điện', true);
+        if (matched && state.currentCheckout) {
+          state.currentCheckout.originalImageUrl = null;
+          const hasCamOrFile = Boolean(webcamStream || state.currentImageFile);
+          if (hasCamOrFile) {
+            const exitImgUrl = await captureAndUploadBikeExitPhoto();
+            if (exitImgUrl) {
+              state.currentCheckout.originalImageUrl = exitImgUrl;
+            }
+          } else if (fileStatusText) {
+            fileStatusText.textContent = `Đã đối soát vé ${cleanCode} — Hãy mở Camera hoặc chọn ảnh xe ra`;
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi chụp/lưu ảnh xe đạp lúc ra khi tra cứu:', err);
       } finally {
         btnLookupBikeTicket.disabled = false;
         btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-bicycle"></i> <span>Tra cứu vé xe đạp (6 số)</span>';
@@ -993,6 +1039,50 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('Lượt gửi này đã được ghi nhận hoàn tất!');
         }
         return;
+      }
+
+      // Đảm bảo xe đạp / xe điện có ảnh lúc ra để lưu đầy đủ cả ảnh vào & ra trong Lịch sử
+      if (chk.type === 'Xe đạp / Xe điện' && !chk.originalImageUrl) {
+        try {
+          if (webcamStream || state.currentImageFile) {
+            btnConfirmCheckout.disabled = true;
+            btnConfirmCheckout.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang lưu ảnh xe ra...</span>';
+            const uploadedUrl = await captureAndUploadBikeExitPhoto();
+            if (uploadedUrl) {
+              chk.originalImageUrl = uploadedUrl;
+            }
+          }
+        } catch (err) {
+          btnConfirmCheckout.disabled = false;
+          btnConfirmCheckout.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Ghi nhận xe ra bãi (Mở Barrier)</span>';
+          if (window.showAppAlert) {
+            await window.showAppAlert({
+              title: 'LỖI LƯU ẢNH XE ĐẠP LÚC RA',
+              message: err.message,
+              type: 'error'
+            });
+          } else {
+            alert(err.message);
+          }
+          return;
+        }
+
+        if (!chk.originalImageUrl) {
+          btnConfirmCheckout.disabled = false;
+          btnConfirmCheckout.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Ghi nhận xe ra bãi (Mở Barrier)</span>';
+          if (window.showAppAlert) {
+            await window.showAppAlert({
+              title: 'Chưa có ảnh xe đạp lúc ra',
+              message: 'Vui lòng mở Camera hoặc chọn ảnh chiếc xe đạp / xe điện lúc ra bãi trước khi xác nhận mở barrier.',
+              hint: 'Hệ thống sẽ lưu cả ảnh lúc vào và ảnh lúc ra để đối soát đầy đủ trong mục Lịch sử vào ra.',
+              type: 'warning',
+              confirmText: 'Đã hiểu'
+            });
+          } else {
+            alert('Vui lòng chụp hoặc chọn ảnh xe đạp / xe điện lúc ra trước khi mở barrier!');
+          }
+          return;
+        }
       }
 
       btnConfirmCheckout.disabled = true;
