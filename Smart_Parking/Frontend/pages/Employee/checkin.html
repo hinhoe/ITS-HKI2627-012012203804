@@ -6,7 +6,7 @@
   <title>Ghi nhận xe vào bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt theo chuẩn dự án -->
-  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=14.0">
+  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=15.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter -->
@@ -394,53 +394,51 @@
     </main>
   </div>
 
-  <!-- MODAL: PHIẾU GỬI XE ĐẠP / XE ĐIỆN CÓ DẤU MỘC ĐỎ ĐỂ IN CHO KHÁCH -->
+  <!-- MODAL: PHIẾU GIỮ XE NHỎ GỌN CÓ DẤU MỘC ĐỎ ĐỂ IN CHO KHÁCH -->
   <div class="park-modal-backdrop" id="bikeTicketModalBackdrop">
     <div class="bike-ticket-modal-card">
       <div class="bike-ticket-paper" id="printableBikeTicket">
-        <div class="ticket-header">
-          <div class="ticket-brand">BÃI ĐỖ XE THÔNG MINH PARKTECH</div>
-          <div class="ticket-doc-title">PHIẾU GỬI XE KHÔNG BIỂN SỐ</div>
-          <div class="ticket-session-code" id="ticketSessionCode">Mã phiên: --</div>
-        </div>
-
-        <div class="ticket-code-box">
-          <div class="ticket-code-label">MÃ SỐ THẺ ĐỐI SOÁT (6 CHỮ SỐ)</div>
-          <div class="ticket-code-value" id="ticketSixDigits">000000</div>
-        </div>
-
-        <div class="ticket-meta-list">
-          <div class="ticket-meta-row">
-            <span>Loại phương tiện:</span>
-            <strong id="ticketVehicleType">Xe đạp / Xe điện</strong>
+        <div class="ticket-top-row">
+          <div class="ticket-title-group">
+            <div class="ticket-brand">BÃI ĐỖ XE THÔNG MINH PARKTECH</div>
+            <div class="ticket-doc-title">PHIẾU GIỮ XE</div>
           </div>
-          <div class="ticket-meta-row">
-            <span>Thời gian vào bãi:</span>
-            <strong id="ticketEntryTime">--</strong>
-          </div>
-          <div class="ticket-meta-row">
-            <span>Nhân viên cấp phiếu:</span>
-            <strong id="ticketStaffName">Trần Bảo Anh</strong>
+          <div class="ticket-serial-box">
+            <span class="ticket-serial-label">MÃ SỐ</span>
+            <span class="ticket-code-value" id="ticketSixDigits">000000</span>
           </div>
         </div>
 
-        <div class="ticket-photo-row" id="ticketPhotoWrapper" style="display: none;">
-          <img id="ticketBikePhoto" src="" alt="Ảnh xe đạp lúc vào">
-        </div>
-
-        <div class="ticket-stamp-area">
-          <div class="ticket-note">
-            Vui lòng giữ phiếu nguyên vẹn và xuất trình lại mã số này tại cổng ra để đối chiếu hình ảnh nhận xe.
+        <div class="ticket-body-row">
+          <div class="ticket-meta-list">
+            <div class="ticket-meta-row">
+              <span>Loại xe:</span>
+              <strong id="ticketVehicleType">Xe đạp / Xe điện</strong>
+            </div>
+            <div class="ticket-meta-row">
+              <span>Giờ vào:</span>
+              <strong id="ticketEntryTime">--</strong>
+            </div>
+            <div class="ticket-meta-row">
+              <span>Nhân viên:</span>
+              <strong id="ticketStaffName">Trần Bảo Anh</strong>
+            </div>
+            <div class="ticket-session-code" id="ticketSessionCode">Mã phiên: --</div>
           </div>
+
           <div class="red-official-stamp" aria-label="Dấu mộc đỏ xác thực ParkTech">
             <div class="stamp-outer-ring">
               <div class="stamp-inner-ring">
                 <span class="stamp-top">★ PARKTECH ★</span>
                 <span class="stamp-center">ĐÃ XÁC THỰC</span>
-                <span class="stamp-bottom">BÃI XE THÔNG MINH</span>
+                <span class="stamp-bottom">PHIẾU GIỮ XE</span>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="ticket-footer-note">
+          * Lưu ý: Vui lòng xuất trình phiếu này tại cổng ra để đối chiếu hình ảnh nhận xe.
         </div>
       </div>
 
@@ -449,7 +447,7 @@
           <span>Đóng</span>
         </button>
         <button type="button" class="park-btn-modal primary" id="btnPrintBikeTicket">
-          <i class="fa-solid fa-print"></i> <span>In phiếu gửi xe</span>
+          <i class="fa-solid fa-print"></i> <span>In phiếu giữ xe</span>
         </button>
       </div>
     </div>
@@ -457,6 +455,6 @@
 
   <!-- JavaScript xử lý tương tác -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
-  <script src="../../js/Employee/checkin.js?v=16.0"></script>
+  <script src="../../js/Employee/checkin.js?v=17.0"></script>
 </body>
 </html>

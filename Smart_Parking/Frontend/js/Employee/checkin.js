@@ -37,8 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const ticketVehicleType = document.getElementById('ticketVehicleType');
   const ticketEntryTime = document.getElementById('ticketEntryTime');
   const ticketStaffName = document.getElementById('ticketStaffName');
-  const ticketPhotoWrapper = document.getElementById('ticketPhotoWrapper');
-  const ticketBikePhoto = document.getElementById('ticketBikePhoto');
   const btnCloseBikeTicket = document.getElementById('btnCloseBikeTicket');
   const btnPrintBikeTicket = document.getElementById('btnPrintBikeTicket');
   let lastBikeTicketInfo = null;
@@ -1137,13 +1135,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ticketVehicleType) ticketVehicleType.textContent = info.vehicleType || 'Xe đạp / Xe điện';
     if (ticketEntryTime) ticketEntryTime.textContent = info.entryTime || '--';
     if (ticketStaffName) ticketStaffName.textContent = info.staffName || 'Trần Bảo Anh';
-
-    if (info.photoUrl && ticketPhotoWrapper && ticketBikePhoto) {
-      ticketBikePhoto.src = info.photoUrl;
-      ticketPhotoWrapper.style.display = 'block';
-    } else if (ticketPhotoWrapper) {
-      ticketPhotoWrapper.style.display = 'none';
-    }
     bikeTicketModalBackdrop.classList.add('show');
   }
 
