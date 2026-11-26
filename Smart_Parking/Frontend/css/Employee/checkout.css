@@ -609,7 +609,7 @@ body {
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   transition: border-color 0.2s ease;
 }
@@ -660,11 +660,12 @@ body {
   border: 1px solid var(--color-border);
 }
 
-/* Viewport Boxes (Cột 1 và Cột 2) */
+/* Viewport Boxes (Cột 1 và Cột 2) - Căn sát lên dưới tiêu đề và lấp đầy cân đối */
 .viewport-box {
   position: relative;
   width: 100%;
-  height: 380px;
+  flex: 1;
+  min-height: 380px;
   background-color: #0b0f19;
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -675,6 +676,8 @@ body {
 }
 
 .viewport-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -713,6 +716,7 @@ body {
   position: absolute;
   top: 10px;
   left: 10px;
+  z-index: 5;
   background-color: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(4px);
   color: #ffffff;
