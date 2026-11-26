@@ -673,10 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emptyViewportPlaceholder) emptyViewportPlaceholder.style.display = 'none';
       if (webcamLiveControls) webcamLiveControls.style.display = 'flex';
 
-      if (btnCaptureWebcam) btnCaptureWebcam.style.display = 'inline-flex';
-      if (btnFlipWebcam) btnFlipWebcam.style.display = 'inline-flex';
       if (webcamBtnText) webcamBtnText.textContent = 'Tắt Camera';
-      if (fileStatusText) fileStatusText.textContent = 'Camera đang mở: Đặt biển số vào khung và bấm nút chụp';
+      if (fileStatusText) fileStatusText.textContent = 'Camera đang bật — Bấm Nhận diện';
       if (camStatusText) camStatusText.textContent = 'WEBCAM LAPTOP - TRỰC TIẾP';
       if (camStatusDot) camStatusDot.style.backgroundColor = '#10b981';
     } catch (err) {

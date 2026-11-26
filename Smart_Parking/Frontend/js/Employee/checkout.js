@@ -547,11 +547,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (vehiclePreviewImg) vehiclePreviewImg.style.display = 'none';
       if (webcamLiveControls) webcamLiveControls.style.display = 'flex';
       if (webcamBtnText) webcamBtnText.textContent = 'Tắt Camera';
-      if (btnCaptureWebcam) btnCaptureWebcam.style.display = 'inline-flex';
-      if (btnFlipWebcam) btnFlipWebcam.style.display = 'inline-flex';
       if (camStatusDot) camStatusDot.style.backgroundColor = '#10b981';
       if (camStatusText) camStatusText.textContent = 'CAM 02 -- CỔNG RA (LIVE)';
-      if (fileStatusText) fileStatusText.textContent = 'Đang xem trực tiếp từ camera Cổng Ra';
+      if (fileStatusText) fileStatusText.textContent = 'Camera đang bật — Bấm Nhận diện';
     } catch (err) {
       console.error('Không thể truy cập Camera:', err);
       if (window.showAppAlert) {
