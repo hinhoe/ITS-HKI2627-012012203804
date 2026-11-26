@@ -5,13 +5,13 @@
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam hoặc mã vé 6 số (Xe đạp / Xe điện)
+  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam hoặc mã vé 6 số (Xe đạp / Đạp điện)
   function validateVietnamesePlate(plateStr, vehicleType = '') {
     if (!plateStr) return { valid: false, reason: 'Vui lòng nhập biển số xe hoặc mã vé.' };
     const rawClean = plateStr.trim().toUpperCase();
-    if (vehicleType === 'Xe đạp / Xe điện') {
+    if (vehicleType === 'Xe đạp / Đạp điện') {
       if (!/^\d{6}$/.test(rawClean)) {
-        return { valid: false, reason: 'Mã vé xe đạp / xe điện phải gồm đúng 6 chữ số (VD: 482915).' };
+        return { valid: false, reason: 'Mã vé Xe đạp / Đạp điện phải gồm đúng 6 chữ số (VD: 482915).' };
       }
       return { valid: true, clean: rawClean };
     }
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tạo thumbnail định danh cho biển số xe / vé xe đạp
   function createPlateThumbnail(type) {
-    const isBike = (type === 'Xe đạp / Xe điện');
+    const isBike = (type === 'Xe đạp / Đạp điện');
     const isAuto = (type === 'Ô tô');
     const bg = isBike ? '#6d28d9' : (isAuto ? '#1e3a8a' : '#0f766e');
     const label = isBike ? 'BIKE' : (isAuto ? 'AUTO' : 'MOTO');
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <span class="vehicle-type-cell">
-            <i class="fa-solid ${v.type === 'Xe đạp / Xe điện' ? 'fa-bicycle' : (v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
+            <i class="fa-solid ${v.type === 'Xe đạp / Đạp điện' ? 'fa-bicycle' : (v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
             <span>${v.type}</span>
           </span>
         </td>

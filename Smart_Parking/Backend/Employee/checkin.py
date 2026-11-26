@@ -273,16 +273,16 @@ async def process_checkin_recognition(
 def validate_vietnamese_plate(plate: str, vehicle_type: str = "") -> tuple[bool, str]:
     """
     Kiểm tra hợp lệ mã định danh phương tiện:
-    - Nếu là 'Xe đạp / Xe điện': bắt buộc đúng mã vé 6 chữ số (VD: 482915).
+    - Nếu là 'Xe đạp / Đạp điện': bắt buộc đúng mã vé 6 chữ số (VD: 482915).
     - Nếu là 'Ô tô' hoặc 'Xe máy': kiểm tra chặt chẽ quy chuẩn biển số xe Việt Nam.
     """
     clean = plate.strip().upper()
     if not clean or clean in ("---", "CHƯA RÕ", "CHUA RO"):
         return False, "Biển số hoặc mã vé xe không được để trống."
 
-    if vehicle_type == "Xe đạp / Xe điện":
+    if vehicle_type == "Xe đạp / Đạp điện":
         if not re.fullmatch(r"\d{6}", clean):
-            return False, f"Mã vé xe đạp / xe điện '{clean}' phải gồm đúng 6 chữ số (VD: 482915)."
+            return False, f"Mã vé Xe đạp / Đạp điện '{clean}' phải gồm đúng 6 chữ số (VD: 482915)."
         return True, ""
 
     stripped = re.sub(r"[\s\.\-_]", "", clean)
@@ -343,10 +343,10 @@ async def create_bike_ticket_preview(
     return {
         "success": True,
         "ticket_code": ticket_code,
-        "vehicle_type": "Xe đạp / Xe điện",
+        "vehicle_type": "Xe đạp / Đạp điện",
         "checkin_image_url": orig_url,
         "entry_time": now_str,
-        "message": f"Đã tạo mã vé {ticket_code} cho xe đạp / xe điện.",
+        "message": f"Đã tạo mã vé {ticket_code} cho Xe đạp / Đạp điện.",
     }
 
 

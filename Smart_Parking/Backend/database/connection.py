@@ -68,6 +68,14 @@ def init_db() -> None:
                 conn.executescript(sample_sql)
                 logger.info("Đã nạp dữ liệu mẫu ban đầu từ %s", SAMPLE_FILE.name)
 
+            # 4. Đồng bộ tên loại xe 'Xe đạp / Đạp điện' cho dữ liệu cũ nếu có
+            conn.execute(
+                "UPDATE parking_sessions SET vehicle_type = 'Xe đạp / Đạp điện' WHERE vehicle_type = 'Xe đạp / Xe điện'"
+            )
+            conn.execute(
+                "UPDATE pricing_rules SET vehicle_type = 'Xe đạp / Đạp điện' WHERE vehicle_type = 'Xe đạp / Xe điện'"
+            )
+
         conn.close()
         logger.info("Khởi tạo cơ sở dữ liệu thành công tại: %s", DATABASE_PATH)
     except Exception as exc:

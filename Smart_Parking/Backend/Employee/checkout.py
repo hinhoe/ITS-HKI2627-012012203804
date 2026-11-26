@@ -112,7 +112,7 @@ def calculate_parking_fee(db: sqlite3.Connection, vehicle_type: str, checkin_dt:
         return fee_type, row["base_price"]
 
     # Mặc định an toàn nếu chưa cấu hình CSDL
-    if vehicle_type == "Xe đạp / Xe điện":
+    if vehicle_type == "Xe đạp / Đạp điện":
         base_fee = 6000 if is_overnight else 3000
     elif vehicle_type == "Xe máy":
         base_fee = 10000 if is_overnight else 5000
@@ -396,7 +396,7 @@ async def lookup_checkout_session(
             },
         }
 
-    fallback_vtype = vehicle_type or ("Xe đạp / Xe điện" if re.fullmatch(r"\d{6}", clean_plate) else "Ô tô")
+    fallback_vtype = vehicle_type or ("Xe đạp / Đạp điện" if re.fullmatch(r"\d{6}", clean_plate) else "Ô tô")
     fee_type, default_fee = calculate_parking_fee(db, fallback_vtype, now, now)
     return {
         "matched": False,
@@ -431,7 +431,7 @@ async def confirm_checkout_session(
     3. Cập nhật phiên gửi thành `COMPLETED`, lưu đầy đủ ảnh vào/ra và giảm sức chứa bãi xe.
     """
     clean_plate = payload.plate_number.strip().upper()
-    inferred_vtype = "Xe đạp / Xe điện" if (payload.vehicle_type == "Xe đạp / Xe điện" or re.fullmatch(r"\d{6}", clean_plate)) else payload.vehicle_type
+    inferred_vtype = "Xe đạp / Đạp điện" if (payload.vehicle_type == "Xe đạp / Đạp điện" or re.fullmatch(r"\d{6}", clean_plate)) else payload.vehicle_type
     is_valid, error_msg = validate_vietnamese_plate(clean_plate, inferred_vtype)
     if not is_valid:
         raise HTTPException(

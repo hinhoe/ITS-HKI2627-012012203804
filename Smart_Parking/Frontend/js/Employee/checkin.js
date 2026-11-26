@@ -112,11 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return cleaned;
   }
 
-  // Phân loại loại phương tiện chuẩn: Ô tô, Xe máy, hoặc Xe đạp / Xe điện
+  // Phân loại loại phương tiện chuẩn: Ô tô, Xe máy, hoặc Xe đạp / Đạp điện
   function determineVehicleType(vehicleType, plateStr) {
     if (vehicleType === 'car') return 'Ô tô';
     if (vehicleType === 'motorbike') return 'Xe máy';
-    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy' || vehicleType === 'Xe đạp / Xe điện') return vehicleType;
+    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy' || vehicleType === 'Xe đạp / Đạp điện') return vehicleType;
     if (!plateStr) return 'Ô tô';
     const clean = plateStr.replace(/[\s\-\.]/g, '').toUpperCase();
     // Xe máy Việt Nam: Sê-ri có 2 ký tự (chữ cái + số/chữ cái, ví dụ 59P1, 29B1, 60U1, 59AA, 59MD)
@@ -142,11 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    if (vehicleType === 'Xe đạp / Xe điện') {
+    if (vehicleType === 'Xe đạp / Đạp điện') {
       if (!/^\d{6}$/.test(clean)) {
         return {
           valid: false,
-          message: `Mã vé xe đạp / xe điện "${clean}" phải gồm đúng 6 chữ số (VD: 482915).`
+          message: `Mã vé Xe đạp / Đạp điện "${clean}" phải gồm đúng 6 chữ số (VD: 482915).`
         };
       }
       return { valid: true, cleanPlate: clean };
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (resultPlateText) resultPlateText.textContent = val || '---';
       if (vehicleTypeText) {
         const vt = state.currentRecognition.type;
-        const icon = (vt === 'Xe đạp / Xe điện')
+        const icon = (vt === 'Xe đạp / Đạp điện')
           ? '<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i>'
           : ((vt === 'Xe máy') ? '<i class="fa-solid fa-motorcycle" style="color:#2563eb; margin-right:4px;"></i>' : '<i class="fa-solid fa-car" style="color:#2563eb; margin-right:4px;"></i>');
         vehicleTypeText.innerHTML = `${icon} ${vt}`;
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manualEntryHint.className = 'manual-entry-hint valid';
             manualEntryHint.style.display = 'flex';
             if (hintIcon) hintIcon.className = 'fa-solid fa-circle-check';
-            manualEntryHintText.textContent = (state.currentRecognition.type === 'Xe đạp / Xe điện')
+            manualEntryHintText.textContent = (state.currentRecognition.type === 'Xe đạp / Đạp điện')
               ? `Mã vé 6 chữ số hợp lệ (${val}) — Sẵn sàng ghi nhận và in phiếu.`
               : `Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi.`;
           }
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     historyTableBody.innerHTML = displayRecords.map(item => {
-      const isBike = (item.type === 'Xe đạp / Xe điện');
+      const isBike = (item.type === 'Xe đạp / Đạp điện');
       const isCar = (item.type === 'Ô tô');
       const vtypeClass = isBike ? 'moto' : (isCar ? 'car' : 'moto');
       const vtypeIcon = isBike
@@ -565,10 +565,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let newPlate = null;
         if (window.showAppPrompt) {
           newPlate = await window.showAppPrompt({
-            title: oldType === 'Xe đạp / Xe điện' ? 'Chỉnh sửa mã vé 6 chữ số' : 'Chỉnh sửa biển số lượt xe',
+            title: oldType === 'Xe đạp / Đạp điện' ? 'Chỉnh sửa mã vé 6 chữ số' : 'Chỉnh sửa biển số lượt xe',
             subtitle: `Sửa lại định danh đúng cho lượt vừa vào (Hiện tại: ${oldPlate}):`,
             defaultValue: oldPlate,
-            placeholder: oldType === 'Xe đạp / Xe điện' ? 'VD: 482915 (6 chữ số)' : 'VD: 51F-866.88 hoặc 29A-12345',
+            placeholder: oldType === 'Xe đạp / Đạp điện' ? 'VD: 482915 (6 chữ số)' : 'VD: 51F-866.88 hoặc 29A-12345',
             validateFn: (val) => {
               const res = validateVietnamesePlate(val, oldType);
               return { valid: res.valid, reason: res.message || res.reason, clean: res.cleanPlate || res.clean };
@@ -1108,13 +1108,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // MODAL PHIẾU GỬI XE ĐẠP / XE ĐIỆN CÓ DẤU MỘC ĐỎ + NÚT CẤP MÃ 6 SỐ
+  // MODAL PHIẾU GỬI XE ĐẠP / ĐẠP ĐIỆN CÓ DẤU MỘC ĐỎ + NÚT CẤP MÃ 6 SỐ
   // ==========================================================================
   function openBikeTicketModal(info) {
     if (!bikeTicketModalBackdrop || !info) return;
     if (ticketSessionCode) ticketSessionCode.textContent = `Mã phiên: ${info.sessionCode || '--'}`;
     if (ticketSixDigits) ticketSixDigits.textContent = info.ticketCode || '000000';
-    if (ticketVehicleType) ticketVehicleType.textContent = info.vehicleType || 'Xe đạp / Xe điện';
+    if (ticketVehicleType) ticketVehicleType.textContent = info.vehicleType || 'Xe đạp / Đạp điện';
     if (ticketEntryTime) ticketEntryTime.textContent = info.entryTime || '--';
     if (ticketStaffName) ticketStaffName.textContent = info.staffName || 'Trần Bảo Anh';
     bikeTicketModalBackdrop.classList.add('show');
@@ -1143,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnBikeTicket) {
     btnBikeTicket.addEventListener('click', async () => {
-      // Nếu camera đang mở -> tự chụp khung hình chiếc xe đạp / xe điện
+      // Nếu camera đang mở -> tự chụp khung hình chiếc Xe đạp / Đạp điện
       if (webcamStream) {
         const snapshot = await captureWebcamSnapshot();
         if (snapshot) {
@@ -1161,13 +1161,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.showAppAlert) {
           await window.showAppAlert({
             title: 'Chưa có ảnh phương tiện',
-            message: 'Vui lòng chụp ảnh hoặc chọn ảnh chiếc xe đạp / xe điện trước khi cấp mã vé 6 số.',
+            message: 'Vui lòng chụp ảnh hoặc chọn ảnh chiếc Xe đạp / Đạp điện trước khi cấp mã vé 6 số.',
             hint: 'Ảnh chụp xe sẽ được lưu kèm mã vé 6 số để nhân viên đối chiếu trực quan khi khách lấy xe ra.',
             type: 'warning',
             confirmText: 'Đã hiểu'
           });
         } else {
-          alert('Vui lòng chụp hoặc chọn ảnh xe đạp / xe điện trước!');
+          alert('Vui lòng chụp hoặc chọn ảnh Xe đạp / Đạp điện trước!');
         }
         return;
       }
@@ -1202,7 +1202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.currentRecognition = {
           plate: ticketCode,
-          type: 'Xe đạp / Xe điện',
+          type: 'Xe đạp / Đạp điện',
           confidence: '100.0%',
           ocrConfidence: '100.0%',
           entryTime: currentTime,
@@ -1238,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (processingTimeText) processingTimeText.textContent = 'Tức thì';
         if (entryTimeText) entryTimeText.textContent = currentTime;
         if (vehicleTypeText) {
-          vehicleTypeText.innerHTML = `<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i> Xe đạp / Xe điện`;
+          vehicleTypeText.innerHTML = `<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i> Xe đạp / Đạp điện`;
         }
         if (fileStatusText) {
           fileStatusText.textContent = `Đã sinh mã vé 6 số: ${ticketCode} — Bấm Ghi nhận để lưu & in phiếu`;
@@ -1262,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } finally {
         btnBikeTicket.disabled = false;
-        btnBikeTicket.innerHTML = `<i class="fa-solid fa-bicycle"></i> <span>Cấp mã xe không biển số</span>`;
+        btnBikeTicket.innerHTML = `<i class="fa-solid fa-bicycle"></i> <span>Cấp mã Xe đạp / Đạp điện</span>`;
       }
     });
   }
@@ -1316,10 +1316,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.showAppAlert) {
           await window.showAppAlert({
-            title: targetVehicleType === 'Xe đạp / Xe điện' ? 'Mã vé 6 số không hợp lệ' : 'Biển số xe không hợp lệ',
+            title: targetVehicleType === 'Xe đạp / Đạp điện' ? 'Mã vé 6 số không hợp lệ' : 'Biển số xe không hợp lệ',
             message: validation.message,
-            hint: targetVehicleType === 'Xe đạp / Xe điện'
-              ? 'Mã vé xe đạp / xe điện phải gồm đúng 6 chữ số (VD: 482915).'
+            hint: targetVehicleType === 'Xe đạp / Đạp điện'
+              ? 'Mã vé Xe đạp / Đạp điện phải gồm đúng 6 chữ số (VD: 482915).'
               : 'Hệ thống tạm khóa mở barrier để đảm bảo chính xác dữ liệu. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
             type: 'error',
             confirmText: 'Nhập lại'
@@ -1372,8 +1372,8 @@ document.addEventListener('DOMContentLoaded', () => {
           successBanner.style.display = 'flex';
         }
 
-        // Nếu là Xe đạp / Xe điện -> hiện nút In phiếu & tự động mở Phiếu gửi xe có Dấu Mộc Đỏ
-        if (type === 'Xe đạp / Xe điện') {
+        // Nếu là Xe đạp / Đạp điện -> hiện nút In phiếu & tự động mở Phiếu gửi xe có Dấu Mộc Đỏ
+        if (type === 'Xe đạp / Đạp điện') {
           lastBikeTicketInfo = {
             sessionCode: data.session.session_code,
             ticketCode: data.session.plate_number,

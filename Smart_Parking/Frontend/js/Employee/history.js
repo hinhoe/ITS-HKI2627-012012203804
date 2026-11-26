@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tạo thumbnail định danh cho biển số xe / vé xe đạp
   function createPlateThumbnail(type) {
-    const isBike = (type === 'Xe đạp / Xe điện');
+    const isBike = (type === 'Xe đạp / Đạp điện');
     const isAuto = (type === 'Ô tô');
     const bg = isBike ? '#6d28d9' : (isAuto ? '#1e3a8a' : '#0f766e');
     const label = isBike ? 'BIKE' : (isAuto ? 'AUTO' : 'MOTO');
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <span class="vehicle-type-cell">
-            <i class="fa-solid ${item.type === 'Xe đạp / Xe điện' ? 'fa-bicycle' : (item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
+            <i class="fa-solid ${item.type === 'Xe đạp / Đạp điện' ? 'fa-bicycle' : (item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
             <span>${item.type}</span>
           </span>
         </td>
