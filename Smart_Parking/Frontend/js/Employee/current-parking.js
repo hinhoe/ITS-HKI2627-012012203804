@@ -5,35 +5,6 @@
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam hoặc mã vé 6 số (Xe đạp / Đạp điện)
-  function validateVietnamesePlate(plateStr, vehicleType = '') {
-    if (!plateStr) return { valid: false, reason: 'Vui lòng nhập biển số xe hoặc mã vé.' };
-    const rawClean = plateStr.trim().toUpperCase();
-    if (vehicleType === 'Xe đạp / Đạp điện') {
-      if (!/^\d{6}$/.test(rawClean)) {
-        return { valid: false, reason: 'Mã vé Xe đạp / Đạp điện phải gồm đúng 6 chữ số (VD: 482915).' };
-      }
-      return { valid: true, clean: rawClean };
-    }
-    const clean = rawClean.replace(/[\s\.\-_]/g, '');
-    if (clean.length < 6 || clean.length > 11) {
-      return { valid: false, reason: `Độ dài biển số chưa hợp lệ (${clean.length} ký tự, cần 6–10 ký tự).` };
-    }
-    const digitCount = (clean.match(/\d/g) || []).length;
-    if (digitCount < 4) {
-      return { valid: false, reason: `Biển số thiếu chữ số đăng ký (${digitCount}/4 chữ số tối thiểu).` };
-    }
-    const letterCount = (clean.match(/[A-Z]/g) || []).length;
-    if (letterCount < 1) {
-      return { valid: false, reason: 'Biển số phải có ít nhất 1 chữ cái sê-ri (VD: 51F, 29A, 59P1).' };
-    }
-    const standardVnPlatePattern = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/;
-    if (!standardVnPlatePattern.test(clean)) {
-      return { valid: false, reason: 'Biển số chưa đúng quy chuẩn Việt Nam (VD: 51F-866.88 hoặc 29A-12345).' };
-    }
-    return { valid: true, clean };
-  }
-
   // 1. Quản lý trạng thái và Dữ liệu
   const state = {
     totalCapacity: 500,
@@ -243,9 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="btn-action-icon btn-view-photo" data-id="${v.id}" title="Xem ảnh chụp lúc vào bãi" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
               <i class="fa-regular fa-eye"></i> <span>Xem ảnh</span>
             </button>
-            <button type="button" class="btn-action-icon btn-action-edit btn-edit-vehicle" data-id="${v.id}" title="Sửa biển số hoặc loại xe nếu sai" style="background:#eff6ff !important; color:#2563eb !important; border:1px solid #bfdbfe !important; border-radius:6px; padding:4px 10px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-              <i class="fa-solid fa-pen-to-square" style="color:#2563eb;"></i> <span>Sửa</span>
-            </button>
           </div>
         </td>
       </tr>
@@ -266,17 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const vehicle = state.vehicles.find(v => v.id === id);
         if (vehicle) {
           openPhotoModal(vehicle);
-        }
-      });
-    });
-
-    // Gán sự kiện Sửa thông tin xe
-    document.querySelectorAll('.btn-edit-vehicle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.getAttribute('data-id'), 10);
-        const vehicle = state.vehicles.find(v => v.id === id);
-        if (vehicle) {
-          openEditModal(vehicle);
         }
       });
     });
@@ -390,167 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (photoModalBackdrop) {
       photoModalBackdrop.classList.remove('show');
     }
-  }
-
-  // ==========================================================================
-  // XỬ LÝ MODAL SỬA & XÓA THÔNG TIN XE ĐANG GỬI
-  // ==========================================================================
-  const editVehicleModalBackdrop = document.getElementById('editVehicleModalBackdrop');
-  const modalCloseEditBtn = document.getElementById('modalCloseEditBtn');
-  const btnCancelEditVehicle = document.getElementById('btnCancelEditVehicle');
-  const btnSaveEditVehicle = document.getElementById('btnSaveEditVehicle');
-  const editVehicleId = document.getElementById('editVehicleId');
-  const editVehiclePlate = document.getElementById('editVehiclePlate');
-  const editVehicleType = document.getElementById('editVehicleType');
-  const btnClearEditPlate = document.getElementById('btnClearEditPlate');
-  const editVehicleErrorBanner = document.getElementById('editVehicleErrorBanner');
-  const editVehicleErrorText = document.getElementById('editVehicleErrorText');
-
-  function openEditModal(vehicle) {
-    if (!editVehicleModalBackdrop) return;
-    if (editVehicleId) editVehicleId.value = vehicle.id;
-    if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
-    if (editVehiclePlate) {
-      editVehiclePlate.value = vehicle.plate;
-      editVehiclePlate.style.borderColor = '';
-      setTimeout(() => editVehiclePlate.focus(), 100);
-    }
-    if (editVehicleType) editVehicleType.value = vehicle.type || 'Ô tô';
-    editVehicleModalBackdrop.classList.add('show');
-  }
-
-  function closeEditModal() {
-    if (editVehicleModalBackdrop) {
-      editVehicleModalBackdrop.classList.remove('show');
-    }
-    if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
-    if (editVehiclePlate) editVehiclePlate.style.borderColor = '';
-  }
-
-  if (modalCloseEditBtn) modalCloseEditBtn.addEventListener('click', closeEditModal);
-  if (btnCancelEditVehicle) btnCancelEditVehicle.addEventListener('click', closeEditModal);
-  if (editVehicleModalBackdrop) {
-    editVehicleModalBackdrop.addEventListener('click', (e) => {
-      if (e.target === editVehicleModalBackdrop) closeEditModal();
-    });
-  }
-
-  // Nút xóa trắng ký tự trong ô sửa biển số
-  if (btnClearEditPlate && editVehiclePlate) {
-    btnClearEditPlate.addEventListener('click', () => {
-      editVehiclePlate.value = '';
-      if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
-      editVehiclePlate.style.borderColor = '';
-      editVehiclePlate.focus();
-    });
-  }
-
-  // Kiểm tra thời gian thực khi nhân viên gõ biển số trong modal sửa
-  if (editVehiclePlate) {
-    editVehiclePlate.addEventListener('input', () => {
-      const val = editVehiclePlate.value.trim().toUpperCase();
-      if (!val) {
-        if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
-        editVehiclePlate.style.borderColor = '';
-        return;
-      }
-      const check = validateVietnamesePlate(val, editVehicleType ? editVehicleType.value : '');
-      if (!check.valid) {
-        if (editVehicleErrorBanner && editVehicleErrorText) {
-          editVehicleErrorText.textContent = check.reason;
-          editVehicleErrorBanner.style.display = 'block';
-        }
-        editVehiclePlate.style.borderColor = '#ef4444';
-      } else {
-        if (editVehicleErrorBanner) editVehicleErrorBanner.style.display = 'none';
-        editVehiclePlate.style.borderColor = '#10b981';
-      }
-    });
-  }
-
-  // Lưu thông tin biển số xe sau khi sửa
-  if (btnSaveEditVehicle) {
-    btnSaveEditVehicle.addEventListener('click', async () => {
-      const id = editVehicleId ? editVehicleId.value : null;
-      const newPlate = editVehiclePlate ? editVehiclePlate.value.trim().toUpperCase() : '';
-      const newType = editVehicleType ? editVehicleType.value : 'Ô tô';
-
-      if (!id || !newPlate) {
-        if (window.showAppAlert) {
-          await window.showAppAlert({
-            title: 'THIẾU BIỂN SỐ XE!',
-            message: 'Vui lòng nhập biển số xe trước khi lưu.',
-            hint: 'Không được để trống ô biển số.',
-            type: 'warning',
-            confirmText: 'Nhập lại ngay'
-          });
-        } else {
-          alert('Vui lòng nhập biển số xe hợp lệ!');
-        }
-        if (editVehiclePlate) editVehiclePlate.focus();
-        return;
-      }
-
-      const plateCheck = validateVietnamesePlate(newPlate, newType);
-      if (!plateCheck.valid) {
-        const card = editVehicleModalBackdrop.querySelector('.modal-card');
-        if (card) {
-          card.classList.remove('shake');
-          void card.offsetWidth;
-          card.classList.add('shake');
-        }
-        if (editVehicleErrorBanner && editVehicleErrorText) {
-          editVehicleErrorText.textContent = plateCheck.reason;
-          editVehicleErrorBanner.style.display = 'block';
-        }
-        if (editVehiclePlate) {
-          editVehiclePlate.style.borderColor = '#ef4444';
-          editVehiclePlate.focus();
-          editVehiclePlate.select();
-        }
-        return;
-      }
-
-      try {
-        btnSaveEditVehicle.disabled = true;
-        btnSaveEditVehicle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
-
-        const apiBase = getApiBase();
-        const res = await fetch(`${apiBase}/api/current-parking/sessions/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plate_number: newPlate, vehicle_type: newType })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Lỗi khi cập nhật biển số');
-
-        closeEditModal();
-        if (window.showAppToast) {
-          window.showAppToast({
-            title: 'Cập nhật thành công!',
-            message: `Biển số xe đã được cập nhật thành: ${newPlate}`,
-            type: 'success'
-          });
-        }
-        await loadParkingStats();
-        await loadVehicles();
-      } catch (err) {
-        if (window.showAppAlert) {
-          await window.showAppAlert({
-            title: 'KHÔNG THỂ CẬP NHẬT',
-            message: err.message,
-            hint: 'Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.',
-            type: 'error'
-          });
-        } else {
-          alert(`Không thể sửa biển số: ${err.message}`);
-        }
-      } finally {
-        btnSaveEditVehicle.disabled = false;
-        btnSaveEditVehicle.innerHTML = '<i class="fa-solid fa-check"></i> <span>Lưu thay đổi</span>';
-      }
-    });
   }
 
   // Xóa phiên gửi xe nếu người dùng / nhân viên nhập sai hoặc xe ảo
