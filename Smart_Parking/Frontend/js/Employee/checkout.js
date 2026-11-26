@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Lỗi chụp/lưu ảnh xe đạp lúc ra khi tra cứu:', err);
       } finally {
         btnLookupBikeTicket.disabled = false;
-        btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-bicycle"></i> <span>Tra cứu vé xe đạp (6 số)</span>';
+        btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-bicycle"></i> <span>Tra mã xe không biển số</span>';
       }
     });
   }

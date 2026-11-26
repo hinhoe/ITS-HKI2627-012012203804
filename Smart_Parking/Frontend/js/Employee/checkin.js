@@ -1262,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } finally {
         btnBikeTicket.disabled = false;
-        btnBikeTicket.innerHTML = `<i class="fa-solid fa-bicycle"></i> <span>Cấp mã xe đạp (6 số)</span>`;
+        btnBikeTicket.innerHTML = `<i class="fa-solid fa-bicycle"></i> <span>Cấp mã xe không biển số</span>`;
       }
     });
   }
