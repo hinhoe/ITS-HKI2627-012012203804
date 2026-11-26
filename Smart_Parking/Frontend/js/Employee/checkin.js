@@ -51,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const camStatusDot = document.getElementById('camStatusDot');
   const camStatusText = document.getElementById('camStatusText');
   const webcamLiveControls = document.getElementById('webcamLiveControls');
-  const btnShutterLive = document.getElementById('btnShutterLive');
   let webcamStream = null;
   let isWebcamFlipped = false; // Trạng thái lật gương camera chống ngược chữ
   
@@ -797,21 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnRecognize) {
       btnRecognize.click();
     }
-  }
-
-  // B2. Bắt sự kiện nút chụp nổi trên khung camera
-  if (btnShutterLive) {
-    btnShutterLive.addEventListener('click', (e) => {
-      e.stopPropagation();
-      triggerWebcamCaptureAndRecognize();
-    });
-  }
-
-  // B3. Bắt sự kiện nút chụp trên thanh công cụ tác vụ
-  if (btnCaptureWebcam) {
-    btnCaptureWebcam.addEventListener('click', () => {
-      triggerWebcamCaptureAndRecognize();
-    });
   }
 
   // B3. Chọn ảnh xe từ máy tính (mô phỏng tải ảnh phương tiện)

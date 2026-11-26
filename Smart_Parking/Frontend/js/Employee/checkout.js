@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const camStatusDot = document.getElementById('camStatusDot');
   const camStatusText = document.getElementById('camStatusText');
   const webcamLiveControls = document.getElementById('webcamLiveControls');
-  const btnShutterLive = document.getElementById('btnShutterLive');
   let webcamStream = null;
   let isWebcamFlipped = false; // Trạng thái lật gương camera chống ngược chữ
 
@@ -626,22 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileStatusText) fileStatusText.textContent = `Đã chụp ảnh xe ra (${(file.size / 1024).toFixed(1)} KB)`;
 
     return file;
-  }
-
-  if (btnCaptureWebcam) {
-    btnCaptureWebcam.addEventListener('click', async () => {
-      await captureWebcamSnapshot();
-      stopWebcam();
-    });
-  }
-
-  if (btnShutterLive) {
-    btnShutterLive.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      await captureWebcamSnapshot();
-      stopWebcam();
-      executeCheckoutRecognition();
-    });
   }
 
   // ==========================================================================
