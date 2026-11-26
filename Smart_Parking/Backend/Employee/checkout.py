@@ -112,7 +112,9 @@ def calculate_parking_fee(db: sqlite3.Connection, vehicle_type: str, checkin_dt:
         return fee_type, row["base_price"]
 
     # Mặc định an toàn nếu chưa cấu hình CSDL
-    if vehicle_type == "Xe máy":
+    if vehicle_type == "Xe đạp / Xe điện":
+        base_fee = 6000 if is_overnight else 3000
+    elif vehicle_type == "Xe máy":
         base_fee = 10000 if is_overnight else 5000
     else:
         base_fee = 50000 if is_overnight else 25000
@@ -355,6 +357,7 @@ async def lookup_checkout_session(
                 "plate_number": matched_session["plate_number"],
                 "vehicle_type": session_vtype,
                 "checkin_time": checkin_time_str,
+                "checkin_image_url": matched_session["checkin_image_url"],
                 "checkin_crop_url": matched_session["checkin_crop_url"],
                 "checkout_time": now_str,
                 "duration_display": duration_display,
@@ -366,7 +369,7 @@ async def lookup_checkout_session(
             },
         }
 
-    fallback_vtype = vehicle_type or "Ô tô"
+    fallback_vtype = vehicle_type or ("Xe đạp / Xe điện" if re.fullmatch(r"\d{6}", clean_plate) else "Ô tô")
     fee_type, default_fee = calculate_parking_fee(db, fallback_vtype, now, now)
     return {
         "matched": False,
@@ -376,6 +379,7 @@ async def lookup_checkout_session(
             "plate_number": clean_plate,
             "vehicle_type": fallback_vtype,
             "checkin_time": "Không xác định",
+            "checkin_image_url": None,
             "checkin_crop_url": None,
             "checkout_time": now_str,
             "duration_display": "--",
@@ -395,12 +399,13 @@ async def confirm_checkout_session(
 ):
     """
     Nghiệp vụ khi nhân viên nhấn "Ghi nhận xe ra bãi (Mở Barrier)":
-    1. Đối soát lại phiên gửi PARKED khớp biển số cuối cùng (tránh sai lệch nếu nhân viên vừa sửa tay biển số).
+    1. Đối soát lại phiên gửi PARKED khớp biển số / mã vé 6 số cuối cùng.
     2. Tự tính lại chính xác `duration_minutes` và `total_fee` trên Backend theo quy tắc bảng giá CSDL.
     3. Cập nhật phiên gửi thành `COMPLETED`, lưu đầy đủ ảnh vào/ra và giảm sức chứa bãi xe.
     """
     clean_plate = payload.plate_number.strip().upper()
-    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    inferred_vtype = "Xe đạp / Xe điện" if (payload.vehicle_type == "Xe đạp / Xe điện" or re.fullmatch(r"\d{6}", clean_plate)) else payload.vehicle_type
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate, inferred_vtype)
     if not is_valid:
         raise HTTPException(
             status_code=400,

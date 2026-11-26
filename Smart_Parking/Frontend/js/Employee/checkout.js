@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileStatusText = document.getElementById('fileStatusText');
   const fileStatusBadge = document.getElementById('fileStatusBadge');
   const btnRecognize = document.getElementById('btnRecognize');
+  const btnLookupBikeTicket = document.getElementById('btnLookupBikeTicket');
   const btnConfirmCheckout = document.getElementById('btnConfirmCheckout');
 
   // Webcam elements
@@ -138,9 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function determineVehicleType(vehicleType, plateStr) {
     if (vehicleType === 'car') return 'Ô tô';
     if (vehicleType === 'motorbike') return 'Xe máy';
-    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy') return vehicleType;
+    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy' || vehicleType === 'Xe đạp / Xe điện') return vehicleType;
     if (!plateStr) return 'Ô tô';
     const clean = plateStr.replace(/[\s\-\.]/g, '').toUpperCase();
+    if (/^\d{6}$/.test(clean)) {
+      return 'Xe đạp / Xe điện';
+    }
     if (/^[0-9]{2}[A-Z][A-Z0-9]/.test(clean)) {
       return 'Xe máy';
     }
@@ -160,20 +164,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (capacityAvailable) capacityAvailable.textContent = `${avail} chỗ trống`;
   }
 
-  // Kiểm tra tính hợp lệ của biển số xe theo quy chuẩn Việt Nam
-  function validateVietnamesePlate(plateStr) {
+  // Kiểm tra tính hợp lệ của biển số xe hoặc mã vé 6 số theo quy chuẩn Việt Nam
+  function validateVietnamesePlate(plateStr, vehicleType = '') {
     if (!plateStr || typeof plateStr !== 'string') {
       return {
         valid: false,
-        message: 'Vui lòng nhập biển số xe trước khi xác nhận.'
+        message: 'Vui lòng nhập biển số xe hoặc mã vé trước khi xác nhận.'
       };
     }
     const clean = plateStr.trim().toUpperCase();
     if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO' || clean === 'KHÔNG TÌM THẤY') {
       return {
         valid: false,
-        message: 'Vui lòng nhập biển số xe hợp lệ.'
+        message: 'Vui lòng nhập biển số xe hoặc mã vé hợp lệ.'
       };
+    }
+
+    if (vehicleType === 'Xe đạp / Xe điện') {
+      if (!/^\d{6}$/.test(clean)) {
+        return {
+          valid: false,
+          message: `Mã vé xe đạp / xe điện "${clean}" phải gồm đúng 6 chữ số (VD: 482915).`
+        };
+      }
+      return { valid: true, cleanPlate: clean };
     }
 
     const stripped = clean.replace(/[\s\.\-_]/g, '');
@@ -263,18 +277,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Hàm gọi API đối soát lại lượt xe vào & tiền phí khi nhân viên sửa tay biển số hoặc đổi loại xe
-  async function lookupCheckoutByPlate(plate, vehicleType) {
+  // Hàm gọi API đối soát lại lượt xe vào & tiền phí khi nhân viên sửa tay biển số, tra cứu vé 6 số hoặc đổi loại xe
+  async function lookupCheckoutByPlate(plate, vehicleType, showAlertIfNotFound = false) {
     try {
       const apiBase = getApiBase();
       const params = new URLSearchParams({ plate });
       if (vehicleType) params.append('vehicle_type', vehicleType);
 
       const res = await fetch(`${apiBase}/api/checkout/lookup?${params.toString()}`);
-      if (!res.ok) return;
+      if (!res.ok) return false;
       const data = await res.json();
       const chk = data.checkin_info || {};
 
+      if (showAlertIfNotFound && !data.matched) {
+        if (aiStatusPill) {
+          aiStatusPill.className = 'badge-status-pill error';
+          aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Không tìm thấy vé</span>';
+        }
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'Không tìm thấy mã vé trong bãi',
+            message: `Mã vé "${plate}" hiện không tồn tại trong danh sách xe đang gửi.`,
+            hint: 'Vui lòng kiểm tra lại 6 chữ số và dấu mộc đỏ trên phiếu của khách trước khi mở barrier.',
+            type: 'error',
+            confirmText: 'Kiểm tra lại'
+          });
+        } else {
+          alert(`Không tìm thấy mã vé "${plate}" đang gửi trong bãi!`);
+        }
+        return false;
+      }
+
+      const resolvedVtype = chk.vehicle_type || vehicleType || 'Ô tô';
+      state.currentCheckout.plate = chk.plate_number || plate;
+      state.currentCheckout.type = resolvedVtype;
       state.currentCheckout.sessionId = chk.session_id || null;
       state.currentCheckout.sessionCode = chk.session_code || null;
       state.currentCheckout.checkinTime = chk.checkin_time || 'Không xác định';
@@ -285,12 +321,47 @@ document.addEventListener('DOMContentLoaded', () => {
       state.currentCheckout.feeAmount = chk.fee_amount || 0;
       state.currentCheckout.feeDisplay = chk.fee_display || '0 VNĐ';
       state.currentCheckout.feeDisplayTable = chk.fee_display_table || '0 đ';
+      state.currentCheckout.isProcessed = false;
+
+      if (resultPlateText) resultPlateText.textContent = state.currentCheckout.plate;
+      if (plateManualInput) plateManualInput.value = state.currentCheckout.plate;
+      renderVehicleType(resolvedVtype);
 
       if (timeInText) timeInText.textContent = state.currentCheckout.checkinTime;
       if (timeOutText) timeOutText.textContent = state.currentCheckout.checkoutTime;
       if (durationText) durationText.textContent = state.currentCheckout.duration;
       if (feeTypeText) feeTypeText.textContent = state.currentCheckout.feeType;
       if (feeAmountText) feeAmountText.textContent = state.currentCheckout.feeDisplay;
+
+      if (feeStatusBadge) {
+        feeStatusBadge.className = 'fee-status-badge unpaid';
+        feeStatusBadge.innerHTML = '<i class="fa-solid fa-clock"></i> <span>Chờ thanh toán</span>';
+      }
+      if (checkoutSuccessBanner) checkoutSuccessBanner.style.display = 'none';
+      if (licensePlateCard) licensePlateCard.classList.remove('warning-mode', 'error-mode');
+      if (manualEntryHint) manualEntryHint.style.display = 'none';
+
+      // Hiển thị ảnh đối soát lúc vào nếu là Xe đạp / Xe điện (hoặc có checkin_image_url)
+      const checkinPhotoPath = chk.checkin_image_url || chk.checkin_crop_url;
+      if (data.matched && checkinPhotoPath) {
+        const photoSrc = checkinPhotoPath.startsWith('http') ? checkinPhotoPath : `${apiBase}${checkinPhotoPath}`;
+        if (resolvedVtype === 'Xe đạp / Xe điện') {
+          if (annotatedPreviewImg) {
+            annotatedPreviewImg.src = `${photoSrc}?t=${Date.now()}`;
+            annotatedPreviewImg.style.display = 'block';
+          }
+          if (emptyAnnotatedPlaceholder) emptyAnnotatedPlaceholder.style.display = 'none';
+          const tagSpan = document.querySelector('#viewportAnnotatedBox .viewport-tag span');
+          if (tagSpan) tagSpan.textContent = 'ẢNH XE LÚC VÀO (ĐỐI CHIẾU)';
+          if (cropPlaceholder) {
+            cropPlaceholder.innerHTML = `<img src="${photoSrc}?t=${Date.now()}" alt="Ảnh xe đạp lúc vào">`;
+          }
+          if (cropDimsText) cropDimsText.textContent = 'Ảnh xe lúc vào';
+          if (fileStatusText) {
+            fileStatusText.textContent = `Đã đối soát vé ${state.currentCheckout.plate} — Vui lòng kiểm tra khớp ảnh xe lúc vào`;
+          }
+        }
+      }
 
       if (aiStatusPill) {
         if (data.matched) {
@@ -301,8 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
           aiStatusPill.innerHTML = '<span class="status-bullet"></span> <span id="aiStatusText">Xe vãng lai</span>';
         }
       }
+      return data.matched;
     } catch (err) {
       console.warn('Không thể đối soát lại lượt gửi:', err);
+      return false;
     }
   }
 
@@ -343,7 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Kiểm tra hợp lệ thời gian thực khi nhân viên đang gõ ở Checkout
       if (val.length >= 3) {
-        const check = validateVietnamesePlate(val);
+        const detectedVtype = /^\d{6}$/.test(val.trim())
+          ? 'Xe đạp / Xe điện'
+          : (state.currentCheckout?.type === 'Xe đạp / Xe điện' ? 'Ô tô' : determineVehicleType(null, val));
+        const check = validateVietnamesePlate(val, detectedVtype);
         const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (!check.valid) {
           if (manualEntryHint && manualEntryHintText) {
@@ -358,17 +434,18 @@ document.addEventListener('DOMContentLoaded', () => {
             manualEntryHint.className = 'manual-entry-hint valid';
             manualEntryHint.style.display = 'flex';
             if (hintIcon) hintIcon.className = 'fa-solid fa-circle-check';
-            manualEntryHintText.textContent = `Biển số hợp lệ (${val}) — Sẵn sàng tính phí và mở barrier.`;
+            manualEntryHintText.textContent = detectedVtype === 'Xe đạp / Xe điện'
+              ? `Mã vé 6 số (${val}) — Đang tự động đối soát ảnh xe vào...`
+              : `Biển số hợp lệ (${val}) — Sẵn sàng tính phí và mở barrier.`;
           }
           if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
 
-          // Tự động tra cứu lại thông tin xe đang đỗ & tiền phí khi nhập xong biển số hợp lệ
-          const detectedVtype = determineVehicleType(null, val);
+          // Tự động tra cứu lại thông tin xe đang đỗ & tiền phí khi nhập xong biển số / mã vé 6 số hợp lệ
           state.currentCheckout.type = detectedVtype;
           renderVehicleType(detectedVtype);
           clearTimeout(lookupDebounceTimer);
           lookupDebounceTimer = setTimeout(() => {
-            lookupCheckoutByPlate(val, detectedVtype);
+            lookupCheckoutByPlate(val, detectedVtype === 'Xe đạp / Xe điện' ? null : detectedVtype);
           }, 300);
         }
       } else {
@@ -393,6 +470,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Đổi loại phương tiện qua lại giữa Ô tô và Xe máy
   function renderVehicleType(type) {
     if (!vehicleTypeText) return;
+    if (type === 'Xe đạp / Xe điện') {
+      vehicleTypeText.innerHTML = '<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i> Xe đạp / Xe điện';
+      return;
+    }
     const isMoto = (type === 'Xe máy');
     const icon = isMoto 
       ? '<i class="fa-solid fa-motorcycle" style="color:#10b981; margin-right:4px;"></i>' 
@@ -811,6 +892,43 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRecognize.addEventListener('click', executeCheckoutRecognition);
   }
 
+  // Nút Tra cứu vé 6 số (dành cho Xe đạp / Xe điện không biển số)
+  if (btnLookupBikeTicket) {
+    btnLookupBikeTicket.addEventListener('click', async () => {
+      let code = null;
+      if (window.showAppPrompt) {
+        code = await window.showAppPrompt({
+          title: 'Tra cứu vé xe đạp / xe điện',
+          subtitle: 'Nhập đúng 6 chữ số trên phiếu gửi xe có dấu mộc đỏ của khách:',
+          defaultValue: '',
+          placeholder: 'VD: 482915',
+          validateFn: (val) => {
+            const clean = val.trim();
+            if (!/^\d{6}$/.test(clean)) {
+              return { valid: false, reason: 'Mã vé phải gồm đúng 6 chữ số (VD: 482915).' };
+            }
+            return { valid: true, clean };
+          }
+        });
+      } else {
+        code = prompt('Nhập mã vé 6 chữ số trên phiếu gửi xe:');
+      }
+
+      if (!code) return;
+      const cleanCode = code.trim();
+      if (!/^\d{6}$/.test(cleanCode)) return;
+
+      btnLookupBikeTicket.disabled = true;
+      btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tra cứu...</span>';
+      try {
+        await lookupCheckoutByPlate(cleanCode, 'Xe đạp / Xe điện', true);
+      } finally {
+        btnLookupBikeTicket.disabled = false;
+        btnLookupBikeTicket.innerHTML = '<i class="fa-solid fa-bicycle"></i> <span>Tra cứu vé xe đạp (6 số)</span>';
+      }
+    });
+  }
+
   // ==========================================================================
   // XÁC NHẬN XE RA BÃI & MỞ BARRIER (POST /api/checkout/confirm)
   // ==========================================================================
@@ -826,8 +944,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlate = state.currentCheckout.plate.trim().toUpperCase();
       }
 
-      // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE TRƯỚC KHI TÍNH PHÍ & MỞ BARRIER
-      const valCheck = validateVietnamesePlate(currentPlate);
+      // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE (HOẶC MÃ VÉ 6 SỐ) TRƯỚC KHI TÍNH PHÍ & MỞ BARRIER
+      const currentVtype = state.currentCheckout?.type || determineVehicleType(null, currentPlate);
+      const valCheck = validateVietnamesePlate(currentPlate, currentVtype);
       if (!valCheck.valid) {
         const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (manualEntryHint && manualEntryHintText) {
@@ -847,14 +966,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.showAppAlert) {
           await window.showAppAlert({
-            title: 'Biển số xe ra không hợp lệ',
+            title: currentVtype === 'Xe đạp / Xe điện' ? 'Mã vé 6 số không hợp lệ' : 'Biển số xe ra không hợp lệ',
             message: valCheck.message,
-            hint: 'Hệ thống tạm khóa mở barrier cổng ra để tránh sai lệch đối soát. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
+            hint: currentVtype === 'Xe đạp / Xe điện'
+              ? 'Mã vé xe đạp / xe điện phải gồm đúng 6 chữ số (VD: 482915).'
+              : 'Hệ thống tạm khóa mở barrier cổng ra để tránh sai lệch đối soát. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
             type: 'error',
-            confirmText: 'Nhập lại biển số'
+            confirmText: 'Nhập lại'
           });
         } else {
-          alert(`Biển số xe không hợp lệ: ${valCheck.message}`);
+          alert(`Không hợp lệ: ${valCheck.message}`);
         }
         return; // CHẶN LẠI HOÀN TOÀN
       }
@@ -1009,13 +1130,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     records.forEach(item => {
       const tr = document.createElement('tr');
+      const isBike = (item.type === 'Xe đạp / Xe điện');
       const isCar = (item.type === 'Ô tô');
-      const typeBadgeClass = isCar ? 'car' : 'moto';
-      const typeIcon = isCar ? 'fa-car' : 'fa-motorcycle';
+      const typeBadgeClass = isBike ? 'moto' : (isCar ? 'car' : 'moto');
+      const typeIcon = isBike ? 'fa-bicycle' : (isCar ? 'fa-car' : 'fa-motorcycle');
 
       tr.innerHTML = `
         <td>
-          <span class="plate-badge"><i class="fa-solid fa-id-card"></i> ${item.plate}</span>
+          <span class="plate-badge"><i class="fa-solid ${isBike ? 'fa-ticket' : 'fa-id-card'}"></i> ${item.plate}</span>
         </td>
         <td>
           <span class="badge-vtype ${typeBadgeClass}"><i class="fa-solid ${typeIcon}"></i> ${item.type}</span>

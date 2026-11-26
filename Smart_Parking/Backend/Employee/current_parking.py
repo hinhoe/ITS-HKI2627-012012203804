@@ -255,18 +255,19 @@ async def update_current_parking_session(
     if not clean_plate:
         raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
 
-    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
-    if not is_valid:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Biển số xe không hợp lệ: {error_msg}. Vui lòng nhập đúng định dạng biển số xe Việt Nam (VD: 51F-888.88 hoặc 29A-12345)."
-        )
-
     cur = db.cursor()
-    cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))
+    cur.execute("SELECT id, vehicle_type FROM parking_sessions WHERE id = ?", (session_id,))
     row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Không tìm thấy phiên gửi xe cần sửa")
+
+    target_vtype = payload.vehicle_type or row["vehicle_type"] or "Ô tô"
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate, target_vtype)
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Biển số / mã vé không hợp lệ: {error_msg}"
+        )
 
     if payload.vehicle_type:
         cur.execute(

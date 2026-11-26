@@ -26,7 +26,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewportOriginalBox = document.getElementById('viewportOriginalBox');
   const fileStatusText = document.getElementById('fileStatusText');
   const btnRecognize = document.getElementById('btnRecognize');
+  const btnBikeTicket = document.getElementById('btnBikeTicket');
   const btnConfirmCheckin = document.getElementById('btnConfirmCheckin');
+  const btnReopenBikeTicket = document.getElementById('btnReopenBikeTicket');
+
+  // Modal Phiếu gửi xe có Dấu Mộc Đỏ
+  const bikeTicketModalBackdrop = document.getElementById('bikeTicketModalBackdrop');
+  const ticketSessionCode = document.getElementById('ticketSessionCode');
+  const ticketSixDigits = document.getElementById('ticketSixDigits');
+  const ticketVehicleType = document.getElementById('ticketVehicleType');
+  const ticketEntryTime = document.getElementById('ticketEntryTime');
+  const ticketStaffName = document.getElementById('ticketStaffName');
+  const ticketPhotoWrapper = document.getElementById('ticketPhotoWrapper');
+  const ticketBikePhoto = document.getElementById('ticketBikePhoto');
+  const btnCloseBikeTicket = document.getElementById('btnCloseBikeTicket');
+  const btnPrintBikeTicket = document.getElementById('btnPrintBikeTicket');
+  let lastBikeTicketInfo = null;
 
   // Webcam elements
   const btnToggleWebcam = document.getElementById('btnToggleWebcam');
@@ -100,35 +115,44 @@ document.addEventListener('DOMContentLoaded', () => {
     return cleaned;
   }
 
-  // Phân loại loại phương tiện chuẩn: Ô tô hoặc Xe máy
+  // Phân loại loại phương tiện chuẩn: Ô tô, Xe máy, hoặc Xe đạp / Xe điện
   function determineVehicleType(vehicleType, plateStr) {
     if (vehicleType === 'car') return 'Ô tô';
     if (vehicleType === 'motorbike') return 'Xe máy';
-    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy') return vehicleType;
+    if (vehicleType === 'Ô tô' || vehicleType === 'Xe máy' || vehicleType === 'Xe đạp / Xe điện') return vehicleType;
     if (!plateStr) return 'Ô tô';
     const clean = plateStr.replace(/[\s\-\.]/g, '').toUpperCase();
     // Xe máy Việt Nam: Sê-ri có 2 ký tự (chữ cái + số/chữ cái, ví dụ 59P1, 29B1, 60U1, 59AA, 59MD)
     if (/^[0-9]{2}[A-Z][A-Z0-9]/.test(clean)) {
       return 'Xe máy';
     }
-    // Mặc định theo quy chuẩn biển ô tô (ví dụ 51F, 30G, 51LD)
     return 'Ô tô';
   }
 
-  // Kiểm tra tính hợp lệ của biển số xe theo quy chuẩn Việt Nam
-  function validateVietnamesePlate(plateStr) {
+  // Kiểm tra tính hợp lệ của biển số xe hoặc mã vé 6 số theo quy chuẩn Việt Nam
+  function validateVietnamesePlate(plateStr, vehicleType = '') {
     if (!plateStr || typeof plateStr !== 'string') {
       return {
         valid: false,
-        message: 'Vui lòng nhập biển số xe trước khi xác nhận.'
+        message: 'Vui lòng nhập biển số xe hoặc mã vé trước khi xác nhận.'
       };
     }
     const clean = plateStr.trim().toUpperCase();
     if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO' || clean === 'KHÔNG TÌM THẤY') {
       return {
         valid: false,
-        message: 'Vui lòng nhập biển số xe hợp lệ.'
+        message: 'Vui lòng nhập biển số xe hoặc mã vé hợp lệ.'
       };
+    }
+
+    if (vehicleType === 'Xe đạp / Xe điện') {
+      if (!/^\d{6}$/.test(clean)) {
+        return {
+          valid: false,
+          message: `Mã vé xe đạp / xe điện "${clean}" phải gồm đúng 6 chữ số (VD: 482915).`
+        };
+      }
+      return { valid: true, cleanPlate: clean };
     }
 
     const stripped = clean.replace(/[\s\.\-_]/g, '');
@@ -265,13 +289,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (resultPlateText) resultPlateText.textContent = val || '---';
       if (vehicleTypeText) {
-        const icon = (state.currentRecognition.type === 'Xe máy') ? '<i class="fa-solid fa-motorcycle" style="color:#2563eb; margin-right:4px;"></i>' : '<i class="fa-solid fa-car" style="color:#2563eb; margin-right:4px;"></i>';
-        vehicleTypeText.innerHTML = `${icon} ${state.currentRecognition.type}`;
+        const vt = state.currentRecognition.type;
+        const icon = (vt === 'Xe đạp / Xe điện')
+          ? '<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i>'
+          : ((vt === 'Xe máy') ? '<i class="fa-solid fa-motorcycle" style="color:#2563eb; margin-right:4px;"></i>' : '<i class="fa-solid fa-car" style="color:#2563eb; margin-right:4px;"></i>');
+        vehicleTypeText.innerHTML = `${icon} ${vt}`;
       }
 
       // Kiểm tra hợp lệ thời gian thực khi nhân viên đang gõ
       if (val.length >= 3) {
-        const check = validateVietnamesePlate(val);
+        const check = validateVietnamesePlate(val, state.currentRecognition.type);
         const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (!check.valid) {
           if (manualEntryHint && manualEntryHintText) {
@@ -286,7 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
             manualEntryHint.className = 'manual-entry-hint valid';
             manualEntryHint.style.display = 'flex';
             if (hintIcon) hintIcon.className = 'fa-solid fa-circle-check';
-            manualEntryHintText.textContent = `Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi.`;
+            manualEntryHintText.textContent = (state.currentRecognition.type === 'Xe đạp / Xe điện')
+              ? `Mã vé 6 chữ số hợp lệ (${val}) — Sẵn sàng ghi nhận và in phiếu.`
+              : `Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi.`;
           }
           if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
         }
@@ -488,9 +517,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     historyTableBody.innerHTML = displayRecords.map(item => {
+      const isBike = (item.type === 'Xe đạp / Xe điện');
       const isCar = (item.type === 'Ô tô');
-      const vtypeClass = isCar ? 'car' : 'moto';
-      const vtypeIcon = isCar ? '<i class="fa-solid fa-car"></i>' : '<i class="fa-solid fa-motorcycle"></i>';
+      const vtypeClass = isBike ? 'moto' : (isCar ? 'car' : 'moto');
+      const vtypeIcon = isBike
+        ? '<i class="fa-solid fa-bicycle" style="color:#6d28d9;"></i>'
+        : (isCar ? '<i class="fa-solid fa-car"></i>' : '<i class="fa-solid fa-motorcycle"></i>');
       const isManual = item.status && item.status.includes('Nhập tay');
       const statusClass = isManual ? 'manual' : 'success';
 
@@ -498,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td>
             <span class="plate-badge">
-              <i class="fa-solid fa-id-card"></i>
+              <i class="fa-solid ${isBike ? 'fa-ticket' : 'fa-id-card'}"></i>
               ${item.plate}
             </span>
           </td>
@@ -536,13 +568,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let newPlate = null;
         if (window.showAppPrompt) {
           newPlate = await window.showAppPrompt({
-            title: 'CHỈNH SỬA BIỂN SỐ LƯỢT XE',
-            subtitle: `Sửa lại biển số đúng cho lượt vừa vào (Hiện tại: ${oldPlate}):`,
+            title: oldType === 'Xe đạp / Xe điện' ? 'Chỉnh sửa mã vé 6 chữ số' : 'Chỉnh sửa biển số lượt xe',
+            subtitle: `Sửa lại định danh đúng cho lượt vừa vào (Hiện tại: ${oldPlate}):`,
             defaultValue: oldPlate,
-            placeholder: 'VD: 51F-888.88 hoặc 29A-12345',
+            placeholder: oldType === 'Xe đạp / Xe điện' ? 'VD: 482915 (6 chữ số)' : 'VD: 51F-866.88 hoặc 29A-12345',
             validateFn: (val) => {
-              const res = validateVietnamesePlate(val);
-              return { valid: res.valid, reason: res.message || res.reason, clean: res.clean };
+              const res = validateVietnamesePlate(val, oldType);
+              return { valid: res.valid, reason: res.message || res.reason, clean: res.cleanPlate || res.clean };
             }
           });
         } else {
@@ -552,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newPlate || newPlate.trim().toUpperCase() === oldPlate) return;
 
         const clean = newPlate.trim().toUpperCase();
-        const check = validateVietnamesePlate(clean);
+        const check = validateVietnamesePlate(clean, oldType);
         if (!check.valid) {
           if (window.showAppAlert) {
             await window.showAppAlert({
@@ -1095,11 +1127,178 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
+  // MODAL PHIẾU GỬI XE ĐẠP / XE ĐIỆN CÓ DẤU MỘC ĐỎ + NÚT CẤP MÃ 6 SỐ
+  // ==========================================================================
+  function openBikeTicketModal(info) {
+    if (!bikeTicketModalBackdrop || !info) return;
+    if (ticketSessionCode) ticketSessionCode.textContent = `Mã phiên: ${info.sessionCode || '--'}`;
+    if (ticketSixDigits) ticketSixDigits.textContent = info.ticketCode || '000000';
+    if (ticketVehicleType) ticketVehicleType.textContent = info.vehicleType || 'Xe đạp / Xe điện';
+    if (ticketEntryTime) ticketEntryTime.textContent = info.entryTime || '--';
+    if (ticketStaffName) ticketStaffName.textContent = info.staffName || 'Trần Bảo Anh';
+
+    if (info.photoUrl && ticketPhotoWrapper && ticketBikePhoto) {
+      ticketBikePhoto.src = info.photoUrl;
+      ticketPhotoWrapper.style.display = 'block';
+    } else if (ticketPhotoWrapper) {
+      ticketPhotoWrapper.style.display = 'none';
+    }
+    bikeTicketModalBackdrop.classList.add('show');
+  }
+
+  function closeBikeTicketModal() {
+    if (bikeTicketModalBackdrop) bikeTicketModalBackdrop.classList.remove('show');
+  }
+
+  if (btnCloseBikeTicket) btnCloseBikeTicket.addEventListener('click', closeBikeTicketModal);
+  if (bikeTicketModalBackdrop) {
+    bikeTicketModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === bikeTicketModalBackdrop) closeBikeTicketModal();
+    });
+  }
+  if (btnPrintBikeTicket) {
+    btnPrintBikeTicket.addEventListener('click', () => {
+      window.print();
+    });
+  }
+  if (btnReopenBikeTicket) {
+    btnReopenBikeTicket.addEventListener('click', () => {
+      if (lastBikeTicketInfo) openBikeTicketModal(lastBikeTicketInfo);
+    });
+  }
+
+  if (btnBikeTicket) {
+    btnBikeTicket.addEventListener('click', async () => {
+      // Nếu camera đang mở -> tự chụp khung hình chiếc xe đạp / xe điện
+      if (webcamStream) {
+        const snapshot = await captureWebcamSnapshot();
+        if (snapshot) {
+          currentImageFile = snapshot.file;
+          if (vehiclePreviewImg) {
+            vehiclePreviewImg.src = snapshot.dataUrl;
+            vehiclePreviewImg.style.display = 'block';
+          }
+          if (emptyViewportPlaceholder) emptyViewportPlaceholder.style.display = 'none';
+          stopWebcam();
+        }
+      }
+
+      if (!currentImageFile && !vehiclePreviewImg?.src) {
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'Chưa có ảnh phương tiện',
+            message: 'Vui lòng chụp ảnh hoặc chọn ảnh chiếc xe đạp / xe điện trước khi cấp mã vé 6 số.',
+            hint: 'Ảnh chụp xe sẽ được lưu kèm mã vé 6 số để nhân viên đối chiếu trực quan khi khách lấy xe ra.',
+            type: 'warning',
+            confirmText: 'Đã hiểu'
+          });
+        } else {
+          alert('Vui lòng chụp hoặc chọn ảnh xe đạp / xe điện trước!');
+        }
+        return;
+      }
+
+      if (successBanner) successBanner.style.display = 'none';
+      if (btnReopenBikeTicket) btnReopenBikeTicket.style.display = 'none';
+
+      btnBikeTicket.disabled = true;
+      btnBikeTicket.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang sinh mã 6 số...</span>`;
+
+      try {
+        const formData = new FormData();
+        if (currentImageFile) {
+          formData.append('file', currentImageFile);
+        } else if (vehiclePreviewImg?.src) {
+          const resImg = await fetch(vehiclePreviewImg.src);
+          const blob = await resImg.blob();
+          formData.append('file', blob, 'bike_entry.jpg');
+        }
+
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/checkin/ticket-bike`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Không thể sinh mã vé 6 số');
+
+        const ticketCode = data.ticket_code;
+        const imgUrl = data.checkin_image_url ? `${apiBase}${data.checkin_image_url}` : (vehiclePreviewImg?.src || null);
+        const currentTime = data.entry_time || formatDateTime();
+
+        state.currentRecognition = {
+          plate: ticketCode,
+          type: 'Xe đạp / Xe điện',
+          confidence: '100.0%',
+          ocrConfidence: '100.0%',
+          entryTime: currentTime,
+          originalImageUrl: imgUrl,
+          cropUrl: null,
+          status: 'recognized'
+        };
+
+        // Hiển thị ảnh xe ở Cột 2 & Cột 3 để nhân viên xác nhận trực quan
+        if (imgUrl && annotatedPreviewImg) {
+          annotatedPreviewImg.src = imgUrl;
+          annotatedPreviewImg.style.display = 'block';
+          if (emptyAnnotatedPlaceholder) emptyAnnotatedPlaceholder.style.display = 'none';
+        }
+        if (cropPlaceholder && imgUrl) {
+          cropPlaceholder.innerHTML = `<img src="${imgUrl}" alt="Ảnh xe đạp lúc vào" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px;">`;
+        }
+        if (cropDimsText) cropDimsText.textContent = 'Ảnh xe không biển số';
+
+        if (resultPlateText) resultPlateText.textContent = ticketCode;
+        if (plateManualInput) plateManualInput.value = ticketCode;
+        toggleManualEdit(false);
+
+        if (licensePlateCard) licensePlateCard.classList.remove('warning-mode', 'error-mode');
+        if (manualEntryHint) manualEntryHint.style.display = 'none';
+
+        if (aiStatusPill) {
+          aiStatusPill.className = 'badge-status-pill success';
+          if (aiStatusText) aiStatusText.textContent = 'Đã cấp mã vé 6 số';
+        }
+        if (yoloConfText) yoloConfText.textContent = 'Vé 6 số';
+        if (ocrConfidenceText) ocrConfidenceText.textContent = '100%';
+        if (processingTimeText) processingTimeText.textContent = 'Tức thì';
+        if (entryTimeText) entryTimeText.textContent = currentTime;
+        if (vehicleTypeText) {
+          vehicleTypeText.innerHTML = `<i class="fa-solid fa-bicycle" style="color:#6d28d9; margin-right:4px;"></i> Xe đạp / Xe điện`;
+        }
+        if (fileStatusText) {
+          fileStatusText.textContent = `Đã sinh mã vé 6 số: ${ticketCode} — Bấm Ghi nhận để lưu & in phiếu`;
+        }
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: `Mã vé mới: ${ticketCode}`,
+            message: 'Bấm "Ghi nhận xe vào bãi" để lưu dữ liệu và in phiếu có dấu mộc đỏ.',
+            type: 'success'
+          });
+        }
+      } catch (err) {
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'Lỗi cấp mã vé 6 số',
+            message: err.message,
+            type: 'error'
+          });
+        } else {
+          alert(`Lỗi: ${err.message}`);
+        }
+      } finally {
+        btnBikeTicket.disabled = false;
+        btnBikeTicket.innerHTML = `<i class="fa-solid fa-bicycle"></i> <span>Cấp mã xe đạp (6 số)</span>`;
+      }
+    });
+  }
+
   // D. THAO TÁC 2: NHẤN NÚT "GHI NHẬN XE VÀO BÃI"
   // Gọi API Backend POST /api/checkin/confirm để lưu lượt vào CSDL thật và mở barrier.
   if (btnConfirmCheckin) {
     btnConfirmCheckin.addEventListener('click', async () => {
-      // 1. Đồng bộ biển số từ ô nhập tay nếu đang mở
+      // 1. Đồng bộ biển số / mã vé từ ô nhập tay nếu đang mở
       let currentPlate = '';
       if (plateManualInput && plateManualInput.style.display !== 'none') {
         const val = normalizePlateSpacing(plateManualInput.value.trim().toUpperCase());
@@ -1122,8 +1321,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlate = state.currentRecognition.plate.trim().toUpperCase();
       }
 
-      // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE TRƯỚC KHI XÁC NHẬN (BẮT BUỘC CÓ SỐ, ĐÚNG QUY CHUẨN)
-      const validation = validateVietnamesePlate(currentPlate);
+      // 2. KIỂM TRA HỢP LỆ BIỂN SỐ XE (HOẶC MÃ VÉ 6 SỐ NẾU LÀ XE ĐẠP) TRƯỚC KHI XÁC NHẬN
+      const targetVehicleType = state.currentRecognition?.type || '';
+      const validation = validateVietnamesePlate(currentPlate, targetVehicleType);
       if (!validation.valid) {
         const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (manualEntryHint && manualEntryHintText) {
@@ -1143,14 +1343,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.showAppAlert) {
           await window.showAppAlert({
-            title: 'Biển số xe không hợp lệ',
+            title: targetVehicleType === 'Xe đạp / Xe điện' ? 'Mã vé 6 số không hợp lệ' : 'Biển số xe không hợp lệ',
             message: validation.message,
-            hint: 'Hệ thống tạm khóa mở barrier để đảm bảo chính xác dữ liệu. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
+            hint: targetVehicleType === 'Xe đạp / Xe điện'
+              ? 'Mã vé xe đạp / xe điện phải gồm đúng 6 chữ số (VD: 482915).'
+              : 'Hệ thống tạm khóa mở barrier để đảm bảo chính xác dữ liệu. Định dạng chuẩn: 51F-866.88 (ô tô) hoặc 59P1-998.23 (xe máy).',
             type: 'error',
-            confirmText: 'Nhập lại biển số'
+            confirmText: 'Nhập lại'
           });
         } else {
-          alert(`Biển số xe không hợp lệ: ${validation.message}`);
+          alert(`Không hợp lệ: ${validation.message}`);
         }
         return; // CHẶN LẠI HOÀN TOÀN, KHÔNG GỌI BACKEND VÀ KHÔNG MỞ BARRIER
       }
@@ -1196,10 +1398,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successBanner) {
           successBanner.style.display = 'flex';
         }
+
+        // Nếu là Xe đạp / Xe điện -> hiện nút In phiếu & tự động mở Phiếu gửi xe có Dấu Mộc Đỏ
+        if (type === 'Xe đạp / Xe điện') {
+          lastBikeTicketInfo = {
+            sessionCode: data.session.session_code,
+            ticketCode: data.session.plate_number,
+            vehicleType: data.session.vehicle_type,
+            entryTime: data.session.checkin_time,
+            staffName: data.session.staff_checkin || staffName,
+            photoUrl: originalImageUrl || vehiclePreviewImg?.src || null
+          };
+          if (btnReopenBikeTicket) btnReopenBikeTicket.style.display = 'inline-flex';
+          openBikeTicketModal(lastBikeTicketInfo);
+        } else {
+          if (btnReopenBikeTicket) btnReopenBikeTicket.style.display = 'none';
+        }
+
         if (window.showAppToast) {
           window.showAppToast({
             title: 'Đã mở Barrier Cổng Vào!',
-            message: `Ghi nhận xe ${data.session.plate_number} (${data.session.vehicle_type}) vào bãi thành công.`,
+            message: `Ghi nhận ${data.session.vehicle_type} (${data.session.plate_number}) vào bãi thành công.`,
             type: 'success'
           });
         }

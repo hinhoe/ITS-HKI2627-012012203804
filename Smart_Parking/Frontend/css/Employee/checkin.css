@@ -1593,3 +1593,267 @@ body {
   border-radius: 50%;
   background-color: currentColor;
 }
+
+/* ==========================================================================
+   TÍNH NĂNG XE ĐẠP / XE ĐIỆN (MÃ VÉ 6 SỐ + PHIẾU IN DẤU MỘC ĐỎ)
+   ========================================================================== */
+.btn-bike-ticket {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.btn-bike-ticket:hover {
+  background-color: #ede9fe;
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(109, 40, 217, 0.16);
+}
+
+.btn-bike-ticket:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-print-ticket-inline {
+  background: #ffffff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.btn-print-ticket-inline:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.bike-ticket-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  border: 1px solid #e2e8f0;
+}
+
+.bike-ticket-paper {
+  background: #ffffff;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 18px 18px 16px;
+  text-align: center;
+  position: relative;
+}
+
+.ticket-header {
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.ticket-brand {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.4px;
+}
+
+.ticket-doc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e40af;
+  margin-top: 3px;
+}
+
+.ticket-session-code {
+  font-size: 11px;
+  color: #64748b;
+  font-family: Consolas, monospace;
+  margin-top: 2px;
+}
+
+.ticket-code-box {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.ticket-code-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.ticket-code-value {
+  font-size: 30px;
+  font-weight: 800;
+  font-family: Consolas, 'Courier New', monospace;
+  color: #0f172a;
+  letter-spacing: 6px;
+}
+
+.ticket-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #475569;
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.ticket-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-meta-row strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.ticket-photo-row {
+  width: 100%;
+  height: 110px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #0b0f19;
+  margin-bottom: 12px;
+}
+
+.ticket-photo-row img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ticket-stamp-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 12px;
+}
+
+.ticket-note {
+  flex: 1;
+  font-size: 10.5px;
+  color: #64748b;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* Dấu mộc đỏ tròn chứng thực */
+.red-official-stamp {
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  transform: rotate(-12deg);
+  user-select: none;
+  opacity: 0.9;
+}
+
+.stamp-outer-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2.5px solid #dc2626;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(220, 38, 38, 0.04);
+}
+
+.stamp-inner-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid #dc2626;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  text-align: center;
+  padding: 4px;
+}
+
+.stamp-top {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.stamp-center {
+  font-size: 9px;
+  font-weight: 900;
+  border-top: 1px solid rgba(220, 38, 38, 0.55);
+  border-bottom: 1px solid rgba(220, 38, 38, 0.55);
+  padding: 2px 3px;
+  margin: 3px 0;
+  line-height: 1.1;
+}
+
+.stamp-bottom {
+  font-size: 6.5px;
+  font-weight: 700;
+}
+
+.bike-ticket-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #bikeTicketModalBackdrop,
+  #bikeTicketModalBackdrop * {
+    visibility: visible !important;
+  }
+  #bikeTicketModalBackdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  .bike-ticket-modal-card {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -157,12 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Tạo thumbnail định danh cho biển số xe
+  // Tạo thumbnail định danh cho biển số xe / vé xe đạp
   function createPlateThumbnail(type) {
-    const isAuto = type === 'Ô tô';
+    const isBike = (type === 'Xe đạp / Xe điện');
+    const isAuto = (type === 'Ô tô');
+    const bg = isBike ? '#6d28d9' : (isAuto ? '#1e3a8a' : '#0f766e');
+    const label = isBike ? 'BIKE' : (isAuto ? 'AUTO' : 'MOTO');
     return `
-      <div class="plate-thumb" style="display:flex;align-items:center;justify-content:center;background:${isAuto ? '#1e3a8a' : '#0f766e'};color:#fff;font-family:Consolas,monospace;font-size:8px;font-weight:700;">
-        ${isAuto ? 'AUTO' : 'MOTO'}
+      <div class="plate-thumb" style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;font-family:Consolas,monospace;font-size:8px;font-weight:700;">
+        ${label}
       </div>
     `;
   }
@@ -266,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <span class="vehicle-type-cell">
-            <i class="fa-solid ${item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
+            <i class="fa-solid ${item.type === 'Xe đạp / Xe điện' ? 'fa-bicycle' : (item.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
             <span>${item.type}</span>
           </span>
         </td>

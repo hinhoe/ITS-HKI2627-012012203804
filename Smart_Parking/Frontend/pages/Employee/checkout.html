@@ -6,7 +6,7 @@
   <title>Ghi nhận xe ra & Tính phí - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Ghi nhận xe ra -->
-  <link rel="stylesheet" href="../../css/Employee/checkout.css?v=6.0">
+  <link rel="stylesheet" href="../../css/Employee/checkout.css?v=7.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter (Đồng bộ tuyệt đối với hệ thống) -->
@@ -327,7 +327,11 @@
               </div>
             </div>
 
-            <div class="toolbar-right">
+            <div class="toolbar-right" style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" class="btn btn-bike-checkout" id="btnLookupBikeTicket" title="Nhập mã vé 6 số để đối chiếu ảnh xe đạp / xe điện lúc vào và tính phí">
+                <i class="fa-solid fa-bicycle"></i>
+                <span>Tra cứu vé xe đạp (6 số)</span>
+              </button>
               <button type="button" class="btn btn-recognize-main" id="btnRecognize">
                 <i class="fa-solid fa-bolt"></i>
                 <span>Nhận diện biển số ra</span>
@@ -403,6 +407,6 @@
 
   <!-- JavaScript xử lý tương tác nghiệp vụ Check-out -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
-  <script src="../../js/Employee/checkout.js?v=16.0"></script>
+  <script src="../../js/Employee/checkout.js?v=17.0"></script>
 </body>
 </html>

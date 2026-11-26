@@ -13,7 +13,9 @@ VALUES
     (1, 'Xe máy', 'Ban ngày', 5000, 'Lượt gửi ban ngày (06:00 - 18:00)'),
     (2, 'Xe máy', 'Qua đêm', 10000, 'Gửi qua đêm (sau 18:00)'),
     (3, 'Ô tô', 'Ban ngày', 25000, 'Lượt gửi ban ngày (06:00 - 18:00)'),
-    (4, 'Ô tô', 'Qua đêm', 50000, 'Gửi qua đêm (sau 18:00)');
+    (4, 'Ô tô', 'Qua đêm', 50000, 'Gửi qua đêm (sau 18:00)'),
+    (5, 'Xe đạp / Xe điện', 'Ban ngày', 3000, 'Lượt gửi ban ngày (06:00 - 18:00)'),
+    (6, 'Xe đạp / Xe điện', 'Qua đêm', 6000, 'Gửi qua đêm (sau 18:00)');
 
 -- 3. Tài khoản mẫu (Mật khẩu mặc định: 123456)
 INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role)

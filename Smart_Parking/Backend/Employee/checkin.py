@@ -23,6 +23,7 @@ from datetime import datetime
 import logging
 from pathlib import Path
 import re
+import secrets
 import time
 from typing import Any, Optional
 import uuid
@@ -269,11 +270,20 @@ async def process_checkin_recognition(
     )
 
 
-def validate_vietnamese_plate(plate: str) -> tuple[bool, str]:
-    """Kiểm tra hợp lệ quy chuẩn biển số xe Việt Nam."""
+def validate_vietnamese_plate(plate: str, vehicle_type: str = "") -> tuple[bool, str]:
+    """
+    Kiểm tra hợp lệ mã định danh phương tiện:
+    - Nếu là 'Xe đạp / Xe điện': bắt buộc đúng mã vé 6 chữ số (VD: 482915).
+    - Nếu là 'Ô tô' hoặc 'Xe máy': kiểm tra chặt chẽ quy chuẩn biển số xe Việt Nam.
+    """
     clean = plate.strip().upper()
     if not clean or clean in ("---", "CHƯA RÕ", "CHUA RO"):
-        return False, "Biển số xe không được để trống."
+        return False, "Biển số hoặc mã vé xe không được để trống."
+
+    if vehicle_type == "Xe đạp / Xe điện":
+        if not re.fullmatch(r"\d{6}", clean):
+            return False, f"Mã vé xe đạp / xe điện '{clean}' phải gồm đúng 6 chữ số (VD: 482915)."
+        return True, ""
 
     stripped = re.sub(r"[\s\.\-_]", "", clean)
     if len(stripped) < 6 or len(stripped) > 11:
@@ -288,6 +298,56 @@ def validate_vietnamese_plate(plate: str) -> tuple[bool, str]:
         return False, f"Biển số '{clean}' thiếu ký tự chữ cái sê-ri (VD: 51F, 29A, 59P1)."
 
     return True, ""
+
+
+def generate_unique_bike_ticket(db: sqlite3.Connection) -> str:
+    """Sinh ngẫu nhiên mã vé 6 chữ số không trùng với bất kỳ xe nào đang gửi trong bãi."""
+    cur = db.cursor()
+    cur.execute("SELECT plate_number FROM parking_sessions WHERE status = 'PARKED'")
+    active_codes = {(r["plate_number"] or "").strip() for r in cur.fetchall()}
+
+    for _ in range(100):
+        code = str(100000 + secrets.randbelow(900000))
+        if code not in active_codes:
+            return code
+    raise HTTPException(status_code=500, detail="Không thể sinh mã vé 6 số khả dụng, vui lòng thử lại.")
+
+
+@router.post("/api/checkin/ticket-bike")
+async def create_bike_ticket_preview(
+    file: Optional[UploadFile] = File(default=None, description="Ảnh chụp xe đạp / xe đạp điện tại cổng vào"),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """
+    Quy trình tiếp nhận xe đạp / xe đạp điện (không biển số):
+    1. Lưu ảnh phương tiện vào uploads/ để phục vụ đối soát lúc ra.
+    2. Sinh ngẫu nhiên mã vé 6 chữ số duy nhất không trùng trong bãi.
+    """
+    orig_url = None
+    if file is not None:
+        raw_bytes = await file.read()
+        if raw_bytes:
+            decode_checkin_image(file.filename or "bike_capture.jpg", raw_bytes)
+            ext = Path(file.filename or "bike_capture.jpg").suffix.lower()
+            if not ext or ext not in settings.ALLOWED_EXTENSIONS:
+                ext = ".jpg"
+            request_id = uuid.uuid4().hex[:12]
+            orig_filename = f"{request_id}_bike{ext}"
+            orig_path = settings.UPLOAD_DIR / orig_filename
+            orig_path.write_bytes(raw_bytes)
+            orig_url = f"/uploads/{orig_filename}"
+
+    ticket_code = generate_unique_bike_ticket(db)
+    now_str = datetime.now().strftime("%H:%M:%S - %d/%m/%Y")
+
+    return {
+        "success": True,
+        "ticket_code": ticket_code,
+        "vehicle_type": "Xe đạp / Xe điện",
+        "checkin_image_url": orig_url,
+        "entry_time": now_str,
+        "message": f"Đã tạo mã vé {ticket_code} cho xe đạp / xe điện.",
+    }
 
 
 # ==========================================================================
@@ -308,7 +368,7 @@ async def confirm_checkin_session(
     5. Trả về thông tin phiên vừa tạo kèm thống kê sức chứa bãi xe mới nhất.
     """
     clean_plate = payload.plate_number.strip().upper()
-    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate, payload.vehicle_type)
     if not is_valid:
         raise HTTPException(
             status_code=400,
@@ -496,15 +556,17 @@ async def update_checkin_session(
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Sửa biển số xe hoặc loại xe của lượt vừa check-in nếu bị nhập sai."""
+    cur = db.cursor()
+    cur.execute("SELECT id, vehicle_type FROM parking_sessions WHERE id = ?", (session_id,))
+    existing = cur.fetchone()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lượt xe cần sửa")
+
+    target_vtype = payload.vehicle_type or existing["vehicle_type"] or "Ô tô"
     clean_plate = payload.plate_number.strip().upper()
-    is_valid, error_msg = validate_vietnamese_plate(clean_plate)
+    is_valid, error_msg = validate_vietnamese_plate(clean_plate, target_vtype)
     if not is_valid:
         raise HTTPException(status_code=400, detail=f"Biển số xe không hợp lệ: {error_msg}")
-
-    cur = db.cursor()
-    cur.execute("SELECT id FROM parking_sessions WHERE id = ?", (session_id,))
-    if not cur.fetchone():
-        raise HTTPException(status_code=404, detail="Không tìm thấy lượt xe cần sửa")
 
     if payload.vehicle_type:
         cur.execute(

@@ -5,10 +5,17 @@
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam
-  function validateVietnamesePlate(plateStr) {
-    if (!plateStr) return { valid: false, reason: 'Vui lòng nhập biển số xe.' };
-    const clean = plateStr.toUpperCase().replace(/[\s\.\-_]/g, '');
+  // Hàm kiểm tra quy chuẩn biển số xe Việt Nam hoặc mã vé 6 số (Xe đạp / Xe điện)
+  function validateVietnamesePlate(plateStr, vehicleType = '') {
+    if (!plateStr) return { valid: false, reason: 'Vui lòng nhập biển số xe hoặc mã vé.' };
+    const rawClean = plateStr.trim().toUpperCase();
+    if (vehicleType === 'Xe đạp / Xe điện') {
+      if (!/^\d{6}$/.test(rawClean)) {
+        return { valid: false, reason: 'Mã vé xe đạp / xe điện phải gồm đúng 6 chữ số (VD: 482915).' };
+      }
+      return { valid: true, clean: rawClean };
+    }
+    const clean = rawClean.replace(/[\s\.\-_]/g, '');
     if (clean.length < 6 || clean.length > 11) {
       return { valid: false, reason: `Độ dài biển số chưa hợp lệ (${clean.length} ký tự, cần 6–10 ký tự).` };
     }
@@ -172,12 +179,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Tạo thumbnail định danh cho biển số xe
+  // Tạo thumbnail định danh cho biển số xe / vé xe đạp
   function createPlateThumbnail(type) {
+    const isBike = (type === 'Xe đạp / Xe điện');
     const isAuto = (type === 'Ô tô');
+    const bg = isBike ? '#6d28d9' : (isAuto ? '#1e3a8a' : '#0f766e');
+    const label = isBike ? 'BIKE' : (isAuto ? 'AUTO' : 'MOTO');
     return `
-      <div class="plate-thumb" style="display:flex;align-items:center;justify-content:center;background:${isAuto ? '#1e3a8a' : '#0f766e'};color:#fff;font-family:Consolas,monospace;font-size:8px;font-weight:700;">
-        ${isAuto ? 'AUTO' : 'MOTO'}
+      <div class="plate-thumb" style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;font-family:Consolas,monospace;font-size:8px;font-weight:700;">
+        ${label}
       </div>
     `;
   }
@@ -214,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <span class="vehicle-type-cell">
-            <i class="fa-solid ${v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle'}"></i>
+            <i class="fa-solid ${v.type === 'Xe đạp / Xe điện' ? 'fa-bicycle' : (v.type === 'Ô tô' ? 'fa-car' : 'fa-motorcycle')}"></i>
             <span>${v.type}</span>
           </span>
         </td>
@@ -444,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editVehiclePlate.style.borderColor = '';
         return;
       }
-      const check = validateVietnamesePlate(val);
+      const check = validateVietnamesePlate(val, editVehicleType ? editVehicleType.value : '');
       if (!check.valid) {
         if (editVehicleErrorBanner && editVehicleErrorText) {
           editVehicleErrorText.textContent = check.reason;
@@ -481,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const plateCheck = validateVietnamesePlate(newPlate);
+      const plateCheck = validateVietnamesePlate(newPlate, newType);
       if (!plateCheck.valid) {
         const card = editVehicleModalBackdrop.querySelector('.modal-card');
         if (card) {
