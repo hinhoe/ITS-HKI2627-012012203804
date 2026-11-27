@@ -332,20 +332,35 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    let currentUser = null;
     try {
       const raw = localStorage.getItem('parktech_user');
       if (raw) {
-        const u = JSON.parse(raw);
-        if (u && u.full_name) {
+        currentUser = JSON.parse(raw);
+        if (currentUser && currentUser.full_name) {
           document.querySelectorAll('.user-name').forEach(el => {
-            el.textContent = u.full_name;
+            el.textContent = currentUser.full_name;
           });
           document.querySelectorAll('.user-role').forEach(el => {
-            el.textContent = u.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+            el.textContent = currentUser.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
           });
         }
       }
     } catch (e) { /* ignore */ }
+
+    const dropdown = document.getElementById('userDropdownMenu');
+    if (dropdown && currentUser && currentUser.role === 'admin' && !dropdown.querySelector('.back-to-admin-link')) {
+      const logoutLink = dropdown.querySelector('.dropdown-item.logout');
+      const adminLink = document.createElement('a');
+      adminLink.href = '../Admin/dashboard.html';
+      adminLink.className = 'dropdown-item back-to-admin-link';
+      adminLink.innerHTML = '<i class="fa-solid fa-shield-halved" style="color: #2563eb;"></i> <span style="color: #1d4ed8; font-weight: 600;">Quay lại trang Quản trị</span>';
+      if (logoutLink) {
+        dropdown.insertBefore(adminLink, logoutLink);
+      } else {
+        dropdown.appendChild(adminLink);
+      }
+    }
 
     document.querySelectorAll('.dropdown-item.logout').forEach(link => {
       link.addEventListener('click', () => {

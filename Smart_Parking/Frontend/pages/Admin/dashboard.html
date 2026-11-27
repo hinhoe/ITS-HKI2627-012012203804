@@ -6,7 +6,8 @@
   <title>Thống kê & Báo cáo - Quản trị ParkTech</title>
 
   <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/dashboard.css">
+  <link rel="stylesheet" href="../../css/Admin/dashboard.css?v=2.0">
+  <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -162,13 +163,11 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono">1.480</span>
+            <span class="kpi-value font-mono" id="kpiTotalIn">0</span>
             <span class="kpi-unit">lượt</span>
           </div>
-          <div class="kpi-trend trend-up">
-            <i class="fa-solid fa-arrow-up"></i>
-            <span>+8.2%</span>
-            <span class="trend-compare">so với hôm qua</span>
+          <div class="kpi-sub-info">
+            <span id="kpiPeriodLabelIn">Trong kỳ 7 ngày gần nhất</span>
           </div>
         </div>
 
@@ -181,13 +180,11 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono">1.432</span>
+            <span class="kpi-value font-mono" id="kpiTotalOut">0</span>
             <span class="kpi-unit">lượt</span>
           </div>
-          <div class="kpi-trend trend-up">
-            <i class="fa-solid fa-arrow-up"></i>
-            <span>+7.5%</span>
-            <span class="trend-compare">so với hôm qua</span>
+          <div class="kpi-sub-info">
+            <span id="kpiPeriodLabelOut">Đã đối soát hoàn tất</span>
           </div>
         </div>
 
@@ -200,13 +197,13 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono">412</span>
+            <span class="kpi-value font-mono" id="kpiParkedNow">0</span>
             <span class="kpi-unit">xe</span>
           </div>
-          <div class="kpi-sub-info">
-            <span>412/500 chỗ</span>
+          <div class="kpi-sub-info" id="kpiCapacityMeta">
+            <span>0/500 chỗ</span>
             <span class="dot-separator">•</span>
-            <span>82.4% công suất</span>
+            <span>0.0% công suất</span>
           </div>
         </div>
 
@@ -219,13 +216,11 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono">7.420.000</span>
+            <span class="kpi-value font-mono" id="kpiRevenue">0</span>
             <span class="kpi-currency">đ</span>
           </div>
-          <div class="kpi-trend trend-up">
-            <i class="fa-solid fa-arrow-up"></i>
-            <span>+12.4%</span>
-            <span class="trend-compare">so với kỳ trước</span>
+          <div class="kpi-sub-info">
+            <span id="kpiPeriodLabelRev">Tổng thu thực tế từ CSDL</span>
           </div>
         </div>
       </section>
@@ -235,7 +230,7 @@
         <div class="chart-header">
           <div class="chart-title-group">
             <h2 class="chart-title">Lưu lượng phương tiện & Doanh thu</h2>
-            <p class="chart-subtitle">Phân bổ lượt xe ô tô, xe máy và chỉ số doanh thu 7 ngày gần nhất</p>
+            <p class="chart-subtitle" id="chartSubtitle">Phân bổ lượt xe ô tô, xe máy, xe đạp / đạp điện và doanh thu theo thời gian thực</p>
           </div>
 
           <!-- Chú giải biểu đồ (Legend) -->
@@ -247,6 +242,10 @@
             <div class="legend-item">
               <span class="legend-bar legend-bar-car"></span>
               <span>Ô tô (Lượt)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-bar legend-bar-bike"></span>
+              <span>Xe đạp / Đạp điện</span>
             </div>
             <div class="legend-item">
               <span class="legend-line-dot"></span>
@@ -261,7 +260,7 @@
         </div>
       </section>
 
-      <!-- 3. Bảng Đối soát doanh thu 7 ngày gần nhất -->
+      <!-- 3. Bảng Đối soát doanh thu -->
       <section class="card audit-card">
         <div class="audit-header">
           <h2 class="audit-title" id="auditTitle">Đối soát doanh thu 7 ngày gần nhất</h2>
@@ -275,8 +274,9 @@
                 <th>NGÀY ĐỐI SOÁT</th>
                 <th>LƯỢT VÀO</th>
                 <th>LƯỢT RA</th>
-                <th>THU TIỀN MẶT</th>
-                <th>CHUYỂN KHOẢN QR</th>
+                <th>DOANH THU Ô TÔ</th>
+                <th>DOANH THU XE MÁY</th>
+                <th>XE ĐẠP / ĐẠP ĐIỆN</th>
                 <th>TỔNG DOANH THU</th>
               </tr>
             </thead>
@@ -294,6 +294,8 @@
   </div>
 
   <!-- File JavaScript xử lý logic Dashboard -->
-  <script src="../../js/Admin/dashboard.js"></script>
+  <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
+  <script src="../../js/Admin/admin-common.js?v=1.0"></script>
+  <script src="../../js/Admin/dashboard.js?v=2.0"></script>
 </body>
 </html>

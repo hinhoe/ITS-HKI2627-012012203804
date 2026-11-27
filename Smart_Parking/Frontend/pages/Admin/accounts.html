@@ -6,7 +6,8 @@
   <title>Quản lý tài khoản & Phân quyền - Quản trị ParkTech</title>
 
   <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/accounts.css">
+  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=2.0">
+  <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,7 +152,7 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statTotal">18</span>
+            <span class="kpi-value font-mono" id="statTotal">0</span>
           </div>
           <div class="kpi-sub-text">Trên toàn hệ thống cổng</div>
         </div>
@@ -165,7 +166,7 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statAdmin">3</span>
+            <span class="kpi-value font-mono" id="statAdmin">0</span>
           </div>
           <div class="kpi-sub-text">Toàn quyền cấu hình</div>
         </div>
@@ -179,7 +180,7 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statStaff">15</span>
+            <span class="kpi-value font-mono" id="statStaff">0</span>
           </div>
           <div class="kpi-sub-text">Trực ca kiểm soát cổng</div>
         </div>
@@ -193,9 +194,9 @@
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statActive">16</span>
+            <span class="kpi-value font-mono" id="statActive">0</span>
           </div>
-          <div class="kpi-sub-text" id="statLocked">2 tài khoản tạm khóa</div>
+          <div class="kpi-sub-text" id="statLocked">0 tài khoản tạm khóa</div>
         </div>
       </section>
 
@@ -216,7 +217,7 @@
         <!-- Cụm lọc theo Vai trò -->
         <div class="filter-btn-group" id="roleFilterGroup">
           <button type="button" class="filter-pill-btn active" data-role="all">Tất cả vai trò</button>
-          <button type="button" class="filter-pill-btn" data-role="staff">Nhân viên bãi xe</button>
+          <button type="button" class="filter-pill-btn" data-role="employee">Nhân viên bãi xe</button>
           <button type="button" class="filter-pill-btn" data-role="admin">Quản trị viên</button>
         </div>
 
@@ -241,7 +242,7 @@
             <thead>
               <tr>
                 <th>TÊN ĐĂNG NHẬP</th>
-                <th>MẬT KHẨU</th>
+                <th>BẢO MẬT</th>
                 <th>HỌ VÀ TÊN</th>
                 <th>VAI TRÒ</th>
                 <th>CA TRỰC / GHI CHÚ</th>
@@ -259,7 +260,7 @@
         <!-- 4. Thanh phân trang chân bảng -->
         <div class="table-pagination-footer">
           <div class="pagination-info" id="paginationInfo">
-            Hiển thị 5 / 18 tài khoản
+            Đang tải dữ liệu tài khoản...
           </div>
           <div class="pagination-controls" id="paginationControls">
             <!-- Render động bởi accounts.js -->
@@ -299,7 +300,7 @@
         <div class="form-group">
           <label for="selectRole" class="form-label">Vai trò *</label>
           <select id="selectRole" class="input-field">
-            <option value="staff">Nhân viên bãi xe</option>
+            <option value="employee">Nhân viên bãi xe</option>
             <option value="admin">Quản trị viên</option>
           </select>
         </div>
@@ -312,7 +313,7 @@
         <div class="form-group" id="passwordGroup">
           <label for="inputPassword" class="form-label" id="passwordLabel">Mật khẩu *</label>
           <div class="password-input-wrapper">
-            <input type="text" id="inputPassword" class="input-field font-mono" placeholder="Nhập mật khẩu" required>
+            <input type="text" id="inputPassword" class="input-field font-mono" placeholder="Tối thiểu 6 ký tự" required>
             <button type="button" class="btn-copy-pwd" id="btnCopyPwd" title="Sao chép mật khẩu">
               <i class="fa-regular fa-copy"></i>
             </button>
@@ -337,6 +338,8 @@
   </div>
 
   <!-- File JavaScript xử lý logic -->
-  <script src="../../js/Admin/accounts.js"></script>
+  <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
+  <script src="../../js/Admin/admin-common.js?v=1.0"></script>
+  <script src="../../js/Admin/accounts.js?v=2.0"></script>
 </body>
 </html>

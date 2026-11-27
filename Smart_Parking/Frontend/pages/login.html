@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đăng nhập - Hệ thống quản lý bãi đỗ xe ParkTech</title>
   <!-- Liên kết file CSS riêng biệt từ thư mục ../css/ -->
-  <link rel="stylesheet" href="../css/login.css">
+  <link rel="stylesheet" href="../css/login.css?v=2.0">
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,10 +82,25 @@
       </div>
 
       <!-- Nút Đăng nhập -->
-      <button type="submit" class="btn-submit">
+      <button type="submit" class="btn-submit" id="btnSubmitLogin">
         <span>Đăng nhập</span>
         <img src="../images/icon-arrow-right.svg" alt="Arrow Right" class="btn-arrow-img">
       </button>
+
+      <!-- Đăng nhập nhanh tiện lợi giữa Admin & Nhân viên -->
+      <div class="quick-switch-box">
+        <div class="quick-switch-title">Đăng nhập nhanh theo vai trò</div>
+        <div class="quick-switch-actions">
+          <button type="button" class="btn-quick-role admin" data-username="admin01" data-password="123456">
+            <span class="qr-badge">Admin</span>
+            <span class="qr-text">Quản trị (admin01)</span>
+          </button>
+          <button type="button" class="btn-quick-role staff" data-username="nhanvien01" data-password="123456">
+            <span class="qr-badge">Staff</span>
+            <span class="qr-text">Nhân viên (nhanvien01)</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Dòng chú thích bảo mật phía dưới -->
       <footer class="card-footer">
@@ -98,7 +113,7 @@
   </main>
 
   <!-- Liên kết file JavaScript riêng biệt từ thư mục ../js/ -->
-  <script src="../js/login.js"></script>
+  <script src="../js/login.js?v=2.0"></script>
 
 </body>
 </html>

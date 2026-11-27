@@ -6,7 +6,8 @@
   <title>Quản lý mức phí gửi xe - Quản trị ParkTech</title>
 
   <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/pricing.css">
+  <link rel="stylesheet" href="../../css/Admin/pricing.css?v=2.0">
+  <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,7 +94,7 @@
           <p class="page-subtitle">Thiết lập mức phí theo loại phương tiện và thời gian gửi xe.</p>
           <div class="header-meta-pill">
             <span class="meta-dot"></span>
-            <span>2 loại phương tiện • 3 mức phí mỗi loại • Bãi tối đa 500 xe</span>
+            <span id="headerMetaSummary">3 loại phương tiện • 3 mức phí mỗi loại • Đồng bộ SQLite</span>
           </div>
         </div>
       </div>
@@ -172,7 +173,7 @@
                 </div>
                 <div class="rule-details">
                   <div class="rule-name">Ban ngày</div>
-                  <div class="rule-time-badge">06:00 - 22:00</div>
+                  <div class="rule-time-badge">06:00 - 18:00</div>
                   <div class="rule-desc">Giá cố định theo lượt</div>
                 </div>
               </div>
@@ -195,13 +196,13 @@
                 </div>
                 <div class="rule-details">
                   <div class="rule-name">Qua đêm</div>
-                  <div class="rule-time-badge">22:00 - 06:00 ngày hôm sau</div>
+                  <div class="rule-time-badge">18:00 - 06:00 ngày hôm sau</div>
                   <div class="rule-desc">Giá cố định cho lượt qua đêm</div>
                 </div>
               </div>
               <div class="rule-right">
                 <div class="price-value-box">
-                  <span class="price-number font-mono" id="price-motor-night">8.000 VNĐ</span>
+                  <span class="price-number font-mono" id="price-motor-night">10.000 VNĐ</span>
                   <span class="price-unit">/lượt qua đêm</span>
                 </div>
                 <button type="button" class="btn-edit-rule" data-vehicle="motor" data-tier="night" aria-label="Chỉnh sửa mức phí">
@@ -237,7 +238,7 @@
           <!-- Chân thẻ: Thông tin lần cập nhật gần nhất -->
           <div class="pricing-card-footer" id="footer-motor">
             <i class="fa-regular fa-clock"></i>
-            <span>Cập nhật lần cuối: <strong>14:30 15/04/2026</strong> bởi <strong>Nguyễn Thành Tùng</strong></span>
+            <span>Đồng bộ từ cơ sở dữ liệu hệ thống</span>
           </div>
         </article>
 
@@ -270,13 +271,13 @@
                 </div>
                 <div class="rule-details">
                   <div class="rule-name">Ban ngày</div>
-                  <div class="rule-time-badge">06:00 - 22:00</div>
+                  <div class="rule-time-badge">06:00 - 18:00</div>
                   <div class="rule-desc">Giá cố định theo lượt</div>
                 </div>
               </div>
               <div class="rule-right">
                 <div class="price-value-box">
-                  <span class="price-number font-mono" id="price-car-day">30.000 VNĐ</span>
+                  <span class="price-number font-mono" id="price-car-day">25.000 VNĐ</span>
                   <span class="price-unit">/lượt</span>
                 </div>
                 <button type="button" class="btn-edit-rule" data-vehicle="car" data-tier="day" aria-label="Chỉnh sửa mức phí">
@@ -293,7 +294,7 @@
                 </div>
                 <div class="rule-details">
                   <div class="rule-name">Qua đêm</div>
-                  <div class="rule-time-badge">22:00 - 06:00 ngày hôm sau</div>
+                  <div class="rule-time-badge">18:00 - 06:00 ngày hôm sau</div>
                   <div class="rule-desc">Giá cố định cho lượt qua đêm</div>
                 </div>
               </div>
@@ -335,7 +336,99 @@
           <!-- Chân thẻ: Thông tin lần cập nhật gần nhất -->
           <div class="pricing-card-footer" id="footer-car">
             <i class="fa-regular fa-clock"></i>
-            <span>Cập nhật lần cuối: <strong>09:15 12/04/2026</strong> bởi <strong>Nguyễn Thành Tùng</strong></span>
+            <span>Đồng bộ từ cơ sở dữ liệu hệ thống</span>
+          </div>
+        </article>
+
+        <!-- CỘT 3: BẢNG GIÁ XE ĐẠP / ĐẠP ĐIỆN -->
+        <article class="card pricing-card">
+          <div class="pricing-card-header">
+            <div class="vehicle-title-wrapper">
+              <div class="vehicle-icon-box vehicle-icon-bike">
+                <i class="fa-solid fa-bicycle"></i>
+              </div>
+              <div class="vehicle-title-info">
+                <h2 class="vehicle-name">Xe đạp / Đạp điện</h2>
+                <span class="vehicle-rules-count">3 mức phí áp dụng</span>
+              </div>
+            </div>
+            <div class="status-active-badge">
+              <span class="status-active-dot"></span>
+              <span>Đang kích hoạt</span>
+            </div>
+          </div>
+
+          <div class="pricing-rules-list">
+            <div class="rule-item">
+              <div class="rule-left">
+                <div class="rule-icon-box rule-icon-day">
+                  <i class="fa-regular fa-sun"></i>
+                </div>
+                <div class="rule-details">
+                  <div class="rule-name">Ban ngày</div>
+                  <div class="rule-time-badge">06:00 - 18:00</div>
+                  <div class="rule-desc">Giá cố định theo lượt vé</div>
+                </div>
+              </div>
+              <div class="rule-right">
+                <div class="price-value-box">
+                  <span class="price-number font-mono" id="price-bike-day">3.000 VNĐ</span>
+                  <span class="price-unit">/lượt</span>
+                </div>
+                <button type="button" class="btn-edit-rule" data-vehicle="bike" data-tier="day" aria-label="Chỉnh sửa mức phí">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-left">
+                <div class="rule-icon-box rule-icon-night">
+                  <i class="fa-regular fa-moon"></i>
+                </div>
+                <div class="rule-details">
+                  <div class="rule-name">Qua đêm</div>
+                  <div class="rule-time-badge">18:00 - 06:00 ngày hôm sau</div>
+                  <div class="rule-desc">Giá cố định cho lượt qua đêm</div>
+                </div>
+              </div>
+              <div class="rule-right">
+                <div class="price-value-box">
+                  <span class="price-number font-mono" id="price-bike-night">6.000 VNĐ</span>
+                  <span class="price-unit">/lượt qua đêm</span>
+                </div>
+                <button type="button" class="btn-edit-rule" data-vehicle="bike" data-tier="night" aria-label="Chỉnh sửa mức phí">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-left">
+                <div class="rule-icon-box rule-icon-cycle">
+                  <i class="fa-regular fa-calendar-days"></i>
+                </div>
+                <div class="rule-details">
+                  <div class="rule-name">Chu kỳ 24 giờ</div>
+                  <div class="rule-cycle-note">24 giờ liên tục kể từ thời điểm bắt đầu chu kỳ</div>
+                  <div class="rule-desc">Giá cố định cho mỗi chu kỳ</div>
+                </div>
+              </div>
+              <div class="rule-right">
+                <div class="price-value-box">
+                  <span class="price-number font-mono" id="price-bike-cycle">12.000 VNĐ</span>
+                  <span class="price-unit">/24 giờ</span>
+                </div>
+                <button type="button" class="btn-edit-rule" data-vehicle="bike" data-tier="cycle" aria-label="Chỉnh sửa mức phí">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pricing-card-footer" id="footer-bike">
+            <i class="fa-regular fa-clock"></i>
+            <span>Đồng bộ từ cơ sở dữ liệu hệ thống</span>
           </div>
         </article>
 
@@ -435,6 +528,8 @@
   </div>
 
   <!-- File JavaScript xử lý logic Giá vé -->
-  <script src="../../js/Admin/pricing.js"></script>
+  <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
+  <script src="../../js/Admin/admin-common.js?v=1.0"></script>
+  <script src="../../js/Admin/pricing.js?v=2.0"></script>
 </body>
 </html>

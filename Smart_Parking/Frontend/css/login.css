@@ -316,3 +316,80 @@ body {
   50% { transform: translateX(5px); }
   75% { transform: translateX(-3px); }
 }
+
+/* Đăng nhập nhanh giữa Admin và Employee */
+.quick-switch-box {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.quick-switch-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.quick-switch-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-quick-role {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-role:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.btn-quick-role.admin:hover {
+  border-color: #93c5fd;
+  background-color: #eff6ff;
+}
+
+.btn-quick-role.staff:hover {
+  border-color: #99f6e4;
+  background-color: #f0fdfa;
+}
+
+.qr-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.btn-quick-role.admin .qr-badge {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.btn-quick-role.staff .qr-badge {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.qr-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1e293b;
+}

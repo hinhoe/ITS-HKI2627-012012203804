@@ -24,6 +24,9 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from AI.detect import load_model
+from Backend.Admin.accounts import router as admin_accounts_router
+from Backend.Admin.dashboard import router as admin_dashboard_router
+from Backend.Admin.pricing import router as admin_pricing_router
 from Backend.auth import router as auth_router
 from Backend.config import settings
 from Backend.database.connection import init_db
@@ -97,6 +100,11 @@ app.include_router(current_parking_router)
 
 # 4. Nghiệp vụ Lịch sử vào/ra & Tra cứu -> Quản lý bởi Backend/Employee/history.py
 app.include_router(history_router)
+
+# GẮN CÁC MODULE NGHIỆP VỤ QUẢN TRỊ VIÊN (ADMIN ROUTERS)
+app.include_router(admin_dashboard_router)
+app.include_router(admin_pricing_router)
+app.include_router(admin_accounts_router)
 
 
 @app.get("/", include_in_schema=False)

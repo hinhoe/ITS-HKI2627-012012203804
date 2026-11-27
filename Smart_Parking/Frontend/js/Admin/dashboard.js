@@ -1,143 +1,140 @@
 // ==========================================================================
-// HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE - PARKTECH
+// HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE - PARKTECH / PARKAIVISION
 // File JavaScript: Báo cáo & Thống kê Quản trị viên (dashboard.js)
+// Kết nối dữ liệu thời gian thực từ SQLite qua API (/api/admin/dashboard)
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Dữ liệu theo từng mốc thời gian lọc
-  const dataByRange = {
-    '7days': {
-      kpiIn: '1.480',
-      kpiOut: '1.432',
-      kpiParking: '412',
-      kpiRevenue: '7.420.000',
-      labels: ['T2 (18/05)', 'T3 (19/05)', 'T4 (20/05)', 'T5 (21/05)', 'T6 (22/05)', 'T7 (23/05)', 'CN (Hôm nay)'],
-      motor: [1120, 1180, 1230, 1270, 1310, 1390, 1480],
-      car: [510, 560, 620, 690, 720, 830, 890],
-      revenue: [5.3, 5.5, 5.8, 6.1, 6.3, 6.9, 7.42],
-      audit: [
-        { dateName: 'Hôm nay - CN (24/05/2025)', isCurrent: true, inCount: 1480, outCount: 1432, cash: 2180000, qr: 5240000 },
-        { dateName: 'Thứ Bảy, 23/05/2025', isCurrent: false, inCount: 1368, outCount: 1332, cash: 2010000, qr: 4890000 },
-        { dateName: 'Thứ Sáu, 22/05/2025', isCurrent: false, inCount: 1295, outCount: 1280, cash: 1850000, qr: 4480000 },
-        { dateName: 'Thứ Năm, 21/05/2025', isCurrent: false, inCount: 1240, outCount: 1215, cash: 1740000, qr: 4360000 },
-        { dateName: 'Thứ Tư, 20/05/2025', isCurrent: false, inCount: 1190, outCount: 1182, cash: 1620000, qr: 4180000 },
-        { dateName: 'Thứ Ba, 19/05/2025', isCurrent: false, inCount: 1145, outCount: 1120, cash: 1550000, qr: 3950000 },
-        { dateName: 'Thứ Hai, 18/05/2025', isCurrent: false, inCount: 1080, outCount: 1065, cash: 1480000, qr: 3820000 }
-      ]
-    },
-    'today': {
-      kpiIn: '1.480',
-      kpiOut: '1.432',
-      kpiParking: '412',
-      kpiRevenue: '7.420.000',
-      labels: ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
-      motor: [220, 310, 260, 190, 240, 320, 280],
-      car: [90, 140, 130, 110, 120, 160, 140],
-      revenue: [1.1, 1.6, 1.3, 0.9, 1.2, 1.7, 1.4],
-      audit: [
-        { dateName: 'Hôm nay (24/05/2025)', isCurrent: true, inCount: 1480, outCount: 1432, cash: 2180000, qr: 5240000 }
-      ]
-    },
-    'month': {
-      kpiIn: '41.250',
-      kpiOut: '39.880',
-      kpiParking: '412',
-      kpiRevenue: '215.600.000',
-      labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
-      motor: [9200, 9850, 10200, 11500],
-      car: [4100, 4350, 4700, 5200],
-      revenue: [48.5, 52.3, 54.8, 60.0],
-      audit: [
-        { dateName: 'Tuần 4 (18/05 - 24/05)', isCurrent: true, inCount: 10450, outCount: 10120, cash: 15400000, qr: 36800000 },
-        { dateName: 'Tuần 3 (11/05 - 17/05)', isCurrent: false, inCount: 9800, outCount: 9650, cash: 14200000, qr: 34500000 },
-        { dateName: 'Tuần 2 (04/05 - 10/05)', isCurrent: false, inCount: 9400, outCount: 9280, cash: 13800000, qr: 33100000 },
-        { dateName: 'Tuần 1 (01/05 - 03/05)', isCurrent: false, inCount: 5200, outCount: 5100, cash: 7600000, qr: 18200000 }
-      ]
-    }
-  };
+  if (window.initAdminShell) {
+    window.initAdminShell();
+  }
 
   let currentChart = null;
+  let currentRange = '7days';
+  let currentCustomDate = null;
 
-  // 2. Tham chiếu các phần tử DOM
   const auditTableBody = document.getElementById('auditTableBody');
   const auditTableFoot = document.getElementById('auditTableFoot');
-  const userProfileBtn = document.getElementById('userProfileBtn');
-  const userDropdownMenu = document.getElementById('userDropdownMenu');
+  const auditTitle = document.getElementById('auditTitle');
+  const chartSubtitle = document.getElementById('chartSubtitle');
   const btnExportReport = document.getElementById('btnExportReport');
-  const dateFilterButtons = document.querySelectorAll('.date-filter-btn');
+  const dateFilterButtons = document.querySelectorAll('.date-filter-btn[data-range]');
+  const customDateBtn = document.getElementById('customDateBtn');
   const customDatePicker = document.getElementById('customDatePicker');
   const customDateLabel = document.getElementById('customDateLabel');
 
-  // ==========================================================================
-  // HÀM RENDER DỮ LIỆU BẢNG ĐỐI SOÁT & DÒNG TỔNG CỘNG
-  // ==========================================================================
-  function renderAuditTable(rangeKey = '7days') {
-    if (!auditTableBody) return;
-    const items = dataByRange[rangeKey]?.audit || dataByRange['7days'].audit;
+  const kpiTotalIn = document.getElementById('kpiTotalIn');
+  const kpiTotalOut = document.getElementById('kpiTotalOut');
+  const kpiParkedNow = document.getElementById('kpiParkedNow');
+  const kpiCapacityMeta = document.getElementById('kpiCapacityMeta');
+  const kpiRevenue = document.getElementById('kpiRevenue');
+  const kpiPeriodLabelIn = document.getElementById('kpiPeriodLabelIn');
 
-    // Cập nhật tiêu đề bảng theo kỳ lọc
-    const auditTitle = document.getElementById('auditTitle');
-    if (auditTitle) {
-      if (rangeKey === '7days') auditTitle.textContent = 'Đối soát doanh thu 7 ngày gần nhất (1 tuần)';
-      else if (rangeKey === 'today') auditTitle.textContent = 'Đối soát doanh thu ngày hôm nay';
-      else if (rangeKey === 'month') auditTitle.textContent = 'Đối soát doanh thu theo các tuần trong tháng';
+  function formatVnd(num) {
+    return (Number(num) || 0).toLocaleString('vi-VN');
+  }
+
+  function renderKPIs(data) {
+    const kpi = data.kpi || {};
+    const cap = data.capacity || {};
+
+    if (kpiTotalIn) kpiTotalIn.textContent = formatVnd(kpi.total_in);
+    if (kpiTotalOut) kpiTotalOut.textContent = formatVnd(kpi.total_out);
+    if (kpiParkedNow) kpiParkedNow.textContent = formatVnd(kpi.parked_now);
+    if (kpiRevenue) kpiRevenue.textContent = formatVnd(kpi.total_revenue);
+    if (kpiPeriodLabelIn) kpiPeriodLabelIn.textContent = `Trong kỳ ${data.period_title || 'báo cáo'}`;
+
+    if (kpiCapacityMeta) {
+      const cur = Number(cap.current_count) || 0;
+      const total = Number(cap.total_capacity) || 500;
+      const pct = (typeof cap.percent === 'number' ? cap.percent : 0).toFixed(1);
+      kpiCapacityMeta.innerHTML = `
+        <span>${cur}/${total} chỗ</span>
+        <span class="dot-separator">•</span>
+        <span>${pct}% công suất</span>
+      `;
     }
 
-    // Tính tổng các cột
+    if (window.updateAdminSidebarCapacity) {
+      window.updateAdminSidebarCapacity(cap);
+    }
+  }
+
+  function renderAuditTable(data) {
+    if (!auditTableBody) return;
+    const items = data.audit || [];
+
+    if (auditTitle) {
+      auditTitle.textContent = `Đối soát doanh thu (${data.period_title || '7 ngày gần nhất'})`;
+    }
+    if (chartSubtitle) {
+      chartSubtitle.textContent = `Phân bổ lượt xe ô tô, xe máy, xe đạp / đạp điện và doanh thu (${data.period_title || '7 ngày gần nhất'})`;
+    }
+
+    if (items.length === 0) {
+      auditTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 32px; color: #94a3b8;">
+            Chưa có dữ liệu giao dịch trong khoảng thời gian này
+          </td>
+        </tr>
+      `;
+      if (auditTableFoot) auditTableFoot.innerHTML = '';
+      return;
+    }
+
     let totalIn = 0;
     let totalOut = 0;
-    let totalCash = 0;
-    let totalQr = 0;
+    let totalCar = 0;
+    let totalMotor = 0;
+    let totalBike = 0;
+    let grandTotal = 0;
 
     auditTableBody.innerHTML = items.map(item => {
-      totalIn += item.inCount;
-      totalOut += item.outCount;
-      totalCash += item.cash;
-      totalQr += item.qr;
-      const rowTotal = item.cash + item.qr;
+      totalIn += item.in_count;
+      totalOut += item.out_count;
+      totalCar += item.car_rev;
+      totalMotor += item.motor_rev;
+      totalBike += item.bike_rev;
+      grandTotal += item.total_rev;
 
       return `
         <tr>
           <td>
             <div class="date-cell-wrapper">
-              <span>${item.dateName}</span>
-              ${item.isCurrent ? '<span class="badge-current-day">Hiện tại</span>' : ''}
+              <span>${item.date_name}</span>
+              ${item.is_current ? '<span class="badge-current-day">Hiện tại</span>' : ''}
             </div>
           </td>
-          <td class="font-mono">${item.inCount.toLocaleString('vi-VN')}</td>
-          <td class="font-mono">${item.outCount.toLocaleString('vi-VN')}</td>
-          <td class="td-amount">${item.cash.toLocaleString('vi-VN')} đ</td>
-          <td class="td-amount">${item.qr.toLocaleString('vi-VN')} đ</td>
-          <td class="td-total-amount">${rowTotal.toLocaleString('vi-VN')} đ</td>
+          <td class="font-mono">${formatVnd(item.in_count)}</td>
+          <td class="font-mono">${formatVnd(item.out_count)}</td>
+          <td class="td-amount">${formatVnd(item.car_rev)} đ</td>
+          <td class="td-amount">${formatVnd(item.motor_rev)} đ</td>
+          <td class="td-amount">${formatVnd(item.bike_rev)} đ</td>
+          <td class="td-total-amount">${formatVnd(item.total_rev)} đ</td>
         </tr>
       `;
     }).join('');
 
-    // Render dòng tổng kết (Tfoot)
     if (auditTableFoot) {
-      const grandTotal = totalCash + totalQr;
       auditTableFoot.innerHTML = `
         <tr>
           <td><strong>TỔNG CỘNG</strong></td>
-          <td class="font-mono">${totalIn.toLocaleString('vi-VN')}</td>
-          <td class="font-mono">${totalOut.toLocaleString('vi-VN')}</td>
-          <td class="td-amount">${totalCash.toLocaleString('vi-VN')} đ</td>
-          <td class="td-amount">${totalQr.toLocaleString('vi-VN')} đ</td>
-          <td class="td-total-amount">${grandTotal.toLocaleString('vi-VN')} đ</td>
+          <td class="font-mono">${formatVnd(totalIn)}</td>
+          <td class="font-mono">${formatVnd(totalOut)}</td>
+          <td class="td-amount">${formatVnd(totalCar)} đ</td>
+          <td class="td-amount">${formatVnd(totalMotor)} đ</td>
+          <td class="td-amount">${formatVnd(totalBike)} đ</td>
+          <td class="td-total-amount">${formatVnd(grandTotal)} đ</td>
         </tr>
       `;
     }
   }
 
-  // ==========================================================================
-  // KHỞI TẠO BIỂU ĐỒ LƯU LƯỢNG & DOANH THU (CHART.JS COMBO CHART)
-  // ==========================================================================
-  function initChart(rangeKey = '7days') {
+  function renderChart(chartData) {
     const canvas = document.getElementById('trafficRevenueChart');
-    if (!canvas) return;
-
+    if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
-    const rangeData = dataByRange[rangeKey] || dataByRange['7days'];
 
     if (currentChart) {
       currentChart.destroy();
@@ -145,13 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentChart = new Chart(ctx, {
       data: {
-        labels: rangeData.labels,
+        labels: chartData.labels || [],
         datasets: [
-          // 1. Đường doanh thu (Line)
           {
             type: 'line',
             label: 'Doanh thu (Triệu VNĐ)',
-            data: rangeData.revenue,
+            data: chartData.revenue || [],
             borderColor: '#06b6d4',
             backgroundColor: '#06b6d4',
             borderWidth: 2.5,
@@ -164,48 +160,51 @@ document.addEventListener('DOMContentLoaded', () => {
             yAxisID: 'yRevenue',
             order: 1
           },
-          // 2. Cột xe máy (Bar)
           {
             type: 'bar',
             label: 'Xe máy (Lượt)',
-            data: rangeData.motor,
+            data: chartData.motor || [],
             backgroundColor: '#1d4ed8',
             hoverBackgroundColor: '#1e40af',
             borderRadius: 3,
-            barPercentage: 0.5,
-            categoryPercentage: 0.6,
+            barPercentage: 0.6,
+            categoryPercentage: 0.65,
             yAxisID: 'yTraffic',
             order: 2
           },
-          // 3. Cột ô tô (Bar)
           {
             type: 'bar',
             label: 'Ô tô (Lượt)',
-            data: rangeData.car,
+            data: chartData.car || [],
             backgroundColor: '#0f172a',
             hoverBackgroundColor: '#1e293b',
             borderRadius: 3,
-            barPercentage: 0.5,
-            categoryPercentage: 0.6,
+            barPercentage: 0.6,
+            categoryPercentage: 0.65,
             yAxisID: 'yTraffic',
             order: 3
+          },
+          {
+            type: 'bar',
+            label: 'Xe đạp / Đạp điện (Lượt)',
+            data: chartData.bike || [],
+            backgroundColor: '#7c3aed',
+            hoverBackgroundColor: '#6d28d9',
+            borderRadius: 3,
+            barPercentage: 0.6,
+            categoryPercentage: 0.65,
+            yAxisID: 'yTraffic',
+            order: 4
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: {
-          duration: 500
-        },
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
+        animation: { duration: 400 },
+        interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: {
-            display: false
-          },
+          legend: { display: false },
           tooltip: {
             backgroundColor: '#0f172a',
             titleFont: { family: 'Inter', size: 12, weight: '600' },
@@ -214,42 +213,32 @@ document.addEventListener('DOMContentLoaded', () => {
             cornerRadius: 8,
             boxPadding: 4,
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 if (context.dataset.type === 'line') {
-                  return ` Doanh thu: ${context.raw} Triệu VNĐ`;
+                  const vndExact = Math.round((Number(context.raw) || 0) * 1_000_000);
+                  return ` Doanh thu: ${vndExact.toLocaleString('vi-VN')} đ (${context.raw} Triệu)`;
                 }
-                return ` ${context.dataset.label}: ${context.raw.toLocaleString('vi-VN')} lượt`;
+                return ` ${context.dataset.label}: ${Number(context.raw).toLocaleString('vi-VN')} lượt`;
               }
             }
           }
         },
         scales: {
           x: {
-            grid: {
-              display: false,
-              drawBorder: false
-            },
-            ticks: {
-              font: { family: 'Inter', size: 11, weight: '500' },
-              color: '#64748b'
-            }
+            grid: { display: false, drawBorder: false },
+            ticks: { font: { family: 'Inter', size: 11, weight: '500' }, color: '#64748b' }
           },
-          // Trục tung trái: Lượt phương tiện
           yTraffic: {
             type: 'linear',
             position: 'left',
             beginAtZero: true,
             ticks: {
+              precision: 0,
               font: { family: 'Inter', size: 11 },
               color: '#94a3b8',
-              callback: function(value) {
-                return value === 0 ? '0' : value.toLocaleString('vi-VN');
-              }
+              callback: value => Number(value).toLocaleString('vi-VN')
             },
-            grid: {
-              color: '#f1f5f9',
-              drawBorder: false
-            },
+            grid: { color: '#f1f5f9', drawBorder: false },
             title: {
               display: true,
               text: 'Lượt phương tiện',
@@ -257,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
               color: '#94a3b8'
             }
           },
-          // Trục tung phải: Doanh thu triệu VNĐ
           yRevenue: {
             type: 'linear',
             position: 'right',
@@ -265,14 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ticks: {
               font: { family: 'Inter', size: 11 },
               color: '#94a3b8',
-              callback: function(value) {
-                return value.toFixed(1);
-              }
+              callback: value => Number(value).toFixed(2)
             },
-            grid: {
-              display: false,
-              drawBorder: false
-            },
+            grid: { display: false, drawBorder: false },
             title: {
               display: true,
               text: 'Triệu VNĐ',
@@ -285,46 +268,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ==========================================================================
-  // XỬ LÝ SỰ KIỆN TƯƠNG TÁC
-  // ==========================================================================
+  async function loadDashboardData(rangeKey = '7days', customDate = null) {
+    currentRange = rangeKey;
+    currentCustomDate = customDate;
 
-  // 1. Bật / Tắt menu hồ sơ quản trị viên
-  if (userProfileBtn && userDropdownMenu) {
-    userProfileBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      userDropdownMenu.classList.toggle('show');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!userProfileBtn.contains(e.target)) {
-        userDropdownMenu.classList.remove('show');
+    try {
+      const apiBase = window.getAdminApiBase();
+      const params = new URLSearchParams({ range_key: rangeKey });
+      if (rangeKey === 'custom' && customDate) {
+        params.append('date', customDate);
       }
-    });
+
+      const res = await fetch(`${apiBase}/api/admin/dashboard?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      renderKPIs(data);
+      renderAuditTable(data);
+      renderChart(data.chart || {});
+    } catch (err) {
+      console.error('Lỗi tải dữ liệu Dashboard Admin:', err);
+      if (window.showAppToast) {
+        window.showAppToast({
+          title: 'Lỗi tải thống kê',
+          message: 'Không thể kết nối Backend để tải số liệu Dashboard.',
+          type: 'error'
+        });
+      }
+    }
   }
 
-  // 2. Chuyển đổi bộ lọc khoảng thời gian nhanh (Hôm nay, 7 ngày qua, Tháng này)
-  if (dateFilterButtons) {
-    dateFilterButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const range = btn.getAttribute('data-range');
-        if (!range) return; // nút date picker riêng
+  dateFilterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const range = btn.getAttribute('data-range');
+      if (!range) return;
 
-        dateFilterButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+      document.querySelectorAll('.date-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (customDateLabel) customDateLabel.textContent = 'Tùy chọn ngày';
 
-        if (customDateLabel) {
-          customDateLabel.textContent = 'Tùy chọn ngày';
-        }
-
-        renderAuditTable(range);
-        initChart(range);
-      });
+      loadDashboardData(range, null);
     });
-  }
+  });
 
-  // 3. Tùy chọn ngày từ lịch DatePicker
-  const customDateBtn = document.getElementById('customDateBtn');
   if (customDateBtn && customDatePicker) {
     customDateBtn.addEventListener('click', () => {
       if (typeof customDatePicker.showPicker === 'function') {
@@ -343,35 +329,62 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month, day] = selectedDate.split('-');
       const formattedDate = `${day}/${month}/${year}`;
 
-      dateFilterButtons.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.date-filter-btn').forEach(b => b.classList.remove('active'));
       customDateBtn.classList.add('active');
+      if (customDateLabel) customDateLabel.textContent = formattedDate;
 
-      if (customDateLabel) {
-        customDateLabel.textContent = formattedDate;
-      }
-
-      // Cập nhật tiêu đề bảng theo ngày đã chọn
-      const auditTitle = document.getElementById('auditTitle');
-      if (auditTitle) {
-        auditTitle.textContent = `Đối soát doanh thu ngày ${formattedDate}`;
-      }
-
-      // Nạp dữ liệu giả lập theo ngày được chọn
-      renderAuditTable('today');
-      initChart('today');
+      loadDashboardData('custom', selectedDate);
     });
   }
 
-  // 4. Nút Xuất báo cáo
   if (btnExportReport) {
-    btnExportReport.addEventListener('click', () => {
-      const activeBtn = document.querySelector('.date-filter-btn.active');
-      const timeText = activeBtn ? activeBtn.textContent.trim() : '7 ngày qua';
-      alert(`Hệ thống đang xuất Báo cáo Thống kê doanh thu & Lưu lượng xe (${timeText}) ra file Excel (.xlsx)...\nVui lòng kiểm tra thư mục Tải xuống!`);
+    btnExportReport.addEventListener('click', async () => {
+      const apiBase = window.getAdminApiBase();
+      const params = new URLSearchParams({ range_key: currentRange });
+      if (currentRange === 'custom' && currentCustomDate) {
+        params.append('date', currentCustomDate);
+      }
+
+      btnExportReport.disabled = true;
+      const origHtml = btnExportReport.innerHTML;
+      btnExportReport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang xuất...</span>';
+
+      try {
+        const res = await fetch(`${apiBase}/api/admin/dashboard/export?${params.toString()}`);
+        if (!res.ok) throw new Error('Không thể xuất file Excel.');
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BaoCao_ParkTech_${currentRange}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: 'Xuất báo cáo thành công!',
+            message: 'File Excel thống kê doanh thu (.xlsx) đã được tải xuống.',
+            type: 'success'
+          });
+        }
+      } catch (err) {
+        if (window.showAppAlert) {
+          await window.showAppAlert({
+            title: 'Xuất báo cáo thất bại',
+            message: err.message,
+            type: 'error'
+          });
+        } else {
+          alert(err.message);
+        }
+      } finally {
+        btnExportReport.disabled = false;
+        btnExportReport.innerHTML = origHtml;
+      }
     });
   }
 
-  // Khởi chạy render ban đầu
-  renderAuditTable('7days');
-  initChart('7days');
+  loadDashboardData('7days', null);
 });

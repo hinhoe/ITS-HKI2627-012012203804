@@ -54,13 +54,36 @@ def init_db() -> None:
                 conn.executescript(schema_sql)
                 logger.info("Đã khởi tạo cấu trúc bảng CSDL từ %s", SCHEMA_FILE.name)
 
-            # 2. Đảm bảo cột password_hash tồn tại trên CSDL cũ (Migration an toàn)
+            # 2. Đảm bảo cột password_hash và shift_note tồn tại trên CSDL cũ (Migration an toàn)
             cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
             if "password_hash" not in cols:
                 conn.execute(
                     "ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'"
                 )
                 logger.info("Đã bổ sung cột password_hash cho bảng users")
+            if "shift_note" not in cols:
+                conn.execute(
+                    "ALTER TABLE users ADD COLUMN shift_note TEXT DEFAULT ''"
+                )
+                conn.execute(
+                    "UPDATE users SET shift_note = CASE WHEN role = 'admin' THEN 'Toàn quyền quản trị' ELSE 'Trực ca cổng' END WHERE shift_note = '' OR shift_note IS NULL"
+                )
+                logger.info("Đã bổ sung cột shift_note cho bảng users")
+
+            # 2b. Bảng nhật ký thay đổi mức phí gửi xe (Admin Audit Log)
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pricing_audit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    vehicle_type TEXT NOT NULL,
+                    fee_type TEXT NOT NULL,
+                    old_price INTEGER NOT NULL,
+                    new_price INTEGER NOT NULL,
+                    actor TEXT NOT NULL DEFAULT 'Quản trị viên',
+                    changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
 
             # 3. Đọc và thực thi dữ liệu mẫu
             if SAMPLE_FILE.exists():
@@ -75,6 +98,29 @@ def init_db() -> None:
             conn.execute(
                 "UPDATE pricing_rules SET vehicle_type = 'Xe đạp / Đạp điện' WHERE vehicle_type = 'Xe đạp / Xe điện'"
             )
+
+            # 4b. Đảm bảo đủ 3 mức phí chuẩn (Ban ngày, Qua đêm, Chu kỳ 24 giờ) cho cả 3 loại phương tiện
+            default_rules = [
+                ("Xe máy", "Ban ngày", 5000, "Lượt gửi ban ngày (06:00 - 18:00)"),
+                ("Xe máy", "Qua đêm", 10000, "Gửi qua đêm (sau 18:00)"),
+                ("Xe máy", "Chu kỳ 24 giờ", 20000, "Giá cố định cho mỗi chu kỳ 24 giờ"),
+                ("Ô tô", "Ban ngày", 25000, "Lượt gửi ban ngày (06:00 - 18:00)"),
+                ("Ô tô", "Qua đêm", 50000, "Gửi qua đêm (sau 18:00)"),
+                ("Ô tô", "Chu kỳ 24 giờ", 80000, "Giá cố định cho mỗi chu kỳ 24 giờ"),
+                ("Xe đạp / Đạp điện", "Ban ngày", 3000, "Lượt gửi ban ngày (06:00 - 18:00)"),
+                ("Xe đạp / Đạp điện", "Qua đêm", 6000, "Gửi qua đêm (sau 18:00)"),
+                ("Xe đạp / Đạp điện", "Chu kỳ 24 giờ", 12000, "Giá cố định cho mỗi chu kỳ 24 giờ"),
+            ]
+            for vtype, ftype, price, desc in default_rules:
+                existing = conn.execute(
+                    "SELECT id FROM pricing_rules WHERE vehicle_type = ? AND fee_type = ?",
+                    (vtype, ftype),
+                ).fetchone()
+                if not existing:
+                    conn.execute(
+                        "INSERT INTO pricing_rules (vehicle_type, fee_type, base_price, description, is_active) VALUES (?, ?, ?, ?, 1)",
+                        (vtype, ftype, price, desc),
+                    )
 
         conn.close()
         logger.info("Khởi tạo cơ sở dữ liệu thành công tại: %s", DATABASE_PATH)

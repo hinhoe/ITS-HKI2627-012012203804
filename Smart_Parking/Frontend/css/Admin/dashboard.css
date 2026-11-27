@@ -622,6 +622,10 @@ body {
   background-color: var(--chart-dark);
 }
 
+.legend-bar-bike {
+  background-color: #7c3aed;
+}
+
 .legend-line-dot {
   width: 16px;
   height: 3px;
