@@ -18,7 +18,7 @@ Chức năng chính:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from pathlib import Path
 import re
@@ -88,38 +88,77 @@ def decode_checkout_image(filename: str, raw_bytes: bytes) -> np.ndarray:
     return image
 
 
-def calculate_parking_fee(db: sqlite3.Connection, vehicle_type: str, checkin_dt: datetime, checkout_dt: datetime) -> tuple[str, int]:
-    """
-    Tính phí gửi xe dựa trên loại xe, thời lượng đỗ và biểu phí trong CSDL:
-    - Xe máy: 5.000 đ (Ban ngày), 10.000 đ (Qua đêm)
-    - Ô tô   : 25.000 đ (Ban ngày), 50.000 đ (Qua đêm)
-    """
-    diff = checkout_dt - checkin_dt
-    duration_hours = diff.total_seconds() / 3600.0
+def _get_vehicle_pricing_tiers(db: sqlite3.Connection, vehicle_type: str) -> dict[str, int]:
+    """Đọc 3 mức giá (Ban ngày, Qua đêm, Chu kỳ 24 giờ) của loại xe từ bảng pricing_rules."""
+    if vehicle_type == "Xe đạp / Đạp điện":
+        defaults = {"Ban ngày": 3000, "Qua đêm": 6000, "Chu kỳ 24 giờ": 12000}
+    elif vehicle_type == "Xe máy":
+        defaults = {"Ban ngày": 5000, "Qua đêm": 10000, "Chu kỳ 24 giờ": 20000}
+    else:
+        defaults = {"Ban ngày": 25000, "Qua đêm": 50000, "Chu kỳ 24 giờ": 80000}
 
-    # Nếu đỗ qua 18h hoặc gửi trên 8 tiếng tính giá qua đêm
-    is_overnight = (checkout_dt.hour >= 18 or checkout_dt.hour < 6 or duration_hours >= 8.0)
-    fee_type = "Qua đêm" if is_overnight else "Ban ngày"
-
-    # Đọc từ bảng pricing_rules nếu có
     cur = db.cursor()
     cur.execute(
-        "SELECT base_price FROM pricing_rules WHERE vehicle_type = ? AND fee_type = ? AND is_active = 1 LIMIT 1",
-        (vehicle_type, fee_type),
+        "SELECT fee_type, base_price FROM pricing_rules WHERE vehicle_type = ? AND is_active = 1",
+        (vehicle_type,),
     )
-    row = cur.fetchone()
-    if row:
-        return fee_type, row["base_price"]
+    for row in cur.fetchall():
+        ftype = row["fee_type"]
+        if ftype in defaults and row["base_price"] is not None:
+            defaults[ftype] = int(row["base_price"])
 
-    # Mặc định an toàn nếu chưa cấu hình CSDL
-    if vehicle_type == "Xe đạp / Đạp điện":
-        base_fee = 6000 if is_overnight else 3000
-    elif vehicle_type == "Xe máy":
-        base_fee = 10000 if is_overnight else 5000
-    else:
-        base_fee = 50000 if is_overnight else 25000
+    return defaults
 
-    return fee_type, base_fee
+
+def calculate_parking_fee(db: sqlite3.Connection, vehicle_type: str, checkin_dt: datetime, checkout_dt: datetime) -> tuple[str, int]:
+    """
+    Tính phí gửi xe chuẩn 3 bậc từ CSDL `pricing_rules`:
+    - Dưới 24 giờ: tính theo `Ban ngày` (06:00-18:00, < 8h, cùng ngày) hoặc `Qua đêm`.
+    - Từ 24 giờ trở lên: tính `số ngày chẵn × Chu kỳ 24 giờ`, phần giờ lẻ dư (> 5 phút) cộng thêm 1 lượt `Ban ngày` hoặc `Qua đêm` (tối đa không vượt giá 1 chu kỳ 24h).
+    """
+    tiers = _get_vehicle_pricing_tiers(db, vehicle_type)
+    price_day = tiers["Ban ngày"]
+    price_night = tiers["Qua đêm"]
+    price_cycle = tiers["Chu kỳ 24 giờ"]
+
+    total_seconds = max(0, int((checkout_dt - checkin_dt).total_seconds()))
+    seconds_per_day = 24 * 3600
+    full_days = total_seconds // seconds_per_day
+    rem_seconds = total_seconds % seconds_per_day
+
+    if full_days == 0:
+        rem_hours = rem_seconds / 3600.0
+        is_overnight = (
+            checkout_dt.hour >= 18
+            or checkout_dt.hour < 6
+            or checkin_dt.hour >= 18
+            or checkin_dt.hour < 6
+            or checkin_dt.date() != checkout_dt.date()
+            or rem_hours >= 8.0
+        )
+        fee_type = "Qua đêm" if is_overnight else "Ban ngày"
+        return fee_type, (price_night if is_overnight else price_day)
+
+    base_fee = full_days * price_cycle
+
+    # Ân hạn 5 phút quanh mốc tròn ngày (24h, 48h...)
+    if rem_seconds <= 300:
+        return f"Chu kỳ 24 giờ (×{full_days})", base_fee
+
+    rem_start = checkin_dt + timedelta(days=full_days)
+    rem_hours = rem_seconds / 3600.0
+    rem_overnight = (
+        checkout_dt.hour >= 18
+        or checkout_dt.hour < 6
+        or rem_start.hour >= 18
+        or rem_start.hour < 6
+        or rem_start.date() != checkout_dt.date()
+        or rem_hours >= 8.0
+    )
+    rem_label = "Qua đêm" if rem_overnight else "Ban ngày"
+    rem_fee = min(price_night if rem_overnight else price_day, price_cycle)
+
+    return f"{full_days} chu kỳ 24h + {rem_label}", base_fee + rem_fee
 
 
 @router.post("/api/checkout/recognize")
