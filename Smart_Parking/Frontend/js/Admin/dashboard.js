@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         datasets: [
           {
             type: 'line',
-            label: 'Doanh thu (Triệu VNĐ)',
+            label: 'Doanh thu (VNĐ)',
             data: chartData.revenue || [],
             borderColor: '#06b6d4',
             backgroundColor: '#06b6d4',
@@ -215,8 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             callbacks: {
               label: function (context) {
                 if (context.dataset.type === 'line') {
-                  const vndExact = Math.round((Number(context.raw) || 0) * 1_000_000);
-                  return ` Doanh thu: ${vndExact.toLocaleString('vi-VN')} đ (${context.raw} Triệu)`;
+                  return ` Doanh thu: ${Number(context.raw || 0).toLocaleString('vi-VN')} đ`;
                 }
                 return ` ${context.dataset.label}: ${Number(context.raw).toLocaleString('vi-VN')} lượt`;
               }
@@ -235,15 +234,15 @@ document.addEventListener('DOMContentLoaded', () => {
             ticks: {
               precision: 0,
               font: { family: 'Inter', size: 11 },
-              color: '#94a3b8',
-              callback: value => Number(value).toLocaleString('vi-VN')
+              color: '#64748b',
+              callback: value => `${Number(value).toLocaleString('vi-VN')} lượt`
             },
             grid: { color: '#f1f5f9', drawBorder: false },
             title: {
               display: true,
-              text: 'Lượt phương tiện',
-              font: { family: 'Inter', size: 11, weight: '500' },
-              color: '#94a3b8'
+              text: 'Số lượt xe',
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#64748b'
             }
           },
           yRevenue: {
@@ -252,15 +251,23 @@ document.addEventListener('DOMContentLoaded', () => {
             beginAtZero: true,
             ticks: {
               font: { family: 'Inter', size: 11 },
-              color: '#94a3b8',
-              callback: value => Number(value).toFixed(2)
+              color: '#0891b2',
+              callback: value => {
+                const v = Number(value) || 0;
+                if (v === 0) return '0 đ';
+                if (v >= 1_000_000) {
+                  const m = v / 1_000_000;
+                  return `${Number.isInteger(m) ? m : m.toFixed(1).replace('.', ',')} tr`;
+                }
+                return `${Math.round(v).toLocaleString('vi-VN')} đ`;
+              }
             },
             grid: { display: false, drawBorder: false },
             title: {
               display: true,
-              text: 'Triệu VNĐ',
-              font: { family: 'Inter', size: 11, weight: '500' },
-              color: '#94a3b8'
+              text: 'Doanh thu (VNĐ)',
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#0891b2'
             }
           }
         }

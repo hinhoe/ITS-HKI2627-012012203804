@@ -209,14 +209,14 @@ def _build_dashboard_payload(
         chart_motor = [s["motor"] for s in slot_data]
         chart_car = [s["car"] for s in slot_data]
         chart_bike = [s["bike"] for s in slot_data]
-        chart_revenue = [round(s["rev"] / 1_000_000, 3) for s in slot_data]
+        chart_revenue = [int(s["rev"]) for s in slot_data]
     else:
         ordered_days = [daily_stats[d.strftime("%Y-%m-%d")] for d in bucket_dates]
         chart_labels = [item["label"] for item in ordered_days]
         chart_motor = [item["motor_in"] for item in ordered_days]
         chart_car = [item["car_in"] for item in ordered_days]
         chart_bike = [item["bike_in"] for item in ordered_days]
-        chart_revenue = [round(item["total_rev"] / 1_000_000, 3) for item in ordered_days]
+        chart_revenue = [int(item["total_rev"]) for item in ordered_days]
 
     # Bảng đối soát: sắp xếp ngày mới nhất lên đầu
     audit_rows = [daily_stats[d.strftime("%Y-%m-%d")] for d in reversed(bucket_dates)]
