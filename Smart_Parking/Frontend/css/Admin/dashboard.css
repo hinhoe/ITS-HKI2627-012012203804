@@ -516,6 +516,67 @@ body {
   color: var(--color-primary);
 }
 
+.kpi-icon-teal {
+  background-color: #f0fdfa;
+  color: #0d9488;
+}
+
+.kpi-icon-purple {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+
+.kpi-icon-green {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+/* Thanh lọc kỳ báo cáo gọn gàng dưới Header */
+.dashboard-filter-bar {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
 .kpi-value-row {
   display: flex;
   align-items: baseline;

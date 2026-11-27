@@ -225,3 +225,31 @@ async def toggle_admin_account_status(
         "status": "active" if new_active else "locked",
         "message": f"Đã {'mở khóa' if new_active else 'tạm khóa'} tài khoản '{row['username']}'.",
     }
+
+
+@router.delete("/api/admin/accounts/{user_id}")
+async def delete_admin_account(
+    user_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Xóa tài khoản phụ khỏi CSDL (bảo vệ an toàn tài khoản gốc admin01 và nhanvien01 mặc định)."""
+    cur = db.cursor()
+    cur.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản cần xóa.")
+
+    if row["username"] in ("admin01", "nhanvien01"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Không thể xóa tài khoản mặc định '{row['username']}' của hệ thống. Bạn chỉ có thể chỉnh sửa hoặc tạm khóa.",
+        )
+
+    cur.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Đã xóa tài khoản '{row['username']}' khỏi hệ thống.",
+    }
+

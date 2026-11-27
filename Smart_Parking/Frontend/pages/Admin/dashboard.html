@@ -6,7 +6,8 @@
   <title>Thống kê & Báo cáo - Quản trị ParkTech</title>
 
   <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/dashboard.css?v=2.0">
+  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=1.0">
+  <link rel="stylesheet" href="../../css/Admin/dashboard.css?v=3.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
@@ -92,29 +93,20 @@
     <!-- Header Trang Admin -->
     <header class="app-header">
       <div class="header-left">
+        <div class="header-icon-box">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
         <div class="header-title-group">
-          <h1 class="page-title">Thống kê & Báo cáo</h1>
+          <h1 class="page-title">Thống kê &amp; Báo cáo</h1>
           <p class="page-subtitle">Theo dõi tổng quan lưu lượng xe và doanh thu bãi đỗ xe</p>
         </div>
       </div>
 
       <div class="header-right">
-        <!-- Bộ lọc khoảng thời gian nhanh -->
-        <div class="date-filter-group">
-          <button type="button" class="date-filter-btn" data-range="today">Hôm nay</button>
-          <button type="button" class="date-filter-btn active" data-range="7days">7 ngày qua</button>
-          <button type="button" class="date-filter-btn" data-range="month">Tháng này</button>
-          <div class="date-filter-btn custom-date-btn" id="customDateBtn">
-            <span id="customDateLabel">Tùy chọn ngày</span>
-            <i class="fa-regular fa-calendar" style="margin-left: 6px;"></i>
-            <input type="date" id="customDatePicker" class="custom-date-native-input" aria-label="Chọn ngày xem báo cáo">
-          </div>
-        </div>
-
         <!-- Nút Xuất báo cáo -->
         <button type="button" class="btn-export-report" id="btnExportReport">
-          <i class="fa-solid fa-download"></i>
-          <span>Xuất báo cáo</span>
+          <i class="fa-solid fa-file-excel" style="color: #059669;"></i>
+          <span>Xuất báo cáo Excel</span>
         </button>
 
         <!-- Dropdown Quản trị viên -->
@@ -124,7 +116,7 @@
               <i class="fa-regular fa-user"></i>
             </div>
             <div class="user-info">
-              <div class="user-name">Nguyễn Thành Tùng</div>
+              <div class="user-name">Quản trị viên</div>
               <div class="user-role">Quản trị viên</div>
             </div>
             <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
@@ -132,9 +124,9 @@
 
           <!-- Menu thả xuống -->
           <div class="user-dropdown-menu" id="userDropdownMenu">
-            <a href="#" class="dropdown-item">
+            <a href="pricing.html" class="dropdown-item">
               <i class="fa-solid fa-shield-halved"></i>
-              <span>Cài đặt hệ thống</span>
+              <span>Cài đặt mức phí</span>
             </a>
             <a href="../Employee/checkin.html" class="dropdown-item">
               <i class="fa-solid fa-users-viewfinder"></i>
@@ -151,6 +143,26 @@
 
     <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
+
+      <!-- Thanh lọc khoảng thời gian báo cáo (Gọn gàng chuẩn bố cục hệ thống) -->
+      <section class="card dashboard-filter-bar">
+        <div class="filter-bar-left">
+          <span class="filter-bar-label"><i class="fa-regular fa-calendar-check"></i> Kỳ báo cáo:</span>
+          <div class="date-filter-group">
+            <button type="button" class="date-filter-btn" data-range="today">Hôm nay</button>
+            <button type="button" class="date-filter-btn active" data-range="7days">7 ngày qua</button>
+            <button type="button" class="date-filter-btn" data-range="month">Tháng này</button>
+            <div class="date-filter-btn custom-date-btn" id="customDateBtn">
+              <span id="customDateLabel">Tùy chọn ngày</span>
+              <i class="fa-regular fa-calendar" style="margin-left: 6px;"></i>
+              <input type="date" id="customDatePicker" class="custom-date-native-input" aria-label="Chọn ngày xem báo cáo">
+            </div>
+          </div>
+        </div>
+        <div class="filter-bar-right">
+          <span class="live-sync-pill"><span class="sync-dot"></span> Đồng bộ SQLite trực tiếp</span>
+        </div>
+      </section>
 
       <!-- 1. 4 Thẻ KPI Số liệu tổng quan (Stats Cards) -->
       <section class="kpi-grid">
@@ -175,7 +187,7 @@
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Tổng lượt xe ra</span>
-            <div class="kpi-icon-box kpi-icon-blue">
+            <div class="kpi-icon-box kpi-icon-teal">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </div>
           </div>
@@ -192,7 +204,7 @@
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Xe đang trong bãi</span>
-            <div class="kpi-icon-box kpi-icon-blue">
+            <div class="kpi-icon-box kpi-icon-purple">
               <i class="fa-solid fa-car"></i>
             </div>
           </div>
@@ -211,12 +223,12 @@
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Doanh thu thu được</span>
-            <div class="kpi-icon-box kpi-icon-blue">
+            <div class="kpi-icon-box kpi-icon-green">
               <i class="fa-regular fa-credit-card"></i>
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="kpiRevenue">0</span>
+            <span class="kpi-value font-mono" id="kpiRevenue" style="color: #059669;">0</span>
             <span class="kpi-currency">đ</span>
           </div>
           <div class="kpi-sub-info">

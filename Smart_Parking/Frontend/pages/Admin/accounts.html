@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý tài khoản & Phân quyền - Quản trị ParkTech</title>
 
-  <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=2.0">
+  <!-- File CSS chuẩn đồng bộ Admin -->
+  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=1.0">
+  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=3.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
@@ -20,17 +21,15 @@
 <body>
 
   <!-- ======================================================================
-       1. SIDEBAR: THANH ĐIỀU HƯỚNG QUẢN TRỊ VIÊN (ADMIN)
+       1. SIDEBAR QUẢN TRỊ ĐỒNG BỘ
        ====================================================================== -->
   <aside class="sidebar">
     <div class="sidebar-top">
-      <!-- Thương hiệu & Logo -->
       <div class="sidebar-logo">
         <div class="logo-badge">P</div>
         <span class="logo-text">ParkTech</span>
       </div>
 
-      <!-- Nhãn phân hệ Quản trị -->
       <div class="shift-status-container">
         <div class="section-label-row">
           <span class="section-label">PHÂN HỆ QUẢN TRỊ</span>
@@ -38,13 +37,12 @@
         </div>
       </div>
 
-      <!-- Danh mục menu quản trị -->
       <nav class="sidebar-nav">
         <ul>
           <li>
             <a href="dashboard.html" class="nav-item-link">
               <i class="fa-solid fa-chart-line"></i>
-              <span>Thống kê & Báo cáo</span>
+              <span>Thống kê &amp; Báo cáo</span>
             </a>
           </li>
           <li>
@@ -56,74 +54,69 @@
           <li>
             <a href="accounts.html" class="nav-item-link active">
               <i class="fa-solid fa-user-gear"></i>
-              <span>Quản lý tài khoản & Phân quyền</span>
+              <span>Quản lý tài khoản &amp; Phân quyền</span>
             </a>
           </li>
         </ul>
       </nav>
     </div>
 
-    <!-- Nửa dưới Sidebar: Sức chứa thời gian thực bãi đỗ xe -->
     <div class="sidebar-bottom">
       <div class="capacity-widget-card">
         <div class="capacity-widget-header">
           <span class="widget-title">Sức chứa thời gian thực</span>
-          <span class="capacity-percentage">82.4%</span>
+          <span class="capacity-percentage" id="capacityPercent">0.0%</span>
         </div>
         <div class="progress-track">
-          <div class="progress-fill" style="width: 82.4%;"></div>
+          <div class="progress-fill" id="capacityProgressBar" style="width: 0%;"></div>
         </div>
         <div class="capacity-widget-footer">
-          <span class="capacity-count">412 / 500</span>
-          <span class="capacity-empty">88 chỗ trống</span>
+          <span class="capacity-count" id="capacityCurrent">0 / 500</span>
+          <span class="capacity-empty" id="capacityEmpty">500 chỗ trống</span>
         </div>
       </div>
     </div>
   </aside>
 
   <!-- ======================================================================
-       2. KHUNG NỘI DUNG CHÍNH (MAIN WRAPPER)
+       2. KHUNG NỘI DUNG CHÍNH
        ====================================================================== -->
   <div class="main-wrapper">
 
-    <!-- Header Trang Admin -->
+    <!-- Header chuẩn đồng nhất 64px -->
     <header class="app-header">
       <div class="header-left">
-        <div class="header-breadcrumb">
-          <span class="breadcrumb-prefix">HỆ THỐNG ĐIỀU HÀNH</span>
-          <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">Phân quyền bảo mật</span>
+        <div class="header-icon-box">
+          <i class="fa-solid fa-user-gear"></i>
         </div>
         <div class="header-title-group">
-          <h1 class="page-title">Quản lý tài khoản & Phân quyền</h1>
-          <p class="page-subtitle">Quản lý danh sách người dùng và cấp quyền truy cập hệ thống</p>
+          <h1 class="page-title">Quản lý tài khoản &amp; Phân quyền</h1>
+          <p class="page-subtitle">Quản lý nhân sự trực cổng, cấp tài khoản và phân quyền truy cập hệ thống</p>
         </div>
       </div>
 
       <div class="header-right">
-        <!-- Nút Thêm tài khoản mới -->
         <button type="button" class="btn-add-account" id="btnAddAccount">
-          <i class="fa-solid fa-plus"></i>
-          <span>Thêm tài khoản mới</span>
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Thêm tài khoản</span>
         </button>
 
-        <!-- Dropdown Quản trị viên -->
         <div class="user-menu-wrapper">
           <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
-            <div class="user-info">
-              <div class="user-name">Nguyễn Thành Tùng</div>
-              <div class="user-role">Quản trị viên (Admin)</div>
-            </div>
             <div class="avatar-circle">
               <i class="fa-regular fa-user"></i>
             </div>
+            <div class="user-info">
+              <div class="user-name">Quản trị viên</div>
+              <div class="user-role">Quản trị viên</div>
+            </div>
+            <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
           </button>
 
-          <!-- Menu thả xuống -->
           <div class="user-dropdown-menu" id="userDropdownMenu">
-            <a href="#" class="dropdown-item">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>Cài đặt hệ thống</span>
+            <a href="dashboard.html" class="dropdown-item">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Thống kê &amp; Báo cáo</span>
             </a>
             <a href="../Employee/checkin.html" class="dropdown-item">
               <i class="fa-solid fa-users-viewfinder"></i>
@@ -138,134 +131,196 @@
       </div>
     </header>
 
-    <!-- Thân trang cuộn (Content Body) -->
     <main class="content-body">
 
-      <!-- 1. 4 Thẻ KPI Thống kê Tài khoản -->
-      <section class="kpi-grid">
-        <!-- KPI 1: Tổng số tài khoản -->
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">TỔNG SỐ TÀI KHOẢN</span>
-            <div class="kpi-icon-box kpi-icon-blue">
-              <i class="fa-regular fa-id-badge"></i>
-            </div>
+      <!-- Dải thống kê tóm tắt gọn gàng -->
+      <section class="summary-strip">
+        <div class="summary-chip">
+          <div class="summary-chip-icon blue"><i class="fa-regular fa-id-badge"></i></div>
+          <div>
+            <div class="summary-chip-label">Tổng tài khoản</div>
+            <div class="summary-chip-val font-mono" id="statTotal">0</div>
           </div>
-          <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statTotal">0</span>
-          </div>
-          <div class="kpi-sub-text">Trên toàn hệ thống cổng</div>
         </div>
-
-        <!-- KPI 2: Quản trị viên -->
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">QUẢN TRỊ VIÊN</span>
-            <div class="kpi-icon-box kpi-icon-blue">
-              <i class="fa-solid fa-shield-halved"></i>
-            </div>
+        <div class="summary-chip">
+          <div class="summary-chip-icon purple"><i class="fa-solid fa-shield-halved"></i></div>
+          <div>
+            <div class="summary-chip-label">Quản trị viên</div>
+            <div class="summary-chip-val font-mono" id="statAdmin">0</div>
           </div>
-          <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statAdmin">0</span>
-          </div>
-          <div class="kpi-sub-text">Toàn quyền cấu hình</div>
         </div>
-
-        <!-- KPI 3: Nhân viên bãi xe -->
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">NHÂN VIÊN BÃI XE</span>
-            <div class="kpi-icon-box kpi-icon-blue">
-              <i class="fa-solid fa-car"></i>
-            </div>
+        <div class="summary-chip">
+          <div class="summary-chip-icon teal"><i class="fa-solid fa-id-card-clip"></i></div>
+          <div>
+            <div class="summary-chip-label">Nhân viên bãi xe</div>
+            <div class="summary-chip-val font-mono" id="statStaff">0</div>
           </div>
-          <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statStaff">0</span>
-          </div>
-          <div class="kpi-sub-text">Trực ca kiểm soát cổng</div>
         </div>
-
-        <!-- KPI 4: Đang hoạt động -->
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">ĐANG HOẠT ĐỘNG</span>
-            <div class="kpi-icon-box kpi-icon-blue">
-              <i class="fa-regular fa-circle-check"></i>
+        <div class="summary-chip">
+          <div class="summary-chip-icon green"><i class="fa-regular fa-circle-check"></i></div>
+          <div>
+            <div class="summary-chip-label">Trạng thái</div>
+            <div class="summary-chip-val">
+              <span class="font-mono" id="statActive">0</span> hoạt động • <span class="font-mono text-muted" id="statLocked">0 khóa</span>
             </div>
           </div>
-          <div class="kpi-value-row">
-            <span class="kpi-value font-mono" id="statActive">0</span>
-          </div>
-          <div class="kpi-sub-text" id="statLocked">0 tài khoản tạm khóa</div>
         </div>
       </section>
 
-      <!-- 2. Thanh tìm kiếm & Các bộ lọc phân loại -->
-      <section class="card filter-bar-card">
-        <!-- Ô tìm kiếm theo tên đăng nhập hoặc họ tên -->
-        <div class="search-input-wrapper">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input 
-            type="text" 
-            id="searchInput" 
-            class="search-input" 
-            placeholder="Nhập tên đăng nhập hoặc họ tên..."
-            autocomplete="off"
-          >
-        </div>
+      <!-- Bố cục 2 cột cân đối: Danh sách tài khoản (Trái) & Ma trận phân quyền (Phải) -->
+      <section class="accounts-workspace-grid">
 
-        <!-- Cụm lọc theo Vai trò -->
-        <div class="filter-btn-group" id="roleFilterGroup">
-          <button type="button" class="filter-pill-btn active" data-role="all">Tất cả vai trò</button>
-          <button type="button" class="filter-pill-btn" data-role="employee">Nhân viên bãi xe</button>
-          <button type="button" class="filter-pill-btn" data-role="admin">Quản trị viên</button>
-        </div>
-
-        <!-- Cụm lọc theo Trạng thái -->
-        <div class="filter-btn-group" id="statusFilterGroup">
-          <button type="button" class="filter-pill-btn active" data-status="all">Tất cả</button>
-          <button type="button" class="filter-pill-btn" data-status="active">Đang hoạt động</button>
-          <button type="button" class="filter-pill-btn" data-status="locked">Đã khóa</button>
-        </div>
-
-        <!-- Nút Đặt lại bộ lọc -->
-        <button type="button" class="btn-reset-filter" id="btnResetFilter">
-          <i class="fa-solid fa-rotate-left"></i>
-          <span>Đặt lại</span>
-        </button>
-      </section>
-
-      <!-- 3. Bảng Dữ liệu Tài khoản -->
-      <section class="card table-card">
-        <div class="table-responsive">
-          <table class="custom-table">
-            <thead>
-              <tr>
-                <th>TÊN ĐĂNG NHẬP</th>
-                <th>BẢO MẬT</th>
-                <th>HỌ VÀ TÊN</th>
-                <th>VAI TRÒ</th>
-                <th>CA TRỰC / GHI CHÚ</th>
-                <th>TRẠNG THÁI</th>
-                <th>NGÀY TẠO</th>
-                <th style="text-align: right;">THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody id="accountsTableBody">
-              <!-- Render tự động bởi accounts.js -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 4. Thanh phân trang chân bảng -->
-        <div class="table-pagination-footer">
-          <div class="pagination-info" id="paginationInfo">
-            Đang tải dữ liệu tài khoản...
+        <!-- Cột trái: Quản lý danh sách tài khoản -->
+        <div class="card accounts-list-panel">
+          <div class="panel-header-flex">
+            <div>
+              <h2 class="panel-title">Danh sách tài khoản hệ thống</h2>
+              <p class="panel-desc">Tạo, chỉnh sửa thông tin, cấp lại mật khẩu hoặc tạm khóa quyền đăng nhập</p>
+            </div>
           </div>
-          <div class="pagination-controls" id="paginationControls">
-            <!-- Render động bởi accounts.js -->
+
+          <!-- Thanh tìm kiếm & lọc tích hợp gọn bên trong panel -->
+          <div class="inline-filter-row">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="searchInput" class="search-input" placeholder="Tìm theo tên hoặc username..." autocomplete="off">
+            </div>
+
+            <div class="filter-btn-group" id="roleFilterGroup">
+              <button type="button" class="filter-pill-btn active" data-role="all">Tất cả</button>
+              <button type="button" class="filter-pill-btn" data-role="employee">Nhân viên</button>
+              <button type="button" class="filter-pill-btn" data-role="admin">Admin</button>
+            </div>
+
+            <div class="filter-btn-group" id="statusFilterGroup">
+              <button type="button" class="filter-pill-btn active" data-status="all">Mọi TT</button>
+              <button type="button" class="filter-pill-btn" data-status="active">Mở</button>
+              <button type="button" class="filter-pill-btn" data-status="locked">Khóa</button>
+            </div>
+
+            <button type="button" class="btn-reset-filter" id="btnResetFilter" title="Đặt lại bộ lọc">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>TÀI KHOẢN</th>
+                  <th>VAI TRÒ</th>
+                  <th>CA TRỰC / GHI CHÚ</th>
+                  <th>TRẠNG THÁI</th>
+                  <th style="text-align: right;">THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody id="accountsTableBody">
+                <!-- Render tự động bởi accounts.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-pagination-footer">
+            <div class="pagination-info" id="paginationInfo">Đang tải...</div>
+            <div class="pagination-controls" id="paginationControls"></div>
           </div>
         </div>
+
+        <!-- Cột phải: Ma trận phân quyền theo vai trò -->
+        <aside class="card permissions-panel">
+          <div class="panel-header-flex">
+            <div>
+              <h2 class="panel-title"><i class="fa-solid fa-shield-halved" style="color: #2563eb; margin-right: 6px;"></i>Ma trận phân quyền vai trò</h2>
+              <p class="panel-desc">Quy định phạm vi chức năng giữa Quản trị viên và Nhân viên trực cổng</p>
+            </div>
+          </div>
+
+          <div class="role-summary-cards">
+            <div class="role-info-pill admin">
+              <div class="role-pill-head">
+                <i class="fa-solid fa-crown"></i>
+                <span>Quản trị viên (Admin)</span>
+              </div>
+              <small>Toàn quyền quản trị doanh thu, biểu phí &amp; nhân sự</small>
+            </div>
+            <div class="role-info-pill staff">
+              <div class="role-pill-head">
+                <i class="fa-solid fa-user-check"></i>
+                <span>Nhân viên bãi xe</span>
+              </div>
+              <small>Chuyên trách vận hành cổng vào/ra &amp; tra cứu bãi</small>
+            </div>
+          </div>
+
+          <div class="perm-matrix-wrapper">
+            <table class="perm-matrix-table">
+              <thead>
+                <tr>
+                  <th>CHỨC NĂNG HỆ THỐNG</th>
+                  <th style="text-align: center;">ADMIN</th>
+                  <th style="text-align: center;">NHÂN VIÊN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="perm-name">Check-in (Nhận diện &amp; Cấp vé 6 số)</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Check-out (Đối soát &amp; Thu phí)</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Xem xe đang trong bãi (Chỉ đọc)</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Tra cứu Lịch sử &amp; Xuất Excel</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Thống kê doanh thu &amp; Biểu đồ</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Cấu hình mức phí gửi xe</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="perm-name">Cấp / Khóa tài khoản hệ thống</div>
+                  </td>
+                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="perm-security-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Mật khẩu được mã hóa một chiều bằng thuật toán <strong>SHA-256</strong> và bảo vệ truy cập trang quản trị tự động theo phiên đăng nhập.</span>
+          </div>
+        </aside>
+
       </section>
 
     </main>
@@ -278,7 +333,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title">
-          <i class="fa-solid fa-user-plus" style="color: #2563eb; margin-right: 6px;"></i>
+          <i class="fa-solid fa-user-plus" style="color: #2563eb; margin-right: 8px;"></i>
           <span id="modalFormTitle">Thêm tài khoản mới</span>
         </div>
         <button type="button" class="modal-close-btn" id="modalCloseBtn" aria-label="Đóng">
@@ -289,29 +344,29 @@
       <form class="modal-body" id="accountForm">
         <div class="form-group">
           <label for="inputUsername" class="form-label">Tên đăng nhập *</label>
-          <input type="text" id="inputUsername" class="input-field font-mono" placeholder="ví dụ: nv_namanh" required>
+          <input type="text" id="inputUsername" class="input-field font-mono" placeholder="ví dụ: nv_baove02" required>
         </div>
 
         <div class="form-group">
           <label for="inputFullName" class="form-label">Họ và tên *</label>
-          <input type="text" id="inputFullName" class="input-field" placeholder="ví dụ: Nguyễn Nam Anh" required>
+          <input type="text" id="inputFullName" class="input-field" placeholder="ví dụ: Lê Minh Tuấn" required>
         </div>
 
         <div class="form-group">
-          <label for="selectRole" class="form-label">Vai trò *</label>
+          <label for="selectRole" class="form-label">Vai trò phân quyền *</label>
           <select id="selectRole" class="input-field">
-            <option value="employee">Nhân viên bãi xe</option>
-            <option value="admin">Quản trị viên</option>
+            <option value="employee">Nhân viên bãi xe (Cổng vào/ra &amp; Tra cứu)</option>
+            <option value="admin">Quản trị viên (Toàn quyền hệ thống)</option>
           </select>
         </div>
 
         <div class="form-group">
           <label for="inputShift" class="form-label">Ca trực / Ghi chú nhiệm vụ</label>
-          <input type="text" id="inputShift" class="input-field" placeholder="ví dụ: Ca sáng (06:00 - 14:00)">
+          <input type="text" id="inputShift" class="input-field" placeholder="ví dụ: Ca chiều (14:00 - 22:00)">
         </div>
 
         <div class="form-group" id="passwordGroup">
-          <label for="inputPassword" class="form-label" id="passwordLabel">Mật khẩu *</label>
+          <label for="inputPassword" class="form-label" id="passwordLabel">Mật khẩu khởi tạo *</label>
           <div class="password-input-wrapper">
             <input type="text" id="inputPassword" class="input-field font-mono" placeholder="Tối thiểu 6 ký tự" required>
             <button type="button" class="btn-copy-pwd" id="btnCopyPwd" title="Sao chép mật khẩu">
@@ -328,7 +383,7 @@
     </div>
   </div>
 
-  <!-- TOAST THÔNG BÁO -->
+  <!-- Toast dự phòng -->
   <div class="toast-notification" id="toastNotification">
     <i class="fa-solid fa-circle-check toast-icon"></i>
     <div class="toast-body">
@@ -337,9 +392,9 @@
     </div>
   </div>
 
-  <!-- File JavaScript xử lý logic -->
+  <!-- JS xử lý -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
   <script src="../../js/Admin/admin-common.js?v=1.0"></script>
-  <script src="../../js/Admin/accounts.js?v=2.0"></script>
+  <script src="../../js/Admin/accounts.js?v=3.0"></script>
 </body>
 </html>

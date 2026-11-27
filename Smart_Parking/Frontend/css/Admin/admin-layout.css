@@ -1,0 +1,428 @@
+/* ==========================================================================
+   HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE - PARKTECH / PARKAIVISION
+   File CSS Chung Phân Hệ Quản Trị (admin-layout.css)
+   Đồng bộ 100% Sidebar, Header, Card & Dropdown trên cả 3 trang Admin
+   ========================================================================== */
+
+:root {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Consolas', 'Courier New', monospace;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-navy: #0f172a;
+  --color-bg-body: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-text-main: #1e293b;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-success: #10b981;
+  --color-success-bg: #ecfdf5;
+  --color-blue-bg: #eff6ff;
+  --color-danger: #ef4444;
+
+  --sidebar-width: 260px;
+  --header-height: 64px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-body);
+  color: var(--color-text-main);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+/* ==========================================================================
+   SIDEBAR QUẢN TRỊ ĐỒNG BỘ HOÀN TOÀN VỚI EMPLOYEE
+   ========================================================================== */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: linear-gradient(180deg, #0f172a 0%, #162033 100%);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 50;
+  padding: 0 !important;
+}
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+}
+
+.sidebar-logo {
+  height: var(--header-height);
+  padding: 0 20px !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo-badge {
+  width: 32px !important;
+  height: 32px !important;
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+}
+
+.shift-status-container {
+  padding: 16px 20px 10px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+.admin-badge {
+  background-color: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.32);
+}
+
+.sidebar-nav {
+  padding: 14px 12px;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease-in-out;
+}
+
+.nav-item-link i {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.nav-item-link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.nav-item-link.active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.sidebar-bottom {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.capacity-widget-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.capacity-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.widget-title {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.capacity-percentage {
+  font-size: 12px;
+  font-weight: 700;
+  color: #60a5fa;
+  font-family: var(--font-mono);
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.capacity-widget-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.capacity-count {
+  font-weight: 600;
+  color: #ffffff;
+  font-family: var(--font-mono);
+}
+
+.capacity-empty {
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   MAIN WRAPPER & HEADER CHUẨN HÓA ĐỒNG NHẤT 64PX
+   ========================================================================== */
+.main-wrapper {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg-body);
+}
+
+.app-header {
+  height: var(--header-height) !important;
+  min-height: var(--header-height) !important;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 28px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-blue-bg);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 16.5px !important;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 12px !important;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Profile & Dropdown thống nhất ở cả 3 trang Admin */
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.user-profile-btn:hover {
+  background-color: #f8fafc;
+  border-color: var(--color-border);
+}
+
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background-color: #0f172a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.user-info {
+  text-align: left !important;
+}
+
+.user-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-navy);
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  display: none;
+  z-index: 100;
+}
+
+.user-dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--color-text-main);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f5f9;
+}
+
+.dropdown-item.logout {
+  color: #ef4444;
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.content-body {
+  padding: 22px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}

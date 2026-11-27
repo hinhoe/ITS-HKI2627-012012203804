@@ -68,12 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => toastNotification.classList.remove('show'), 3500);
   }
 
+  function getInitials(fullName) {
+    const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'NV';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   function updateKPIs() {
     if (statTotal) statTotal.textContent = state.kpi.total;
     if (statAdmin) statAdmin.textContent = state.kpi.admin;
     if (statStaff) statStaff.textContent = state.kpi.staff;
     if (statActive) statActive.textContent = state.kpi.active;
-    if (statLocked) statLocked.textContent = `${state.kpi.locked} tài khoản tạm khóa`;
+    if (statLocked) statLocked.textContent = `${state.kpi.locked} khóa`;
   }
 
   function getFilteredAccounts() {
@@ -132,8 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pageItems.length === 0) {
       accountsTableBody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align: center; padding: 36px; color: #94a3b8;">
-            <i class="fa-solid fa-user-xmark" style="font-size: 26px; margin-bottom: 8px; display: block;"></i>
+          <td colspan="5" style="text-align: center; padding: 36px; color: #94a3b8;">
+            <i class="fa-solid fa-user-xmark" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
             Không tìm thấy tài khoản nào phù hợp với bộ lọc
           </td>
         </tr>
@@ -142,41 +149,49 @@ document.addEventListener('DOMContentLoaded', () => {
       accountsTableBody.innerHTML = pageItems.map(acc => {
         const isAdmin = acc.role === 'admin';
         const isLocked = acc.status === 'locked';
+        const isDefaultRoot = acc.username === 'admin01' || acc.username === 'nhanvien01';
         const isRootAdmin = acc.username === 'admin01';
 
         return `
           <tr>
-            <td><span class="username-cell">${acc.username}</span></td>
             <td>
-              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-family: var(--font-mono);">
-                <i class="fa-solid fa-lock" style="font-size: 10px; color: #10b981;"></i>
-                SHA-256
-              </span>
+              <div class="account-identity-cell">
+                <div class="account-avatar-badge ${isAdmin ? 'admin' : 'staff'}">${getInitials(acc.full_name)}</div>
+                <div>
+                  <div class="account-name-main">${acc.full_name}</div>
+                  <div class="account-username-sub">@${acc.username}</div>
+                </div>
+              </div>
             </td>
-            <td><strong style="color: #0f172a;">${acc.full_name}</strong></td>
             <td>
               <span class="badge-role ${isAdmin ? 'badge-role-admin' : 'badge-role-staff'}">
-                <i class="fa-solid ${isAdmin ? 'fa-shield-halved' : 'fa-parking'}"></i>
+                <i class="fa-solid ${isAdmin ? 'fa-shield-halved' : 'fa-id-badge'}"></i>
                 <span>${acc.role_label}</span>
               </span>
             </td>
-            <td>${acc.shift}</td>
             <td>
-              <span class="badge-status">
-                ${isLocked
-                  ? `<span class="badge-status-locked">● Đã khóa</span>`
-                  : `<span class="status-bullet-active"></span><span class="status-active-text">Đang hoạt động</span>`}
+              <div style="font-size: 12.5px; color: #334155;">${acc.shift}</div>
+              <div style="font-size: 11px; color: #94a3b8;">Tạo: ${acc.created_at}</div>
+            </td>
+            <td>
+              <span class="badge-status-pill ${isLocked ? 'locked' : 'active'}">
+                <span>●</span>
+                <span>${isLocked ? 'Đã khóa' : 'Hoạt động'}</span>
               </span>
             </td>
-            <td class="font-mono" style="color: #64748b;">${acc.created_at}</td>
             <td>
               <div class="action-buttons-group">
-                <button type="button" class="btn-action-icon btn-action-edit" data-id="${acc.id}" title="Chỉnh sửa / Đặt lại mật khẩu">
+                <button type="button" class="btn-action-icon btn-action-edit" data-id="${acc.id}" title="Sửa thông tin &amp; đặt lại mật khẩu">
                   <i class="fa-regular fa-pen-to-square"></i>
                 </button>
-                <button type="button" class="btn-action-icon btn-action-lock" data-id="${acc.id}" ${isRootAdmin ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} title="${isRootAdmin ? 'Không thể khóa tài khoản gốc' : (isLocked ? 'Mở khóa tài khoản' : 'Tạm khóa tài khoản')}">
+                <button type="button" class="btn-action-icon btn-action-lock" data-id="${acc.id}" ${isRootAdmin ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="${isRootAdmin ? 'Không thể khóa tài khoản Admin gốc' : (isLocked ? 'Mở khóa tài khoản' : 'Tạm khóa tài khoản')}">
                   <i class="fa-solid ${isLocked ? 'fa-unlock' : 'fa-ban'}"></i>
                 </button>
+                ${!isDefaultRoot ? `
+                  <button type="button" class="btn-action-icon btn-action-delete" data-id="${acc.id}" title="Xóa tài khoản phụ này">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                ` : ''}
               </div>
             </td>
           </tr>
@@ -248,6 +263,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+
+    document.querySelectorAll('.btn-action-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const acc = state.accounts.find(a => a.id === id);
+        if (!acc) return;
+
+        const confirmed = window.showAppConfirm
+          ? await window.showAppConfirm({
+              title: 'Xóa tài khoản nhân sự?',
+              message: `Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản "${acc.full_name}" (@${acc.username})?`,
+              confirmText: 'Xóa tài khoản',
+              cancelText: 'Hủy',
+              type: 'danger'
+            })
+          : confirm(`Xóa tài khoản ${acc.username}?`);
+
+        if (!confirmed) return;
+
+        try {
+          const apiBase = window.getAdminApiBase();
+          const res = await fetch(`${apiBase}/api/admin/accounts/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'Không thể xóa tài khoản.');
+
+          await loadAccountsFromBackend();
+          showToast('Đã xóa tài khoản!', data.message);
+        } catch (err) {
+          if (window.showAppAlert) {
+            await window.showAppAlert({ title: 'Xóa thất bại', message: err.message, type: 'error' });
+          } else {
+            alert(err.message);
+          }
+        }
+      });
+    });
   }
 
   function openAddAccountModal() {
@@ -267,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openEditAccountModal(account) {
     editingId = account.id;
-    if (modalFormTitle) modalFormTitle.textContent = `Cập nhật tài khoản: ${account.username}`;
+    if (modalFormTitle) modalFormTitle.textContent = `Cập nhật: @${account.username}`;
     if (modalSubmitBtn) modalSubmitBtn.textContent = 'Cập nhật tài khoản';
 
     if (inputUsername) {
