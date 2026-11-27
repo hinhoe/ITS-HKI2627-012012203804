@@ -44,7 +44,7 @@ async def login(
 
     cur = db.cursor()
     cur.execute(
-        "SELECT id, username, password_hash, full_name, role, is_active FROM users WHERE username = ?",
+        "SELECT id, username, password_hash, full_name, role, shift_note, is_active FROM users WHERE username = ?",
         (username,),
     )
     user = cur.fetchone()
@@ -66,5 +66,6 @@ async def login(
             "username": user["username"],
             "full_name": user["full_name"],
             "role": user["role"],
+            "shift_note": user["shift_note"] or ("Toàn quyền quản trị (24/7)" if user["role"] == "admin" else "Ca sáng (06:00 - 14:00)"),
         },
     }

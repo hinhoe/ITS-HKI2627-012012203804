@@ -307,6 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalSubmitBtn) modalSubmitBtn.textContent = 'Lưu tài khoản';
     if (accountForm) accountForm.reset();
     if (inputUsername) inputUsername.disabled = false;
+    if (selectRole) selectRole.value = 'employee';
+    if (inputShift) inputShift.value = 'Ca sáng (06:00 - 14:00)';
     if (passwordLabel) passwordLabel.textContent = 'Mật khẩu khởi tạo *';
     if (inputPassword) {
       inputPassword.required = true;
@@ -314,6 +316,24 @@ document.addEventListener('DOMContentLoaded', () => {
       inputPassword.value = '123456';
     }
     if (accountModalBackdrop) accountModalBackdrop.classList.add('show');
+  }
+
+  function normalizeShiftSelection(rawShift, role) {
+    if (!inputShift) return;
+    const mapLegacy = {
+      'Trực ca cổng': 'Ca sáng (06:00 - 14:00)',
+      'Trực ca linh hoạt': 'Trực ca linh hoạt (Xoay ca)',
+      'Toàn quyền quản trị': 'Toàn quyền quản trị (24/7)'
+    };
+    const targetVal = mapLegacy[rawShift] || rawShift || (role === 'admin' ? 'Toàn quyền quản trị (24/7)' : 'Ca sáng (06:00 - 14:00)');
+    const hasOption = Array.from(inputShift.options).some(opt => opt.value === targetVal);
+    if (!hasOption && targetVal) {
+      const opt = document.createElement('option');
+      opt.value = targetVal;
+      opt.textContent = targetVal;
+      inputShift.appendChild(opt);
+    }
+    inputShift.value = targetVal;
   }
 
   function openEditAccountModal(account) {
@@ -327,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (inputFullName) inputFullName.value = account.full_name;
     if (selectRole) selectRole.value = account.role;
-    if (inputShift) inputShift.value = account.shift;
+    normalizeShiftSelection(account.shift, account.role);
     if (passwordLabel) passwordLabel.textContent = 'Mật khẩu mới (để trống nếu giữ nguyên)';
     if (inputPassword) {
       inputPassword.required = false;
@@ -335,6 +355,16 @@ document.addEventListener('DOMContentLoaded', () => {
       inputPassword.placeholder = 'Nhập mật khẩu mới nếu muốn đặt lại';
     }
     if (accountModalBackdrop) accountModalBackdrop.classList.add('show');
+  }
+
+  if (selectRole && inputShift) {
+    selectRole.addEventListener('change', () => {
+      if (selectRole.value === 'admin') {
+        inputShift.value = 'Toàn quyền quản trị (24/7)';
+      } else if (inputShift.value === 'Toàn quyền quản trị (24/7)') {
+        inputShift.value = 'Ca sáng (06:00 - 14:00)';
+      }
+    });
   }
 
   function closeAccountModal() {

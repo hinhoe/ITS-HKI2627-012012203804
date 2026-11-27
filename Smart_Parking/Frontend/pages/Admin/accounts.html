@@ -361,8 +361,14 @@
         </div>
 
         <div class="form-group">
-          <label for="inputShift" class="form-label">Ca trực / Ghi chú nhiệm vụ</label>
-          <input type="text" id="inputShift" class="input-field" placeholder="ví dụ: Ca chiều (14:00 - 22:00)">
+          <label for="inputShift" class="form-label">Ca trực phân công *</label>
+          <select id="inputShift" class="input-field">
+            <option value="Ca sáng (06:00 - 14:00)">Ca sáng (06:00 - 14:00)</option>
+            <option value="Ca chiều (14:00 - 22:00)">Ca chiều (14:00 - 22:00)</option>
+            <option value="Ca đêm (22:00 - 06:00)">Ca đêm (22:00 - 06:00)</option>
+            <option value="Trực ca linh hoạt (Xoay ca)">Trực ca linh hoạt (Xoay ca)</option>
+            <option value="Toàn quyền quản trị (24/7)">Toàn quyền quản trị (24/7)</option>
+          </select>
         </div>
 
         <div class="form-group" id="passwordGroup">
@@ -395,6 +401,6 @@
   <!-- JS xử lý -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
   <script src="../../js/Admin/admin-common.js?v=1.0"></script>
-  <script src="../../js/Admin/accounts.js?v=3.0"></script>
+  <script src="../../js/Admin/accounts.js?v=4.0"></script>
 </body>
 </html>

@@ -344,6 +344,11 @@
           document.querySelectorAll('.user-role').forEach(el => {
             el.textContent = currentUser.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
           });
+          if (currentUser.shift_note) {
+            document.querySelectorAll('.shift-badge span:last-child').forEach(el => {
+              el.textContent = currentUser.shift_note;
+            });
+          }
         }
       }
     } catch (e) { /* ignore */ }

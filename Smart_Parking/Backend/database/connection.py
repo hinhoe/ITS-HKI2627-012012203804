@@ -65,10 +65,18 @@ def init_db() -> None:
                 conn.execute(
                     "ALTER TABLE users ADD COLUMN shift_note TEXT DEFAULT ''"
                 )
-                conn.execute(
-                    "UPDATE users SET shift_note = CASE WHEN role = 'admin' THEN 'Toàn quyền quản trị' ELSE 'Trực ca cổng' END WHERE shift_note = '' OR shift_note IS NULL"
-                )
                 logger.info("Đã bổ sung cột shift_note cho bảng users")
+
+            conn.execute(
+                """
+                UPDATE users
+                SET shift_note = CASE
+                    WHEN role = 'admin' THEN 'Toàn quyền quản trị (24/7)'
+                    ELSE 'Ca sáng (06:00 - 14:00)'
+                END
+                WHERE shift_note IN ('', 'Toàn quyền quản trị', 'Trực ca cổng') OR shift_note IS NULL
+                """
+            )
 
             # 2b. Bảng nhật ký thay đổi mức phí gửi xe (Admin Audit Log)
             conn.execute(
