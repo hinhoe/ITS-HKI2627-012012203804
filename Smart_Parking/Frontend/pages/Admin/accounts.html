@@ -7,7 +7,7 @@
 
   <!-- File CSS chuẩn đồng bộ Admin -->
   <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=1.0">
-  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=3.0">
+  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=4.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
@@ -226,8 +226,8 @@
           </div>
         </div>
 
-        <!-- Cột phải: Ma trận phân quyền theo vai trò -->
-        <aside class="card permissions-panel">
+        <!-- Khối dưới: Ma trận phân quyền theo vai trò (Full width, cân 2 cột gọn gàng) -->
+        <section class="card permissions-panel">
           <div class="panel-header-flex">
             <div>
               <h2 class="panel-title"><i class="fa-solid fa-shield-halved" style="color: #2563eb; margin-right: 6px;"></i>Ma trận phân quyền vai trò</h2>
@@ -235,91 +235,81 @@
             </div>
           </div>
 
-          <div class="role-summary-cards">
-            <div class="role-info-pill admin">
-              <div class="role-pill-head">
-                <i class="fa-solid fa-crown"></i>
-                <span>Quản trị viên (Admin)</span>
+          <div class="permissions-split-body">
+            <div class="role-summary-cards">
+              <div class="role-cards-stack">
+                <div class="role-info-pill admin">
+                  <div class="role-pill-head">
+                    <i class="fa-solid fa-crown"></i>
+                    <span>Quản trị viên (Admin)</span>
+                  </div>
+                  <small>Toàn quyền quản trị doanh thu, cấu hình biểu phí gửi xe &amp; quản lý tài khoản nhân sự. Khi cần có thể chuyển qua giao diện cổng để hỗ trợ kiểm tra vận hành.</small>
+                </div>
+                <div class="role-info-pill staff">
+                  <div class="role-pill-head">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Nhân viên bãi xe</span>
+                  </div>
+                  <small>Chuyên trách vận hành cổng vào/ra (AI nhận diện biển số, cấp vé 6 số xe đạp / đạp điện), xem danh sách xe trong bãi và tra cứu lịch sử vào ra.</small>
+                </div>
               </div>
-              <small>Toàn quyền quản trị doanh thu, biểu phí &amp; nhân sự</small>
-            </div>
-            <div class="role-info-pill staff">
-              <div class="role-pill-head">
-                <i class="fa-solid fa-user-check"></i>
-                <span>Nhân viên bãi xe</span>
+
+              <div class="perm-security-note">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Mật khẩu được mã hóa một chiều bằng thuật toán <strong>SHA-256</strong> và hệ thống tự động chặn nhân viên truy cập các trang cấu hình quản trị.</span>
               </div>
-              <small>Chuyên trách vận hành cổng vào/ra &amp; tra cứu bãi</small>
+            </div>
+
+            <div class="perm-matrix-wrapper">
+              <table class="perm-matrix-table">
+                <thead>
+                  <tr>
+                    <th>CHỨC NĂNG HỆ THỐNG</th>
+                    <th style="text-align: center; width: 110px;">ADMIN</th>
+                    <th style="text-align: center; width: 110px;">NHÂN VIÊN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><div class="perm-name">Check-in (Nhận diện biển số &amp; Cấp mã 6 số)</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Check-out (Đối soát vào/ra &amp; Thu phí)</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Xem xe đang trong bãi (Chỉ đọc)</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Tra cứu Lịch sử &amp; Xuất báo cáo Excel</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Thống kê doanh thu &amp; Biểu đồ tổng quan</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Cấu hình mức phí gửi xe 3 loại phương tiện</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="perm-name">Cấp / Chỉnh sửa / Khóa tài khoản hệ thống</div></td>
+                    <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
+                    <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-
-          <div class="perm-matrix-wrapper">
-            <table class="perm-matrix-table">
-              <thead>
-                <tr>
-                  <th>CHỨC NĂNG HỆ THỐNG</th>
-                  <th style="text-align: center;">ADMIN</th>
-                  <th style="text-align: center;">NHÂN VIÊN</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="perm-name">Check-in (Nhận diện &amp; Cấp vé 6 số)</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Check-out (Đối soát &amp; Thu phí)</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Xem xe đang trong bãi (Chỉ đọc)</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Tra cứu Lịch sử &amp; Xuất Excel</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-yes" title="Được phép"><i class="fa-solid fa-check"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Thống kê doanh thu &amp; Biểu đồ</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Cấu hình mức phí gửi xe</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="perm-name">Cấp / Khóa tài khoản hệ thống</div>
-                  </td>
-                  <td class="perm-cell"><span class="perm-yes" title="Toàn quyền"><i class="fa-solid fa-check"></i></span></td>
-                  <td class="perm-cell"><span class="perm-no" title="Không có quyền"><i class="fa-solid fa-lock"></i></span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="perm-security-note">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Mật khẩu được mã hóa một chiều bằng thuật toán <strong>SHA-256</strong> và bảo vệ truy cập trang quản trị tự động theo phiên đăng nhập.</span>
-          </div>
-        </aside>
+        </section>
 
       </section>
 

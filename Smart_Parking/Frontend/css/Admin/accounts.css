@@ -89,24 +89,30 @@
 }
 
 /* ==========================================================================
-   2. BỐ CỤC 2 CỘT: DANH SÁCH TÀI KHOẢN (TRÁI) & MA TRẬN PHÂN QUYỀN (PHẢI)
+   2. BỐ CỤC XẾP TẦNG ĐẦY ĐẶN: DANH SÁCH TÀI KHOẢN (TRÊN) & PHÂN QUYỀN (DƯỚI)
    ========================================================================== */
 .accounts-workspace-grid {
-  display: grid;
-  grid-template-columns: 1.45fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  align-items: start;
 }
 
-@media (max-width: 1220px) {
-  .accounts-workspace-grid {
+.permissions-split-body {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .permissions-split-body {
     grid-template-columns: 1fr;
   }
 }
 
 .accounts-list-panel,
 .permissions-panel {
-  padding: 18px 20px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -116,8 +122,9 @@
 .panel-header-flex {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .panel-title {
@@ -448,8 +455,16 @@
    5. BẢNG MA TRẬN PHÂN QUYỀN (PERMISSIONS PANEL)
    ========================================================================== */
 .role-summary-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.role-cards-stack {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
