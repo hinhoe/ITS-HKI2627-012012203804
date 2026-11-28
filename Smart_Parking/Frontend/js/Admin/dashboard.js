@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let currentChart = null;
+  let revenueShareChart = null;
   let currentRange = '7days';
   let currentCustomDate = null;
 
@@ -30,8 +31,50 @@ document.addEventListener('DOMContentLoaded', () => {
   const kpiRevenue = document.getElementById('kpiRevenue');
   const kpiPeriodLabelIn = document.getElementById('kpiPeriodLabelIn');
 
+  const aiRateBadge = document.getElementById('aiRateBadge');
+  const aiAutoRate = document.getElementById('aiAutoRate');
+  const aiAvgConf = document.getElementById('aiAvgConf');
+  const aiBikeCount = document.getElementById('aiBikeCount');
+  const aiAutoCount = document.getElementById('aiAutoCount');
+  const aiManualCount = document.getElementById('aiManualCount');
+  const aiProgressBar = document.getElementById('aiProgressBar');
+  const alertTotalBadge = document.getElementById('alertTotalBadge');
+  const alertsList = document.getElementById('alertsList');
+
+  const doughnutCenterTotal = document.getElementById('doughnutCenterTotal');
+  const revShareMotorPct = document.getElementById('revShareMotorPct');
+  const revShareMotorVal = document.getElementById('revShareMotorVal');
+  const revShareCarPct = document.getElementById('revShareCarPct');
+  const revShareCarVal = document.getElementById('revShareCarVal');
+  const revShareBikePct = document.getElementById('revShareBikePct');
+  const revShareBikeVal = document.getElementById('revShareBikeVal');
+
+  // Archive & Cleanup (Chọn Tháng -> Chọn Tuần 1-4 -> Xuất Excel -> Xóa)
+  const archiveMonthSelect = document.getElementById('archiveMonthSelect');
+  const archiveWeekSelect = document.getElementById('archiveWeekSelect');
+  const archiveStatsBadge = document.getElementById('archiveStatsBadge');
+  const btnArchiveExport = document.getElementById('btnArchiveExport');
+  const btnArchiveCleanup = document.getElementById('btnArchiveCleanup');
+  const archiveConfirmModalBackdrop = document.getElementById('archiveConfirmModalBackdrop');
+  const archiveModalTitle = document.getElementById('archiveModalTitle');
+  const archiveModalDesc = document.getElementById('archiveModalDesc');
+  const btnCloseArchiveModalTop = document.getElementById('btnCloseArchiveModalTop');
+  const btnCancelArchiveModal = document.getElementById('btnCancelArchiveModal');
+  const btnConfirmArchiveCleanup = document.getElementById('btnConfirmArchiveCleanup');
+  let archiveMonthsTree = [];
+  let exportedBackupToken = null;
+  let exportedBackupKey = null;
+
   function formatVnd(num) {
     return (Number(num) || 0).toLocaleString('vi-VN');
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function renderKPIs(data) {
@@ -58,6 +101,66 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.updateAdminSidebarCapacity) {
       window.updateAdminSidebarCapacity(cap);
     }
+  }
+
+  function renderAiAndAlerts(data) {
+    const ai = data.ai_stats || {};
+    const alerts = data.alerts || {};
+    const autoRate = Number(ai.auto_rate || 0).toFixed(1);
+    const avgConf = Number(ai.avg_confidence || 0).toFixed(1);
+
+    if (aiRateBadge) aiRateBadge.textContent = `${autoRate}% tự động`;
+    if (aiAutoRate) aiAutoRate.textContent = `${autoRate}%`;
+    if (aiAvgConf) aiAvgConf.textContent = `${avgConf}%`;
+    if (aiBikeCount) aiBikeCount.textContent = formatVnd(ai.bike_tickets || 0);
+    if (aiAutoCount) aiAutoCount.textContent = formatVnd(ai.alpr_auto || 0);
+    if (aiManualCount) aiManualCount.textContent = formatVnd(ai.alpr_manual || 0);
+    if (aiProgressBar) aiProgressBar.style.width = `${Math.min(100, Math.max(0, Number(ai.auto_rate || 0)))}%`;
+
+    const overstays = alerts.overstay_vehicles || [];
+    const manuals = alerts.manual_or_low_conf || [];
+    const total = Number(alerts.total_alerts || 0);
+
+    if (alertTotalBadge) {
+      alertTotalBadge.textContent = `${total} cảnh báo`;
+      alertTotalBadge.className = total > 0 ? 'insight-pill warn' : 'insight-pill ok';
+    }
+
+    if (!alertsList) return;
+    if (overstays.length === 0 && manuals.length === 0) {
+      alertsList.innerHTML = `
+        <div class="alerts-empty">
+          <i class="fa-solid fa-shield-check"></i>
+          <span>Hệ thống vận hành ổn định, chưa ghi nhận cảnh báo</span>
+        </div>
+      `;
+      return;
+    }
+
+    const rows = [];
+    overstays.forEach(item => {
+      rows.push(`
+        <div class="alert-row-item">
+          <div class="alert-row-left">
+            <span class="alert-plate-tag">${escapeHtml(item.plate_number)}</span>
+            <span class="alert-row-desc">${escapeHtml(item.vehicle_type)} • Vào lúc ${escapeHtml(item.checkin_time)}</span>
+          </div>
+          <span class="alert-badge-tag overstay">Gửi tồn ${escapeHtml(item.hours_parked)}h</span>
+        </div>
+      `);
+    });
+    manuals.forEach(item => {
+      rows.push(`
+        <div class="alert-row-item">
+          <div class="alert-row-left">
+            <span class="alert-plate-tag">${escapeHtml(item.plate_number)}</span>
+            <span class="alert-row-desc">${escapeHtml(item.vehicle_type)} • ${escapeHtml(item.checkin_time)}</span>
+          </div>
+          <span class="alert-badge-tag manual">${escapeHtml(item.reason)}</span>
+        </div>
+      `);
+    });
+    alertsList.innerHTML = rows.join('');
   }
 
   function renderAuditTable(data) {
@@ -275,6 +378,73 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderRevenueShareDoughnut(data) {
+    const items = data.audit || [];
+    let motorRev = 0;
+    let carRev = 0;
+    let bikeRev = 0;
+    items.forEach(item => {
+      motorRev += Number(item.motor_rev || 0);
+      carRev += Number(item.car_rev || 0);
+      bikeRev += Number(item.bike_rev || 0);
+    });
+
+    const grandTotal = motorRev + carRev + bikeRev;
+    const pct = (val) => grandTotal > 0 ? `${((val / grandTotal) * 100).toFixed(1)}%` : '0.0%';
+
+    if (doughnutCenterTotal) doughnutCenterTotal.textContent = `${formatVnd(grandTotal)} đ`;
+    if (revShareMotorPct) revShareMotorPct.textContent = pct(motorRev);
+    if (revShareMotorVal) revShareMotorVal.textContent = `${formatVnd(motorRev)} đ`;
+    if (revShareCarPct) revShareCarPct.textContent = pct(carRev);
+    if (revShareCarVal) revShareCarVal.textContent = `${formatVnd(carRev)} đ`;
+    if (revShareBikePct) revShareBikePct.textContent = pct(bikeRev);
+    if (revShareBikeVal) revShareBikeVal.textContent = `${formatVnd(bikeRev)} đ`;
+
+    const canvas = document.getElementById('revenueShareChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const ctx = canvas.getContext('2d');
+
+    if (revenueShareChart) {
+      revenueShareChart.destroy();
+    }
+
+    const hasData = grandTotal > 0;
+    revenueShareChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: hasData ? ['Xe máy', 'Ô tô', 'Xe đạp / Đạp điện'] : ['Chưa có doanh thu'],
+        datasets: [{
+          data: hasData ? [motorRev, carRev, bikeRev] : [1],
+          backgroundColor: hasData ? ['#1d4ed8', '#0f172a', '#7c3aed'] : ['#e2e8f0'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: hasData ? 4 : 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: hasData,
+            backgroundColor: '#0f172a',
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: function (context) {
+                const val = Number(context.raw || 0);
+                const share = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(1) : '0.0';
+                return ` ${context.label}: ${val.toLocaleString('vi-VN')} đ (${share}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   async function loadDashboardData(rangeKey = '7days', customDate = null) {
     currentRange = rangeKey;
     currentCustomDate = customDate;
@@ -291,8 +461,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       renderKPIs(data);
+      renderAiAndAlerts(data);
       renderAuditTable(data);
       renderChart(data.chart || {});
+      renderRevenueShareDoughnut(data);
     } catch (err) {
       console.error('Lỗi tải dữ liệu Dashboard Admin:', err);
       if (window.showAppToast) {
@@ -393,5 +565,213 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
+  // SAO LƯU EXCEL & XÓA DỮ LIỆU ĐỊNH KỲ (THÁNG -> TUẦN 1-4 -> EXCEL -> XÓA)
+  // ==========================================================================
+  function getSelectedWeekInfo() {
+    const mVal = archiveMonthSelect?.value || '';
+    const wVal = archiveWeekSelect?.value || 'ALL';
+    const mObj = archiveMonthsTree.find(m => m.month === mVal);
+    const wObj = mObj?.weeks?.find(w => w.week === wVal);
+    return { mObj, wObj };
+  }
+
+  function updateArchiveControlsState() {
+    const { mObj, wObj } = getSelectedWeekInfo();
+    if (!mObj || !wObj) {
+      if (archiveStatsBadge) archiveStatsBadge.textContent = 'Chưa có dữ liệu';
+      if (btnArchiveExport) btnArchiveExport.disabled = true;
+      if (btnArchiveCleanup) btnArchiveCleanup.disabled = true;
+      return;
+    }
+
+    const cnt = Number(wObj.session_count || 0);
+    if (archiveStatsBadge) {
+      archiveStatsBadge.textContent = cnt > 0
+        ? `${cnt} lượt • ${formatVnd(wObj.total_revenue)} đ • ${wObj.image_files_count} ảnh (${wObj.image_size_kb} KB)`
+        : 'Không có lượt gửi trong mục này';
+    }
+
+    if (btnArchiveExport) btnArchiveExport.disabled = (cnt === 0);
+    const lockKey = `${mObj.month}:${wObj.week}`;
+    const isUnlocked = Boolean(cnt > 0 && exportedBackupToken && exportedBackupKey === lockKey);
+    if (btnArchiveCleanup) btnArchiveCleanup.disabled = !isUnlocked;
+  }
+
+  function renderWeekOptionsForMonth() {
+    if (!archiveWeekSelect) return;
+    const mVal = archiveMonthSelect?.value || '';
+    const mObj = archiveMonthsTree.find(m => m.month === mVal);
+    if (!mObj || !mObj.weeks) {
+      archiveWeekSelect.innerHTML = '<option value="ALL">Cả tháng</option>';
+      updateArchiveControlsState();
+      return;
+    }
+    archiveWeekSelect.innerHTML = mObj.weeks.map(w =>
+      `<option value="${escapeHtml(w.week)}">${escapeHtml(w.label)} — ${w.session_count} lượt</option>`
+    ).join('');
+    exportedBackupToken = null;
+    exportedBackupKey = null;
+    updateArchiveControlsState();
+  }
+
+  async function loadArchiveSummary() {
+    if (!archiveMonthSelect) return;
+    try {
+      const apiBase = window.getAdminApiBase();
+      const res = await fetch(`${apiBase}/api/admin/archive/summary`);
+      if (!res.ok) return;
+      const data = await res.json();
+      archiveMonthsTree = data.months || [];
+
+      archiveMonthSelect.innerHTML = archiveMonthsTree.map(m =>
+        `<option value="${escapeHtml(m.month)}">${escapeHtml(m.label)}</option>`
+      ).join('');
+      exportedBackupToken = null;
+      exportedBackupKey = null;
+      renderWeekOptionsForMonth();
+    } catch (err) {
+      console.warn('Không tải được danh sách tháng/tuần lưu trữ:', err);
+    }
+  }
+
+  if (archiveMonthSelect) {
+    archiveMonthSelect.addEventListener('change', renderWeekOptionsForMonth);
+  }
+
+  if (archiveWeekSelect) {
+    archiveWeekSelect.addEventListener('change', () => {
+      exportedBackupToken = null;
+      exportedBackupKey = null;
+      updateArchiveControlsState();
+    });
+  }
+
+  if (btnArchiveExport) {
+    btnArchiveExport.addEventListener('click', async () => {
+      const { mObj, wObj } = getSelectedWeekInfo();
+      if (!mObj || !wObj) return;
+
+      btnArchiveExport.disabled = true;
+      btnArchiveExport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang xuất Excel...</span>';
+      try {
+        const apiBase = window.getAdminApiBase();
+        const urlApi = `${apiBase}/api/admin/archive/export?month=${encodeURIComponent(mObj.month)}&week=${encodeURIComponent(wObj.week)}`;
+        const res = await fetch(urlApi);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || 'Không thể xuất file sao lưu');
+        }
+
+        const token = res.headers.get('X-Archive-Token');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SaoLuu_ParkTech_${mObj.month}_${wObj.week === 'ALL' ? 'CaThang' : `Tuan${wObj.week}`}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        if (token) {
+          exportedBackupToken = token;
+          exportedBackupKey = `${mObj.month}:${wObj.week}`;
+          updateArchiveControlsState();
+        }
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: `Đã xuất Excel (${wObj.label})`,
+            message: 'Nút "4. Xóa dữ liệu đã chọn" đã được mở khóa.',
+            type: 'success'
+          });
+        }
+      } catch (err) {
+        if (window.showAppAlert) {
+          window.showAppAlert({ title: 'Lỗi xuất sao lưu', message: err.message, type: 'error' });
+        } else {
+          alert(err.message);
+        }
+      } finally {
+        btnArchiveExport.innerHTML = '<i class="fa-solid fa-file-excel"></i> <span>3. Xuất file Excel</span>';
+        updateArchiveControlsState();
+      }
+    });
+  }
+
+  function closeArchiveModal() {
+    if (archiveConfirmModalBackdrop) archiveConfirmModalBackdrop.classList.remove('show');
+  }
+
+  if (btnCloseArchiveModalTop) btnCloseArchiveModalTop.addEventListener('click', closeArchiveModal);
+  if (btnCancelArchiveModal) btnCancelArchiveModal.addEventListener('click', closeArchiveModal);
+  if (archiveConfirmModalBackdrop) {
+    archiveConfirmModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === archiveConfirmModalBackdrop) closeArchiveModal();
+    });
+  }
+
+  if (btnArchiveCleanup) {
+    btnArchiveCleanup.addEventListener('click', () => {
+      const { mObj, wObj } = getSelectedWeekInfo();
+      if (!mObj || !wObj || !exportedBackupToken || exportedBackupKey !== `${mObj.month}:${wObj.week}`) return;
+
+      const label = wObj.week === 'ALL' ? wObj.label : `${wObj.label} (${mObj.label})`;
+      if (archiveModalTitle) archiveModalTitle.textContent = `Xóa dữ liệu: ${label}`;
+      if (archiveModalDesc) {
+        archiveModalDesc.textContent = `Hiện có ${wObj.session_count} lượt gửi và ${wObj.image_files_count} file ảnh (${wObj.image_size_kb} KB). Chọn hình thức xóa:`;
+      }
+      if (archiveConfirmModalBackdrop) archiveConfirmModalBackdrop.classList.add('show');
+    });
+  }
+
+  if (btnConfirmArchiveCleanup) {
+    btnConfirmArchiveCleanup.addEventListener('click', async () => {
+      const { mObj, wObj } = getSelectedWeekInfo();
+      if (!mObj || !wObj || !exportedBackupToken) return;
+      const checkedRadio = document.querySelector('input[name="archiveCleanupMode"]:checked');
+      const mode = checkedRadio ? checkedRadio.value : 'images_only';
+
+      btnConfirmArchiveCleanup.disabled = true;
+      btnConfirmArchiveCleanup.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang xóa...</span>';
+      try {
+        const apiBase = window.getAdminApiBase();
+        const res = await fetch(`${apiBase}/api/admin/archive/cleanup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            month: mObj.month,
+            week: wObj.week,
+            mode,
+            backup_token: exportedBackupToken
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || 'Xóa dữ liệu thất bại');
+
+        closeArchiveModal();
+        if (window.showAppToast) {
+          window.showAppToast({
+            title: 'Xóa dữ liệu hoàn tất',
+            message: data.message || 'Đã giải phóng dữ liệu đã chọn.',
+            type: 'success'
+          });
+        }
+        await loadArchiveSummary();
+        loadDashboardData(currentRange, currentCustomDate);
+      } catch (err) {
+        if (window.showAppAlert) {
+          window.showAppAlert({ title: 'Không thể xóa dữ liệu', message: err.message, type: 'error' });
+        } else {
+          alert(err.message);
+        }
+      } finally {
+        btnConfirmArchiveCleanup.disabled = false;
+        btnConfirmArchiveCleanup.innerHTML = '<i class="fa-solid fa-trash-can"></i> <span>Xác nhận xóa</span>';
+      }
+    });
+  }
+
   loadDashboardData('7days', null);
+  loadArchiveSummary();
 });

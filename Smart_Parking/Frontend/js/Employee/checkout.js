@@ -46,6 +46,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRecognize = document.getElementById('btnRecognize');
   const btnLookupBikeTicket = document.getElementById('btnLookupBikeTicket');
   const btnConfirmCheckout = document.getElementById('btnConfirmCheckout');
+  const btnPayCash = document.getElementById('btnPayCash');
+  const btnPayVietQR = document.getElementById('btnPayVietQR');
+
+  // Modal thanh toán VietQR động
+  const vietqrModalBackdrop = document.getElementById('vietqrModalBackdrop');
+  const vietqrQrImage = document.getElementById('vietqrQrImage');
+  const vietqrFallback = document.getElementById('vietqrFallback');
+  const vietqrAmountDisplay = document.getElementById('vietqrAmountDisplay');
+  const vietqrBankDisplay = document.getElementById('vietqrBankDisplay');
+  const vietqrAccountDisplay = document.getElementById('vietqrAccountDisplay');
+  const vietqrNameDisplay = document.getElementById('vietqrNameDisplay');
+  const vietqrNoteDisplay = document.getElementById('vietqrNoteDisplay');
+  const btnCloseVietqr = document.getElementById('btnCloseVietqr');
+  const btnCloseVietqrTop = document.getElementById('btnCloseVietqrTop');
+  const btnConfirmVietqrPaid = document.getElementById('btnConfirmVietqrPaid');
+  const btnToggleVietqrConfig = document.getElementById('btnToggleVietqrConfig');
+  const vietqrConfigPanel = document.getElementById('vietqrConfigPanel');
+  const vietqrBankInput = document.getElementById('vietqrBankInput');
+  const vietqrAccountInput = document.getElementById('vietqrAccountInput');
+  const vietqrNameInput = document.getElementById('vietqrNameInput');
+  const btnSaveVietqrConfig = document.getElementById('btnSaveVietqrConfig');
+  let selectedPaymentMethod = 'CASH';
 
   // Webcam elements
   const btnToggleWebcam = document.getElementById('btnToggleWebcam');
@@ -1098,6 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
           checkout_crop_url: chk.cropImageUrl,
           total_fee: chk.feeAmount,
           payment_status: 'PAID',
+          payment_method: selectedPaymentMethod,
           staff_checkout: staffName
         };
 
@@ -1127,7 +1150,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cập nhật trạng thái thanh toán trên thẻ phí
         if (feeStatusBadge) {
           feeStatusBadge.className = 'fee-status-badge paid';
-          feeStatusBadge.innerHTML = '<i class="fa-solid fa-check"></i> <span>Đã thu phí</span>';
+          const payLabel = selectedPaymentMethod === 'VIETQR' ? 'Đã thu (VietQR)' : 'Đã thu tiền mặt';
+          feeStatusBadge.innerHTML = `<i class="fa-solid fa-check"></i> <span>${payLabel}</span>`;
         }
 
         // Cập nhật thẻ sức chứa bãi xe từ DB
@@ -1277,6 +1301,129 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!userDropdownMenu.contains(e.target) && !userProfileBtn.contains(e.target)) {
         userDropdownMenu.classList.remove('show');
       }
+    });
+  }
+
+  // ==========================================================================
+  // CHỌN PHƯƠNG THỨC THANH TOÁN & HIỂN THỊ VIETQR ĐỘNG
+  // ==========================================================================
+  function getVietqrConfig() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('parktech_vietqr_config') || '{}');
+      return {
+        bankId: saved.bankId || 'MB',
+        accountNo: saved.accountNo || '0987654321',
+        accountName: saved.accountName || 'BAI DO XE PARKTECH'
+      };
+    } catch {
+      return { bankId: 'MB', accountNo: '0987654321', accountName: 'BAI DO XE PARKTECH' };
+    }
+  }
+
+  function renderVietqrModal() {
+    const chk = state.currentCheckout || {};
+    const amount = Math.max(0, Number(chk.feeAmount) || 0);
+    const plate = (chk.plate && chk.plate !== '---') ? chk.plate : 'GUIXE';
+    const note = `PARKTECH ${plate.replace(/[^A-Z0-9]/gi, '')}`.slice(0, 35);
+    const cfg = getVietqrConfig();
+
+    if (vietqrAmountDisplay) vietqrAmountDisplay.textContent = `${formatPrice(amount)} VNĐ`;
+    if (vietqrBankDisplay) vietqrBankDisplay.textContent = cfg.bankId;
+    if (vietqrAccountDisplay) vietqrAccountDisplay.textContent = cfg.accountNo;
+    if (vietqrNameDisplay) vietqrNameDisplay.textContent = cfg.accountName;
+    if (vietqrNoteDisplay) vietqrNoteDisplay.textContent = note;
+
+    if (vietqrBankInput) vietqrBankInput.value = cfg.bankId;
+    if (vietqrAccountInput) vietqrAccountInput.value = cfg.accountNo;
+    if (vietqrNameInput) vietqrNameInput.value = cfg.accountName;
+
+    if (vietqrQrImage && vietqrFallback) {
+      const qrUrl = `https://img.vietqr.io/image/${encodeURIComponent(cfg.bankId)}-${encodeURIComponent(cfg.accountNo)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(cfg.accountName)}`;
+      vietqrFallback.style.display = 'none';
+      vietqrQrImage.style.display = 'block';
+      vietqrQrImage.onerror = () => {
+        vietqrQrImage.style.display = 'none';
+        vietqrFallback.style.display = 'flex';
+      };
+      vietqrQrImage.src = qrUrl;
+    }
+  }
+
+  function openVietqrModal() {
+    if (!vietqrModalBackdrop) return;
+    if (!state.currentCheckout || !state.currentCheckout.plate || state.currentCheckout.plate === '---') {
+      if (window.showAppAlert) {
+        window.showAppAlert({
+          title: 'Chưa có thông tin xe ra',
+          message: 'Vui lòng nhận diện biển số hoặc tra mã vé 6 số trước khi tạo mã thanh toán VietQR.',
+          type: 'warning',
+          confirmText: 'Đã hiểu'
+        });
+      }
+      return;
+    }
+    renderVietqrModal();
+    vietqrModalBackdrop.classList.add('show');
+  }
+
+  function closeVietqrModal() {
+    if (vietqrModalBackdrop) vietqrModalBackdrop.classList.remove('show');
+  }
+
+  if (btnPayCash) {
+    btnPayCash.addEventListener('click', () => {
+      selectedPaymentMethod = 'CASH';
+      btnPayCash.classList.add('active');
+      if (btnPayVietQR) btnPayVietQR.classList.remove('active');
+    });
+  }
+
+  if (btnPayVietQR) {
+    btnPayVietQR.addEventListener('click', () => {
+      selectedPaymentMethod = 'VIETQR';
+      btnPayVietQR.classList.add('active');
+      if (btnPayCash) btnPayCash.classList.remove('active');
+      openVietqrModal();
+    });
+  }
+
+  if (btnCloseVietqr) btnCloseVietqr.addEventListener('click', closeVietqrModal);
+  if (btnCloseVietqrTop) btnCloseVietqrTop.addEventListener('click', closeVietqrModal);
+  if (vietqrModalBackdrop) {
+    vietqrModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === vietqrModalBackdrop) closeVietqrModal();
+    });
+  }
+
+  if (btnToggleVietqrConfig && vietqrConfigPanel) {
+    btnToggleVietqrConfig.addEventListener('click', () => {
+      vietqrConfigPanel.style.display = vietqrConfigPanel.style.display === 'none' ? 'flex' : 'none';
+    });
+  }
+
+  if (btnSaveVietqrConfig) {
+    btnSaveVietqrConfig.addEventListener('click', () => {
+      const bankId = (vietqrBankInput?.value || 'MB').trim();
+      const accountNo = (vietqrAccountInput?.value || '').trim() || '0987654321';
+      const accountName = (vietqrNameInput?.value || '').trim().toUpperCase() || 'BAI DO XE PARKTECH';
+      localStorage.setItem('parktech_vietqr_config', JSON.stringify({ bankId, accountNo, accountName }));
+      renderVietqrModal();
+      if (vietqrConfigPanel) vietqrConfigPanel.style.display = 'none';
+      if (window.showAppToast) {
+        window.showAppToast({
+          title: 'Đã cập nhật tài khoản nhận VietQR',
+          message: `${bankId} - ${accountNo}`,
+          type: 'success'
+        });
+      }
+    });
+  }
+
+  if (btnConfirmVietqrPaid) {
+    btnConfirmVietqrPaid.addEventListener('click', () => {
+      selectedPaymentMethod = 'VIETQR';
+      closeVietqrModal();
+      if (btnConfirmCheckout) btnConfirmCheckout.click();
     });
   }
 

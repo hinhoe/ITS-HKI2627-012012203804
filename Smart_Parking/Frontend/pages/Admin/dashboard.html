@@ -6,8 +6,8 @@
   <title>Thống kê & Báo cáo - Quản trị ParkTech</title>
 
   <!-- File CSS riêng biệt theo chuẩn phân hệ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=2.0">
-  <link rel="stylesheet" href="../../css/Admin/dashboard.css?v=4.0">
+  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=2.1">
+  <link rel="stylesheet" href="../../css/Admin/dashboard.css?v=8.1">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
@@ -237,39 +237,157 @@
         </div>
       </section>
 
-      <!-- 2. Biểu đồ Lưu lượng phương tiện & Doanh thu -->
-      <section class="card chart-card">
-        <div class="chart-header">
-          <div class="chart-title-group">
-            <h2 class="chart-title">Lưu lượng phương tiện & Doanh thu</h2>
-            <p class="chart-subtitle" id="chartSubtitle">Phân bổ lượt xe ô tô, xe máy, xe đạp / đạp điện và doanh thu theo thời gian thực</p>
+      <!-- 2. Hàng Biểu đồ: Lưu lượng & Doanh thu (Trái) + Cơ cấu Doanh thu Tròn (Phải) -->
+      <section class="charts-split-row">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <h2 class="chart-title">Lưu lượng phương tiện &amp; Doanh thu</h2>
+              <p class="chart-subtitle" id="chartSubtitle">Phân bổ lượt xe ô tô, xe máy, xe đạp / đạp điện và doanh thu theo thời gian thực</p>
+            </div>
+
+            <!-- Chú giải biểu đồ (Legend) -->
+            <div class="chart-legend-group">
+              <div class="legend-item">
+                <span class="legend-bar legend-bar-motor"></span>
+                <span>Xe máy (Lượt)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-bar legend-bar-car"></span>
+                <span>Ô tô (Lượt)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-bar legend-bar-bike"></span>
+                <span>Xe đạp / Đạp điện</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-line-dot"></span>
+                <span>Doanh thu (VNĐ)</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Chú giải biểu đồ (Legend) -->
-          <div class="chart-legend-group">
-            <div class="legend-item">
-              <span class="legend-bar legend-bar-motor"></span>
-              <span>Xe máy (Lượt)</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-bar legend-bar-car"></span>
-              <span>Ô tô (Lượt)</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-bar legend-bar-bike"></span>
-              <span>Xe đạp / Đạp điện</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-line-dot"></span>
-              <span>Doanh thu (VNĐ)</span>
-            </div>
+          <!-- Khung vẽ Chart.js -->
+          <div class="chart-canvas-container">
+            <canvas id="trafficRevenueChart"></canvas>
           </div>
         </div>
 
-        <!-- Khung vẽ Chart.js -->
-        <div class="chart-canvas-container">
-          <canvas id="trafficRevenueChart"></canvas>
+        <!-- Biểu đồ tròn: Tỷ trọng doanh thu theo loại xe -->
+        <div class="card doughnut-card">
+          <div class="doughnut-header">
+            <h2 class="chart-title">Cơ cấu doanh thu</h2>
+            <p class="chart-subtitle">Tỷ trọng theo loại phương tiện</p>
+          </div>
+
+          <div class="doughnut-canvas-wrap">
+            <canvas id="revenueShareChart"></canvas>
+            <div class="doughnut-center-label">
+              <span class="doughnut-center-kicker">Tổng thu</span>
+              <strong class="doughnut-center-val font-mono" id="doughnutCenterTotal">0 đ</strong>
+            </div>
+          </div>
+
+          <div class="doughnut-breakdown-list">
+            <div class="breakdown-row">
+              <div class="breakdown-left">
+                <span class="breakdown-dot motor"></span>
+                <span>Xe máy</span>
+              </div>
+              <div class="breakdown-right font-mono">
+                <strong id="revShareMotorPct">0.0%</strong>
+                <span id="revShareMotorVal">0 đ</span>
+              </div>
+            </div>
+            <div class="breakdown-row">
+              <div class="breakdown-left">
+                <span class="breakdown-dot car"></span>
+                <span>Ô tô</span>
+              </div>
+              <div class="breakdown-right font-mono">
+                <strong id="revShareCarPct">0.0%</strong>
+                <span id="revShareCarVal">0 đ</span>
+              </div>
+            </div>
+            <div class="breakdown-row">
+              <div class="breakdown-left">
+                <span class="breakdown-dot bike"></span>
+                <span>Xe đạp / Đạp điện</span>
+              </div>
+              <div class="breakdown-right font-mono">
+                <strong id="revShareBikePct">0.0%</strong>
+                <span id="revShareBikeVal">0 đ</span>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <!-- 2.5 Hiệu suất nhận diện tự động & Cảnh báo vận hành -->
+      <section class="insights-alerts-grid">
+        <!-- Card Trái: Hiệu suất nhận diện tự động -->
+        <article class="card insight-card">
+          <div class="insight-header">
+            <div class="insight-title-row">
+              <div class="insight-icon-badge ai">
+                <i class="fa-solid fa-microchip"></i>
+              </div>
+              <div>
+                <h2 class="insight-title">Hiệu suất nhận diện tự động</h2>
+                <p class="insight-subtitle">Tỷ lệ nhận diện biển số tự động trên Ô tô &amp; Xe máy</p>
+              </div>
+            </div>
+            <span class="insight-pill info" id="aiRateBadge">0.0% tự động</span>
+          </div>
+
+          <div class="ai-metrics-row">
+            <div class="ai-metric-box">
+              <span class="ai-metric-label">Tỷ lệ đọc chuẩn</span>
+              <span class="ai-metric-val font-mono" id="aiAutoRate">0.0%</span>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-metric-label">Độ tin cậy TB</span>
+              <span class="ai-metric-val font-mono" id="aiAvgConf">0.0%</span>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-metric-label">Vé xe đạp 6 số</span>
+              <span class="ai-metric-val font-mono" id="aiBikeCount">0</span>
+            </div>
+          </div>
+
+          <div class="ai-progress-block">
+            <div class="ai-progress-labels">
+              <span>Nhận diện tự động: <strong id="aiAutoCount">0</strong> lượt</span>
+              <span>Sửa / Nhập tay: <strong id="aiManualCount">0</strong> lượt</span>
+            </div>
+            <div class="ai-progress-track">
+              <div class="ai-progress-fill" id="aiProgressBar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card Phải: Cảnh báo vận hành & Đối soát -->
+        <article class="card insight-card">
+          <div class="insight-header">
+            <div class="insight-title-row">
+              <div class="insight-icon-badge alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <h2 class="insight-title">Cảnh báo vận hành &amp; Đối soát</h2>
+                <p class="insight-subtitle">Xe gửi tồn &ge; 24 giờ và lượt cần kiểm tra thủ công</p>
+              </div>
+            </div>
+            <span class="insight-pill ok" id="alertTotalBadge">0 cảnh báo</span>
+          </div>
+
+          <div class="alerts-list" id="alertsList">
+            <div class="alerts-empty">
+              <i class="fa-solid fa-shield-check"></i>
+              <span>Hệ thống vận hành ổn định, chưa ghi nhận cảnh báo</span>
+            </div>
+          </div>
+        </article>
       </section>
 
       <!-- 3. Bảng Đối soát doanh thu -->
@@ -302,12 +420,96 @@
         </div>
       </section>
 
+      <!-- 4. Sao lưu Excel & Xóa dữ liệu định kỳ (Chọn Tháng -> Chọn Tuần 1-4 -> Xuất Excel -> Xóa) -->
+      <section class="card archive-card">
+        <div class="archive-header">
+          <div class="insight-title-row">
+            <div class="insight-icon-badge archive">
+              <i class="fa-solid fa-box-archive"></i>
+            </div>
+            <div>
+              <h2 class="insight-title">Sao lưu Excel &amp; Xóa dữ liệu định kỳ</h2>
+              <p class="insight-subtitle">Chọn Tháng &rarr; chọn Tuần (hoặc Cả tháng) &rarr; Xuất file Excel sao lưu để mở khóa nút Xóa dữ liệu</p>
+            </div>
+          </div>
+          <span class="insight-pill info" id="archiveStatsBadge">Đang tải dữ liệu...</span>
+        </div>
+
+        <div class="archive-steps-bar">
+          <div class="archive-step-field">
+            <label for="archiveMonthSelect">1. Chọn Tháng</label>
+            <select id="archiveMonthSelect">
+              <option value="">Đang tải...</option>
+            </select>
+          </div>
+
+          <div class="archive-step-field archive-step-week">
+            <label for="archiveWeekSelect">2. Chọn Tuần / Cả tháng</label>
+            <select id="archiveWeekSelect">
+              <option value="ALL">Cả tháng</option>
+            </select>
+          </div>
+
+          <div class="archive-step-actions">
+            <button type="button" class="btn-archive-export" id="btnArchiveExport" disabled>
+              <i class="fa-solid fa-file-excel"></i>
+              <span>3. Xuất file Excel</span>
+            </button>
+            <button type="button" class="btn-archive-cleanup" id="btnArchiveCleanup" disabled title="Xuất file Excel xong mới được phép xóa">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>4. Xóa dữ liệu đã chọn</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
     </main>
+  </div>
+
+  <!-- MODAL XÁC NHẬN XÓA DỮ LIỆU SAU KHI ĐÃ XUẤT EXCEL -->
+  <div class="park-modal-backdrop" id="archiveConfirmModalBackdrop">
+    <div class="archive-modal-card">
+      <div class="archive-modal-header">
+        <div>
+          <span class="archive-modal-kicker">Đã sao lưu Excel hợp lệ</span>
+          <h3 id="archiveModalTitle">Xóa dữ liệu kỳ đã chọn</h3>
+        </div>
+        <button type="button" class="btn-archive-modal-x" id="btnCloseArchiveModalTop" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="archive-modal-desc" id="archiveModalDesc">Chọn cách xử lý cho dữ liệu của kỳ này:</p>
+
+      <div class="archive-mode-options">
+        <label class="archive-mode-option">
+          <input type="radio" name="archiveCleanupMode" value="images_only" checked>
+          <div>
+            <strong>Chỉ xóa file ảnh cũ (giữ doanh thu Dashboard)</strong>
+            <span>Giải phóng dung lượng ổ cứng nhưng không làm mất thống kê doanh thu.</span>
+          </div>
+        </label>
+        <label class="archive-mode-option danger">
+          <input type="radio" name="archiveCleanupMode" value="purge_all">
+          <div>
+            <strong>Xóa toàn bộ ảnh &amp; bản ghi lịch sử của kỳ này</strong>
+            <span>Làm sạch hoàn toàn danh sách các lượt gửi xe trong khoảng đã xuất Excel.</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="archive-modal-actions">
+        <button type="button" class="park-btn-modal secondary" id="btnCancelArchiveModal">Hủy bỏ</button>
+        <button type="button" class="park-btn-modal danger" id="btnConfirmArchiveCleanup">
+          <i class="fa-solid fa-trash-can"></i> <span>Xác nhận xóa</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- File JavaScript xử lý logic Dashboard -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
   <script src="../../js/Admin/admin-common.js?v=1.0"></script>
-  <script src="../../js/Admin/dashboard.js?v=3.0"></script>
+  <script src="../../js/Admin/dashboard.js?v=8.0"></script>
 </body>
 </html>

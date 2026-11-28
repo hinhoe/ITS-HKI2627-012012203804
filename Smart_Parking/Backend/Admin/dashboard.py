@@ -7,10 +7,15 @@ File Backend: Thống kê & Báo cáo Quản trị viên (Backend/Admin/dashboar
 
 from __future__ import annotations
 
+import calendar
 from datetime import datetime, timedelta
 import io
 import logging
+from pathlib import Path
+import re
+import secrets
 import sqlite3
+import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,7 +23,9 @@ from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from pydantic import BaseModel, Field
 
+from Backend.config import settings
 from Backend.database.connection import get_db
 
 logger = logging.getLogger("smart_parking.backend.admin.dashboard")
@@ -59,7 +66,8 @@ def _build_dashboard_payload(
     # Tải toàn bộ phiên gửi xe để thống kê nhanh và chính xác
     cur.execute(
         """
-        SELECT vehicle_type, checkin_time, checkout_time, total_fee, status
+        SELECT session_code, plate_number, vehicle_type, checkin_time, checkout_time,
+               confidence, is_manual, total_fee, status
         FROM parking_sessions
         """
     )
@@ -123,17 +131,30 @@ def _build_dashboard_payload(
             "total_rev": 0,
         }
 
-    # Tổng hợp theo từng phiên
+    # Tổng hợp theo từng phiên + Hiệu suất AI + Cảnh báo bất thường
     period_in = 0
     period_out = 0
     period_rev = 0
 
+    alpr_total = 0
+    alpr_auto = 0
+    alpr_manual = 0
+    alpr_conf_sum = 0.0
+    alpr_conf_count = 0
+    bike_tickets = 0
+
+    overstay_vehicles: list[dict] = []
+    manual_or_low_conf: list[dict] = []
+
     for row in sessions:
         vtype = row["vehicle_type"] or "Ô tô"
-        cin_str = (row["checkin_time"] or "")[:10]
+        cin_full = row["checkin_time"] or ""
+        cin_str = cin_full[:10]
         cout_str = (row["checkout_time"] or "")[:10]
         fee = int(row["total_fee"] or 0)
         status = row["status"] or ""
+        conf = float(row["confidence"] or 0.0)
+        is_manual = bool(row["is_manual"])
 
         if cin_str in daily_stats:
             daily_stats[cin_str]["in_count"] += 1
@@ -142,8 +163,43 @@ def _build_dashboard_payload(
                 daily_stats[cin_str]["motor_in"] += 1
             elif vtype == "Xe đạp / Đạp điện":
                 daily_stats[cin_str]["bike_in"] += 1
+                bike_tickets += 1
             else:
                 daily_stats[cin_str]["car_in"] += 1
+
+            # Thống kê hiệu suất nhận diện ALPR trên Xe máy & Ô tô
+            if vtype != "Xe đạp / Đạp điện":
+                alpr_total += 1
+                if is_manual:
+                    alpr_manual += 1
+                else:
+                    alpr_auto += 1
+                if conf > 0:
+                    alpr_conf_sum += conf
+                    alpr_conf_count += 1
+                if is_manual or (0 < conf < 90.0):
+                    manual_or_low_conf.append({
+                        "plate_number": row["plate_number"],
+                        "vehicle_type": vtype,
+                        "checkin_time": cin_full,
+                        "confidence": round(conf, 1),
+                        "reason": "Nhập / sửa tay" if is_manual else f"Tin cậy thấp ({conf:.1f}%)",
+                    })
+
+        # Phát hiện xe đang gửi tồn trong bãi >= 24 giờ
+        if status == "PARKED" and cin_full:
+            try:
+                cin_dt = datetime.strptime(cin_full[:19], "%Y-%m-%d %H:%M:%S")
+                parked_hours = (now - cin_dt).total_seconds() / 3600.0
+                if parked_hours >= 24.0:
+                    overstay_vehicles.append({
+                        "plate_number": row["plate_number"],
+                        "vehicle_type": vtype,
+                        "checkin_time": cin_full,
+                        "hours_parked": round(parked_hours, 1),
+                    })
+            except ValueError:
+                pass
 
         if status == "COMPLETED" and cout_str in daily_stats:
             daily_stats[cout_str]["out_count"] += 1
@@ -156,6 +212,11 @@ def _build_dashboard_payload(
                 daily_stats[cout_str]["bike_rev"] += fee
             else:
                 daily_stats[cout_str]["car_rev"] += fee
+
+    overstay_vehicles.sort(key=lambda item: item["hours_parked"], reverse=True)
+    manual_or_low_conf.sort(key=lambda item: item["checkin_time"], reverse=True)
+    auto_rate = round((alpr_auto / alpr_total) * 100.0, 1) if alpr_total > 0 else 0.0
+    avg_confidence = round((alpr_conf_sum / alpr_conf_count), 1) if alpr_conf_count > 0 else 0.0
 
     # Nếu xem "Hôm nay" hoặc 1 ngày cụ thể -> vẽ biểu đồ theo các khung giờ trong ngày đó
     if range_key in ("today", "custom"):
@@ -233,6 +294,21 @@ def _build_dashboard_payload(
             "total_out": period_out,
             "parked_now": capacity["current_count"],
             "total_revenue": period_rev,
+        },
+        "ai_stats": {
+            "alpr_total": alpr_total,
+            "alpr_auto": alpr_auto,
+            "alpr_manual": alpr_manual,
+            "auto_rate": auto_rate,
+            "avg_confidence": avg_confidence,
+            "bike_tickets": bike_tickets,
+        },
+        "alerts": {
+            "total_alerts": len(overstay_vehicles) + len(manual_or_low_conf),
+            "overstay_count": len(overstay_vehicles),
+            "manual_low_count": len(manual_or_low_conf),
+            "overstay_vehicles": overstay_vehicles[:5],
+            "manual_or_low_conf": manual_or_low_conf[:5],
         },
         "chart": {
             "labels": chart_labels,
@@ -373,3 +449,378 @@ async def export_admin_dashboard_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ==========================================================================
+# SAO LƯU EXCEL & DỌN DẸP ĐỊNH KỲ: CHỌN THÁNG -> CHỌN TUẦN (1-4 / CẢ THÁNG)
+# ==========================================================================
+_ARCHIVE_EXPORT_TOKENS: dict[str, dict] = {}
+_ARCHIVE_TOKEN_TTL_SEC = 1800
+
+
+class ArchiveCleanupRequest(BaseModel):
+    month: str = Field(..., description="Tháng định dạng YYYY-MM")
+    week: str = Field(default="ALL", description="ALL hoặc 1, 2, 3, 4")
+    mode: str = Field(default="images_only", description="images_only hoặc purge_all")
+    backup_token: str = Field(..., description="Mã xác nhận đã xuất Excel sao lưu")
+
+
+def _get_month_week_ranges(month_str: str) -> tuple[str, int, int, list[dict]]:
+    """
+    Tính 4 tuần chuẩn trong 1 tháng (1..7, 8..14, 15..21, 22..cuối tháng) và mục ALL (Cả tháng).
+    """
+    clean_m = (month_str or "").strip()
+    if not re.fullmatch(r"\d{4}-\d{2}", clean_m):
+        raise HTTPException(status_code=400, detail="Định dạng tháng không hợp lệ (cần YYYY-MM).")
+    year_num, month_num = map(int, clean_m.split("-"))
+    if not (1 <= month_num <= 12):
+        raise HTTPException(status_code=400, detail="Tháng phải từ 01 đến 12.")
+
+    last_day = calendar.monthrange(year_num, month_num)[1]
+    mm = f"{month_num:02d}"
+    defs = [
+        ("ALL", f"Cả tháng {mm}/{year_num}", 1, last_day),
+        ("1", f"Tuần 1 (01/{mm} - 07/{mm})", 1, 7),
+        ("2", f"Tuần 2 (08/{mm} - 14/{mm})", 8, 14),
+        ("3", f"Tuần 3 (15/{mm} - 21/{mm})", 15, 21),
+        ("4", f"Tuần 4 (22/{mm} - {last_day:02d}/{mm})", 22, last_day),
+    ]
+    weeks = [
+        {
+            "week": code,
+            "label": label,
+            "start_day": sd,
+            "end_day": ed,
+            "start_date": f"{clean_m}-{sd:02d}",
+            "end_date": f"{clean_m}-{ed:02d}",
+        }
+        for code, label, sd, ed in defs
+    ]
+    return clean_m, year_num, month_num, weeks
+
+
+def _resolve_month_week(month_str: str, week_str: str) -> tuple[str, str, str, str, str]:
+    """
+    Chuẩn hóa (month, week) -> (clean_month, clean_week, start_date, end_date, display_label)
+    """
+    clean_m, year_num, month_num, weeks = _get_month_week_ranges(month_str)
+    clean_w = (week_str or "ALL").strip().upper()
+    matched = next((w for w in weeks if w["week"] == clean_w), None)
+    if not matched:
+        raise HTTPException(status_code=400, detail="Tuần không hợp lệ (chỉ chấp nhận ALL, 1, 2, 3, 4).")
+    mm = f"{month_num:02d}"
+    label = (
+        f"Cả tháng {mm}/{year_num}"
+        if clean_w == "ALL"
+        else f"{matched['label']} - Tháng {mm}/{year_num}"
+    )
+    return clean_m, clean_w, matched["start_date"], matched["end_date"], label
+
+
+def _resolve_media_file(url: Optional[str]) -> Optional[Path]:
+    if not url:
+        return None
+    clean = url.strip().split("?")[0]
+    if clean.startswith("/uploads/"):
+        base_dir = settings.UPLOAD_DIR.resolve()
+        rel = clean[len("/uploads/"):]
+    elif clean.startswith("/results/"):
+        base_dir = settings.RESULTS_DIR.resolve()
+        rel = clean[len("/results/"):]
+    else:
+        return None
+
+    target = (base_dir / rel).resolve()
+    if not target.is_relative_to(base_dir):
+        return None
+    if target.is_file():
+        return target
+    return None
+
+
+@router.get("/api/admin/archive/summary")
+@router.get("/api/admin/archive/months")
+async def get_archive_summary(db: sqlite3.Connection = Depends(get_db)):
+    """Trả về danh sách các Tháng có dữ liệu lịch sử cùng thống kê chi tiết Tuần 1, 2, 3, 4 và Cả tháng."""
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT
+            substr(COALESCE(checkout_time, checkin_time), 1, 10) AS ymd,
+            total_fee,
+            checkin_image_url, checkin_crop_url, checkout_image_url, checkout_crop_url
+        FROM parking_sessions
+        WHERE status = 'COMPLETED'
+        ORDER BY ymd DESC
+        """
+    )
+
+    months_rows: dict[str, list] = {}
+    for row in cur.fetchall():
+        ymd = (row["ymd"] or "").strip()
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", ymd):
+            continue
+        ym = ymd[:7]
+        months_rows.setdefault(ym, []).append(row)
+
+    months_out = []
+    for ym in sorted(months_rows.keys(), reverse=True):
+        try:
+            clean_m, year_num, month_num, week_defs = _get_month_week_ranges(ym)
+        except HTTPException:
+            continue
+
+        week_stats = {
+            w["week"]: {
+                "week": w["week"],
+                "label": w["label"],
+                "session_count": 0,
+                "total_revenue": 0,
+                "image_paths": set(),
+            }
+            for w in week_defs
+        }
+
+        for row in months_rows[ym]:
+            day_num = int(row["ymd"][8:10])
+            if day_num <= 7:
+                w_code = "1"
+            elif day_num <= 14:
+                w_code = "2"
+            elif day_num <= 21:
+                w_code = "3"
+            else:
+                w_code = "4"
+
+            fee = int(row["total_fee"] or 0)
+            row_paths = [
+                p for col in ("checkin_image_url", "checkin_crop_url", "checkout_image_url", "checkout_crop_url")
+                if (p := _resolve_media_file(row[col])) is not None
+            ]
+
+            for target_code in ("ALL", w_code):
+                ws_item = week_stats[target_code]
+                ws_item["session_count"] += 1
+                ws_item["total_revenue"] += fee
+                ws_item["image_paths"].update(row_paths)
+
+        weeks_serialized = []
+        for w in week_defs:
+            st = week_stats[w["week"]]
+            total_bytes = sum(p.stat().st_size for p in st["image_paths"] if p.exists())
+            weeks_serialized.append({
+                "week": st["week"],
+                "label": st["label"],
+                "session_count": st["session_count"],
+                "total_revenue": st["total_revenue"],
+                "image_files_count": len(st["image_paths"]),
+                "image_size_kb": round(total_bytes / 1024.0, 1),
+            })
+
+        months_out.append({
+            "month": clean_m,
+            "label": f"Tháng {month_num:02d}/{year_num}",
+            "weeks": weeks_serialized,
+        })
+
+    return {
+        "success": True,
+        "months": months_out,
+    }
+
+
+@router.get("/api/admin/archive/export")
+async def export_archive_excel(
+    month: str = Query(..., description="Tháng YYYY-MM"),
+    week: str = Query("ALL", description="ALL hoặc 1, 2, 3, 4"),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Bước 3: Xuất file Excel (.xlsx) theo Tháng & Tuần (1-4 hoặc Cả tháng) và cấp token mở khóa Bước 4."""
+    clean_m, clean_w, start_date, end_date, label = _resolve_month_week(month, week)
+
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT session_code, plate_number, vehicle_type, checkin_time, checkout_time,
+               duration_minutes, total_fee, payment_status, staff_checkin, staff_checkout
+        FROM parking_sessions
+        WHERE status = 'COMPLETED'
+          AND substr(COALESCE(checkout_time, checkin_time), 1, 10) BETWEEN ? AND ?
+        ORDER BY checkout_time ASC, id ASC
+        """,
+        (start_date, end_date),
+    )
+    rows = cur.fetchall()
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"Không có dữ liệu lịch sử đã hoàn tất trong {label}.")
+
+    wb = Workbook()
+    ws = wb.active
+    suffix_name = "CaThang" if clean_w == "ALL" else f"Tuan{clean_w}"
+    ws.title = f"SaoLuu_{clean_m}_{suffix_name}"[:31]
+    navy_fill = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
+    header_fill = PatternFill(start_color="1E3A8A", end_color="1E3A8A", fill_type="solid")
+
+    ws.merge_cells("A1:I1")
+    ws["A1"] = f"SAO LƯU LỊCH SỬ GỬI XE — {label.upper()} (PARKTECH)"
+    ws["A1"].font = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
+    ws["A1"].fill = navy_fill
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 32
+
+    headers = [
+        "STT", "Mã phiên", "Biển số / Mã vé", "Loại xe",
+        "Giờ vào", "Giờ ra", "Thời lượng (phút)", "Phí thu (VNĐ)", "Nhân viên ra",
+    ]
+    ws.append(headers)
+    for col_idx in range(1, 10):
+        c = ws.cell(row=2, column=col_idx)
+        c.font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+        c.fill = header_fill
+        c.alignment = Alignment(horizontal="center", vertical="center")
+
+    total_rev = 0
+    for idx, r in enumerate(rows, 1):
+        fee = int(r["total_fee"] or 0)
+        total_rev += fee
+        ws.append([
+            idx,
+            r["session_code"] or "--",
+            r["plate_number"] or "--",
+            r["vehicle_type"] or "Ô tô",
+            r["checkin_time"] or "--",
+            r["checkout_time"] or "--",
+            int(r["duration_minutes"] or 0),
+            fee,
+            r["staff_checkout"] or "--",
+        ])
+        ws.cell(row=idx + 2, column=8).number_format = '#,##0 "VNĐ"'
+
+    total_row = len(rows) + 3
+    ws.cell(row=total_row, column=7, value="TỔNG DOANH THU:").font = Font(bold=True)
+    ws.cell(row=total_row, column=8, value=total_rev).font = Font(bold=True)
+    ws.cell(row=total_row, column=8).number_format = '#,##0 "VNĐ"'
+
+    for col_idx, width in enumerate([7, 20, 16, 18, 22, 22, 16, 18, 20], 1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    now_ts = time.time()
+    stale = [k for k, v in _ARCHIVE_EXPORT_TOKENS.items() if now_ts - v["issued_at"] > _ARCHIVE_TOKEN_TTL_SEC]
+    for k in stale:
+        _ARCHIVE_EXPORT_TOKENS.pop(k, None)
+
+    token = secrets.token_urlsafe(20)
+    _ARCHIVE_EXPORT_TOKENS[token] = {
+        "month": clean_m,
+        "week": clean_w,
+        "issued_at": now_ts,
+    }
+
+    filename = f"SaoLuu_ParkTech_{clean_m}_{suffix_name}.xlsx"
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Archive-Token": token,
+        },
+    )
+
+
+@router.post("/api/admin/archive/cleanup")
+async def cleanup_archived_data(
+    payload: ArchiveCleanupRequest,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Bước 4: Xóa ảnh cũ hoặc xóa toàn bộ dữ liệu của Tuần / Cả tháng sau khi Admin đã xuất file Excel."""
+    clean_m, clean_w, start_date, end_date, label = _resolve_month_week(payload.month, payload.week)
+
+    mode = (payload.mode or "images_only").strip()
+    if mode not in ("images_only", "purge_all"):
+        raise HTTPException(status_code=400, detail="Chế độ xóa dữ liệu không hợp lệ.")
+
+    token_info = _ARCHIVE_EXPORT_TOKENS.get(payload.backup_token)
+    if (
+        not token_info
+        or token_info.get("month") != clean_m
+        or token_info.get("week") != clean_w
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Vui lòng thực hiện Bước 3 (Xuất file Excel) cho đúng {label} trước khi xóa dữ liệu!",
+        )
+    if time.time() - token_info["issued_at"] > _ARCHIVE_TOKEN_TTL_SEC:
+        _ARCHIVE_EXPORT_TOKENS.pop(payload.backup_token, None)
+        raise HTTPException(status_code=403, detail="Phiên sao lưu Excel đã hết hạn, vui lòng xuất lại file Excel.")
+
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT id, checkin_image_url, checkin_crop_url, checkout_image_url, checkout_crop_url
+        FROM parking_sessions
+        WHERE status = 'COMPLETED'
+          AND substr(COALESCE(checkout_time, checkin_time), 1, 10) BETWEEN ? AND ?
+        """,
+        (start_date, end_date),
+    )
+    rows = cur.fetchall()
+    session_ids = [r["id"] for r in rows]
+
+    media_paths: set[Path] = set()
+    for r in rows:
+        for col in ("checkin_image_url", "checkin_crop_url", "checkout_image_url", "checkout_crop_url"):
+            fpath = _resolve_media_file(r[col])
+            if fpath is not None:
+                media_paths.add(fpath)
+
+    deleted_files = 0
+    freed_bytes = 0
+    for fpath in media_paths:
+        try:
+            fsize = fpath.stat().st_size
+            fpath.unlink()
+            deleted_files += 1
+            freed_bytes += fsize
+        except OSError as exc:
+            logger.warning("Không thể xóa file ảnh %s: %s", fpath, exc)
+
+    deleted_sessions = 0
+    if session_ids:
+        placeholders = ",".join("?" for _ in session_ids)
+        if mode == "purge_all":
+            cur.execute(f"DELETE FROM parking_sessions WHERE id IN ({placeholders})", session_ids)
+            deleted_sessions = cur.rowcount
+        else:
+            cur.execute(
+                f"""
+                UPDATE parking_sessions
+                SET checkin_image_url = NULL,
+                    checkin_crop_url = NULL,
+                    checkout_image_url = NULL,
+                    checkout_crop_url = NULL
+                WHERE id IN ({placeholders})
+                """,
+                session_ids,
+            )
+        db.commit()
+
+    _ARCHIVE_EXPORT_TOKENS.pop(payload.backup_token, None)
+    freed_kb = round(freed_bytes / 1024.0, 1)
+    return {
+        "success": True,
+        "month": clean_m,
+        "week": clean_w,
+        "mode": mode,
+        "deleted_files": deleted_files,
+        "deleted_sessions": deleted_sessions,
+        "freed_kb": freed_kb,
+        "message": (
+            f"Đã xóa {deleted_files} file ảnh ({freed_kb} KB) và {deleted_sessions} bản ghi của {label}."
+            if mode == "purge_all"
+            else f"Đã dọn {deleted_files} file ảnh ({freed_kb} KB) của {label}, vẫn giữ nguyên số liệu doanh thu."
+        ),
+    }

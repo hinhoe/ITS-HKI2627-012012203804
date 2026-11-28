@@ -6,8 +6,8 @@
   <title>Quản lý tài khoản & Phân quyền - Quản trị ParkTech</title>
 
   <!-- File CSS chuẩn đồng bộ Admin -->
-  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=2.0">
-  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=5.0">
+  <link rel="stylesheet" href="../../css/Admin/admin-layout.css?v=2.1">
+  <link rel="stylesheet" href="../../css/Admin/accounts.css?v=5.1">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
 
   <!-- Font chữ Inter -->
@@ -96,11 +96,6 @@
       </div>
 
       <div class="header-right">
-        <button type="button" class="btn-add-account" id="btnAddAccount">
-          <i class="fa-solid fa-user-plus"></i>
-          <span>Thêm tài khoản</span>
-        </button>
-
         <div class="user-menu-wrapper">
           <button class="user-profile-btn" id="userProfileBtn" type="button" aria-haspopup="true" aria-expanded="false">
             <div class="avatar-circle">
@@ -222,7 +217,13 @@
 
           <div class="table-pagination-footer">
             <div class="pagination-info" id="paginationInfo">Đang tải...</div>
-            <div class="pagination-controls" id="paginationControls"></div>
+            <div class="table-footer-right">
+              <div class="pagination-controls" id="paginationControls"></div>
+              <button type="button" class="btn-add-account" id="btnAddAccount">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Thêm tài khoản</span>
+              </button>
+            </div>
           </div>
         </div>
 

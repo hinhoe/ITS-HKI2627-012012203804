@@ -6,7 +6,7 @@
   <title>Ghi nhận xe ra & Tính phí - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Ghi nhận xe ra -->
-  <link rel="stylesheet" href="../../css/Employee/checkout.css?v=11.0">
+  <link rel="stylesheet" href="../../css/Employee/checkout.css?v=13.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter (Đồng bộ tuyệt đối với hệ thống) -->
@@ -119,14 +119,6 @@
 
         <!-- Menu thả xuống -->
         <div class="user-dropdown-menu" id="userDropdownMenu">
-          <a href="#" class="dropdown-item">
-            <i class="fa-regular fa-id-badge"></i>
-            <span>Thông tin cá nhân</span>
-          </a>
-          <a href="#" class="dropdown-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>Cài đặt ca trực</span>
-          </a>
           <a href="../login.html" class="dropdown-item logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
             <span>Đăng xuất</span>
@@ -326,6 +318,18 @@
             </div>
           </div>
 
+          <!-- Chọn phương thức thu phí -->
+          <div class="payment-method-bar">
+            <button type="button" class="pay-method-btn active" id="btnPayCash">
+              <i class="fa-solid fa-money-bill-wave"></i>
+              <span>Tiền mặt</span>
+            </button>
+            <button type="button" class="pay-method-btn vietqr" id="btnPayVietQR">
+              <i class="fa-solid fa-qrcode"></i>
+              <span>Chuyển khoản VietQR</span>
+            </button>
+          </div>
+
           <!-- Nút Xác nhận xe ra & Mở Barrier -->
           <button type="button" class="btn-confirm-checkout" id="btnConfirmCheckout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -398,8 +402,94 @@
     </main>
   </div>
 
+  <!-- MODAL: THANH TOÁN CHUYỂN KHOẢN VIETQR ĐỘNG -->
+  <div class="park-modal-backdrop" id="vietqrModalBackdrop">
+    <div class="vietqr-modal-card">
+      <div class="vietqr-modal-header">
+        <div class="vietqr-title-group">
+          <div class="vietqr-icon-badge">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <div>
+            <h3>Thanh toán chuyển khoản VietQR</h3>
+            <p id="vietqrSubtitle">Quét mã bằng ứng dụng ngân hàng để thu phí tự động</p>
+          </div>
+        </div>
+        <button type="button" class="vietqr-close-btn" id="btnCloseVietqrTop" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="vietqr-body">
+        <div class="vietqr-image-frame">
+          <img id="vietqrQrImage" alt="Mã thanh toán VietQR" style="display: none;">
+          <div class="vietqr-fallback" id="vietqrFallback" style="display: none;">
+            <i class="fa-solid fa-wifi"></i>
+            <span>Không tải được ảnh VietQR trực tuyến.<br>Vui lòng chuyển khoản thủ công theo thông tin bên dưới.</span>
+          </div>
+        </div>
+
+        <div class="vietqr-details-box">
+          <div class="vietqr-detail-row">
+            <span>Số tiền:</span>
+            <strong class="vietqr-amount-val font-mono" id="vietqrAmountDisplay">0 VNĐ</strong>
+          </div>
+          <div class="vietqr-detail-row">
+            <span>Ngân hàng:</span>
+            <strong id="vietqrBankDisplay">MB Bank</strong>
+          </div>
+          <div class="vietqr-detail-row">
+            <span>Số tài khoản:</span>
+            <strong class="font-mono" id="vietqrAccountDisplay">0987654321</strong>
+          </div>
+          <div class="vietqr-detail-row">
+            <span>Chủ tài khoản:</span>
+            <strong id="vietqrNameDisplay">BAI DO XE PARKTECH</strong>
+          </div>
+          <div class="vietqr-detail-row">
+            <span>Nội dung CK:</span>
+            <strong class="font-mono" id="vietqrNoteDisplay">PARKTECH</strong>
+          </div>
+        </div>
+
+        <div class="vietqr-config-toggle-row">
+          <button type="button" class="btn-vietqr-config-toggle" id="btnToggleVietqrConfig">
+            <i class="fa-solid fa-sliders"></i> <span>Đổi TK ngân hàng nhận tiền</span>
+          </button>
+        </div>
+
+        <div class="vietqr-config-panel" id="vietqrConfigPanel" style="display: none;">
+          <div class="vietqr-config-grid">
+            <select id="vietqrBankInput" aria-label="Ngân hàng">
+              <option value="MB">MB Bank (MB)</option>
+              <option value="VCB">Vietcombank (VCB)</option>
+              <option value="TCB">Techcombank (TCB)</option>
+              <option value="BIDV">BIDV</option>
+              <option value="ACB">ACB</option>
+              <option value="TPB">TPBank</option>
+              <option value="VPB">VPBank</option>
+              <option value="ICB">VietinBank</option>
+            </select>
+            <input type="text" id="vietqrAccountInput" placeholder="Số tài khoản">
+            <input type="text" id="vietqrNameInput" placeholder="Tên chủ TK (không dấu)">
+          </div>
+          <button type="button" class="btn-save-vietqr-config" id="btnSaveVietqrConfig">
+            <i class="fa-solid fa-check"></i> Áp dụng &amp; Tạo lại mã QR
+          </button>
+        </div>
+      </div>
+
+      <div class="vietqr-actions">
+        <button type="button" class="park-btn-modal secondary" id="btnCloseVietqr">Đóng</button>
+        <button type="button" class="park-btn-modal primary" id="btnConfirmVietqrPaid">
+          <i class="fa-solid fa-circle-check"></i> <span>Đã nhận chuyển khoản — Mở Barrier</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript xử lý tương tác nghiệp vụ Check-out -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
-  <script src="../../js/Employee/checkout.js?v=23.0"></script>
+  <script src="../../js/Employee/checkout.js?v=24.0"></script>
 </body>
 </html>

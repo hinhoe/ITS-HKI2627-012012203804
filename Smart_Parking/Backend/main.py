@@ -63,6 +63,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "X-Archive-Token"],
 )
 
 # Chống lưu bộ nhớ đệm (Cache) cho các file giao diện Frontend trong quá trình phát triển

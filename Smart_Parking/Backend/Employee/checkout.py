@@ -56,6 +56,7 @@ class CheckoutConfirmRequest(BaseModel):
     checkout_crop_url: Optional[str] = Field(default=None, description="Đường dẫn ảnh crop biển số lúc ra")
     total_fee: int = Field(default=25000, description="Số tiền phí phải thu (VNĐ)")
     payment_status: str = Field(default="PAID", description="Trạng thái thanh toán ('PAID', 'UNPAID')")
+    payment_method: str = Field(default="CASH", description="Hình thức thu phí ('CASH', 'VIETQR')")
     staff_checkout: Optional[str] = Field(default="Trần Bảo Anh", description="Tên nhân viên trực ca lúc xe ra")
 
 
@@ -599,6 +600,7 @@ async def confirm_checkout_session(
                 "duration_minutes": duration_minutes,
                 "total_fee": final_fee,
                 "fee_display_table": fee_display_table,
+                "payment_method": payload.payment_method or "CASH",
                 "status": "Hoàn tất & Đã mở barrier",
             },
             "stats": {

@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const eyeImg = document.getElementById('eyeImg');
   const loginForm = document.getElementById('loginForm');
   const loginErrorBox = document.getElementById('loginErrorBox');
-  const quickRoleBtns = document.querySelectorAll('.btn-quick-role');
 
   if (togglePasswordBtn && passwordInput && eyeImg) {
     togglePasswordBtn.addEventListener('click', () => {
@@ -82,14 +81,4 @@ document.addEventListener('DOMContentLoaded', () => {
       await executeLogin(username, password);
     });
   }
-
-  quickRoleBtns.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const user = btn.getAttribute('data-username') || '';
-      const pass = btn.getAttribute('data-password') || '';
-      if (usernameInput) usernameInput.value = user;
-      if (passwordInput) passwordInput.value = pass;
-      await executeLogin(user, pass);
-    });
-  });
 });

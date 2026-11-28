@@ -118,6 +118,7 @@ async def process_checkin_recognition(
     plate_index: Optional[int] = Form(default=None, description="Chỉ định chỉ số biển số cần đọc (nếu có nhiều biển)"),
     read_all: bool = Form(default=False, description="Nhận diện toàn bộ tất cả biển số tìm thấy"),
     use_preprocess: bool = Form(default=True, description="Kích hoạt tiền xử lý nâng cao tương phản CLAHE"),
+    db: sqlite3.Connection = Depends(get_db),
 ):
     """
     Quy trình nhận diện AI cho xe vào bãi:
@@ -258,6 +259,15 @@ async def process_checkin_recognition(
             processing_time_ms=total_time_ms,
         )
 
+    # Kiểm tra trùng biển số hiện đang đỗ trong bãi để cảnh báo sớm ngay khi AI đọc xong
+    duplicate_warning = None
+    for pr in results_out:
+        rec_plate = pr.recognition.plate_number if pr.recognition else None
+        if rec_plate:
+            duplicate_warning = _find_parked_duplicate(db, rec_plate)
+            if duplicate_warning:
+                break
+
     return RecognizeResponse(
         request_id=request_id,
         status=RecognitionStatus.RECOGNIZED,
@@ -267,6 +277,7 @@ async def process_checkin_recognition(
         plate_count=len(detection.boxes),
         plates=results_out,
         processing_time_ms=total_time_ms,
+        duplicate_warning=duplicate_warning,
     )
 
 
@@ -298,6 +309,48 @@ def validate_vietnamese_plate(plate: str, vehicle_type: str = "") -> tuple[bool,
         return False, f"Biển số '{clean}' thiếu ký tự chữ cái sê-ri (VD: 51F, 29A, 59P1)."
 
     return True, ""
+
+
+def _find_parked_duplicate(db: sqlite3.Connection, plate_number: str) -> Optional[dict]:
+    """Kiểm tra biển số hoặc mã vé đã tồn tại trong danh sách xe đang đỗ (PARKED) hay chưa."""
+    compact_target = re.sub(r"[\s\.\-_]", "", (plate_number or "").strip().upper())
+    if not compact_target or len(compact_target) < 4:
+        return None
+
+    cur = db.cursor()
+    cur.execute(
+        """
+        SELECT id, session_code, plate_number, vehicle_type, checkin_time, staff_checkin
+        FROM parking_sessions
+        WHERE status = 'PARKED'
+        ORDER BY checkin_time DESC, id DESC
+        """
+    )
+    for row in cur.fetchall():
+        compact_existing = re.sub(r"[\s\.\-_]", "", (row["plate_number"] or "").upper())
+        if compact_existing == compact_target:
+            return {
+                "id": row["id"],
+                "session_code": row["session_code"],
+                "plate_number": row["plate_number"],
+                "vehicle_type": row["vehicle_type"],
+                "checkin_time": row["checkin_time"],
+                "staff_checkin": row["staff_checkin"],
+            }
+    return None
+
+
+@router.get("/api/checkin/check-duplicate")
+async def check_duplicate_parked_plate(
+    plate: str,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Kiểm tra nhanh theo thời gian thực khi nhân viên nhập tay biển số ở cổng Check-in."""
+    dup = _find_parked_duplicate(db, plate)
+    return {
+        "duplicate": dup is not None,
+        "existing": dup,
+    }
 
 
 def generate_unique_bike_ticket(db: sqlite3.Connection) -> str:
@@ -385,15 +438,12 @@ async def confirm_checkin_session(
         cur = db.cursor()
 
         # Kiểm tra 1: Không cho phép check-in trùng biển số xe hiện ĐANG ĐỖ trong bãi (status = 'PARKED')
-        compact_new = re.sub(r"[\s\.\-_]", "", clean_plate)
-        cur.execute("SELECT id, plate_number, checkin_time FROM parking_sessions WHERE status = 'PARKED'")
-        for parked_row in cur.fetchall():
-            compact_existing = re.sub(r"[\s\.\-_]", "", (parked_row["plate_number"] or "").upper())
-            if compact_existing == compact_new:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Xe biển số {parked_row['plate_number']} hiện ĐANG ĐỖ TRONG BÃI (vào lúc {parked_row['checkin_time']}). Không thể check-in trùng 2 lần!"
-                )
+        dup_parked = _find_parked_duplicate(db, clean_plate)
+        if dup_parked:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Xe biển số {dup_parked['plate_number']} hiện ĐANG ĐỖ TRONG BÃI (vào lúc {dup_parked['checkin_time']}). Không thể check-in trùng 2 lần!"
+            )
 
         # Kiểm tra 2: Bãi xe đã đạt giới hạn sức chứa tối đa chưa
         cur.execute("SELECT COUNT(*) FROM parking_sessions WHERE status = 'PARKED'")

@@ -412,7 +412,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 4px;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.table-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .pagination-info {

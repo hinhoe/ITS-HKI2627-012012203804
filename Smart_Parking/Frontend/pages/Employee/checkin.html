@@ -6,7 +6,7 @@
   <title>Ghi nhận xe vào bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt theo chuẩn dự án -->
-  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=19.0">
+  <link rel="stylesheet" href="../../css/Employee/checkin.css?v=20.0">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter -->
@@ -119,14 +119,6 @@
 
         <!-- Menu thả xuống -->
         <div class="user-dropdown-menu" id="userDropdownMenu">
-          <a href="#" class="dropdown-item">
-            <i class="fa-regular fa-id-badge"></i>
-            <span>Thông tin cá nhân</span>
-          </a>
-          <a href="#" class="dropdown-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>Cài đặt ca trực</span>
-          </a>
           <a href="../login.html" class="dropdown-item logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
             <span>Đăng xuất</span>
@@ -283,6 +275,12 @@
             <span id="manualEntryHintText">Độ tin cậy &lt; 90% — Vui lòng kiểm tra hoặc nhập tay</span>
           </div>
 
+          <!-- Cảnh báo sớm nếu biển số đang đỗ sẵn trong bãi -->
+          <div class="duplicate-plate-alert" id="duplicatePlateAlert" style="display: none;">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span id="duplicatePlateAlertText">Cảnh báo: Biển số này hiện vẫn đang gửi trong bãi!</span>
+          </div>
+
           <!-- Bảng thông số chi tiết -->
           <div class="meta-details-grid">
             <div class="meta-item">
@@ -419,6 +417,11 @@
             <div class="ticket-session-code" id="ticketSessionCode">Mã phiên: --</div>
           </div>
 
+          <div class="ticket-qr-box">
+            <div id="ticketQrCode" class="ticket-qr-canvas"></div>
+            <span class="ticket-qr-label">Quét QR đối soát</span>
+          </div>
+
           <div class="red-official-stamp" aria-label="Dấu mộc đỏ xác thực ParkTech">
             <div class="stamp-outer-ring">
               <div class="stamp-inner-ring">
@@ -447,7 +450,8 @@
   </div>
 
   <!-- JavaScript xử lý tương tác -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
-  <script src="../../js/Employee/checkin.js?v=22.0"></script>
+  <script src="../../js/Employee/checkin.js?v=24.0"></script>
 </body>
 </html>

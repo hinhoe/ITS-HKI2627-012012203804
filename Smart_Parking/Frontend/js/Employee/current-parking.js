@@ -52,10 +52,59 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalType = document.getElementById('modalVehicleType');
   const modalTimeIn = document.getElementById('modalTimeIn');
   const modalGate = document.getElementById('modalGateIn');
+  const modalEditPlateBtn = document.getElementById('modalEditPlateBtn');
+  let activeModalVehicle = null;
 
   // ==========================================================================
   // HÀM TIỆN ÍCH & KẾT NỐI API BACKEND
   // ==========================================================================
+
+  function getCurrentUser() {
+    try {
+      const raw = localStorage.getItem('parktech_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function isAdminUser() {
+    const user = getCurrentUser();
+    return Boolean(user && String(user.role || '').toLowerCase() === 'admin');
+  }
+
+  function validateVietnamesePlate(plateStr, vehicleType = '') {
+    if (!plateStr || typeof plateStr !== 'string') {
+      return { valid: false, reason: 'Vui lòng nhập biển số xe hoặc mã vé.' };
+    }
+    const clean = plateStr.trim().toUpperCase();
+    if (!clean || clean === '---' || clean === 'CHƯA RÕ' || clean === 'CHUA RO' || clean === 'KHÔNG TÌM THẤY') {
+      return { valid: false, reason: 'Vui lòng nhập biển số xe hoặc mã vé hợp lệ.' };
+    }
+    if (vehicleType === 'Xe đạp / Đạp điện') {
+      if (!/^\d{6}$/.test(clean)) {
+        return { valid: false, reason: `Mã vé Xe đạp / Đạp điện "${clean}" phải gồm đúng 6 chữ số.` };
+      }
+      return { valid: true, clean };
+    }
+    const stripped = clean.replace(/[\s\.\-_]/g, '');
+    if (stripped.length < 6 || stripped.length > 11) {
+      return { valid: false, reason: `Biển số "${clean}" không đúng độ dài quy định (6–10 ký tự).` };
+    }
+    const digits = stripped.match(/\d/g) || [];
+    if (digits.length < 4) {
+      return { valid: false, reason: `Biển số "${clean}" thiếu chữ số đăng ký (tối thiểu 4 chữ số).` };
+    }
+    const letters = stripped.match(/[A-Z]/g) || [];
+    if (letters.length < 1) {
+      return { valid: false, reason: `Biển số "${clean}" thiếu ký tự chữ cái sê-ri (VD: 51F, 29A).` };
+    }
+    const isVnStandard = /^([1-9]\d|[A-Z]{2})[A-Z0-9]{1,3}\d{4,5}$/.test(stripped);
+    if (!isVnStandard) {
+      return { valid: false, reason: `Biển số "${clean}" chưa đúng quy chuẩn biển số Việt Nam.` };
+    }
+    return { valid: true, clean };
+  }
 
   function getApiBase() {
     return window.location.origin.includes('8000') ? '' : 'http://127.0.0.1:8000';
@@ -184,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startIndex = (state.currentPage - 1) * state.pageSize;
     const endIndex = startIndex + state.vehicles.length;
+    const canAdminEdit = isAdminUser();
 
     vehiclesTableBody.innerHTML = state.vehicles.map(v => `
       <tr>
@@ -214,6 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="btn-action-icon btn-view-photo" data-id="${v.id}" title="Xem ảnh chụp lúc vào bãi" style="background:#f0fdfa !important; color:#0f766e !important; border:1px solid #99f6e4 !important; border-radius:6px; padding:4px 9px; font-weight:600; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
               <i class="fa-regular fa-eye"></i> <span>Xem ảnh</span>
             </button>
+            ${canAdminEdit ? `
+              <button type="button" class="btn-action-edit btn-edit-plate" data-id="${v.id}" title="Sửa lại biển số (Chỉ Admin)">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Sửa</span>
+              </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -237,6 +292,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+
+    // Gán sự kiện sửa biển số (chỉ hiển thị & hoạt động khi là Admin)
+    if (canAdminEdit) {
+      document.querySelectorAll('.btn-edit-plate').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.getAttribute('data-id'), 10);
+          const vehicle = state.vehicles.find(v => v.id === id);
+          if (vehicle) {
+            handleEditPlate(vehicle);
+          }
+        });
+      });
+    }
   }
 
   // Render cụm nút phân trang thông minh
@@ -314,10 +382,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mở modal xem ảnh phương tiện lúc vào
   function openPhotoModal(vehicle) {
     if (!photoModalBackdrop) return;
+    activeModalVehicle = vehicle;
     if (modalPlate) modalPlate.textContent = vehicle.plate;
     if (modalType) modalType.textContent = vehicle.type;
     if (modalTimeIn) modalTimeIn.textContent = vehicle.timeIn;
     if (modalGate) modalGate.textContent = vehicle.gate;
+    if (modalEditPlateBtn) {
+      modalEditPlateBtn.style.display = isAdminUser() ? 'inline-flex' : 'none';
+    }
 
     // Hiển thị ảnh chụp thực tế nếu có
     if (modalImagePreview) {
@@ -346,6 +418,83 @@ document.addEventListener('DOMContentLoaded', () => {
   function closePhotoModal() {
     if (photoModalBackdrop) {
       photoModalBackdrop.classList.remove('show');
+    }
+  }
+
+  // Sửa biển số xe đang gửi trong bãi (Dành riêng cho Quản trị viên - Admin)
+  async function handleEditPlate(vehicle) {
+    if (!isAdminUser()) {
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'Không có quyền thực hiện',
+          message: 'Chỉ tài khoản Quản trị viên (Admin) mới có quyền sửa biển số xe đang gửi trong bãi.',
+          type: 'warning'
+        });
+      }
+      return;
+    }
+
+    const oldPlate = vehicle.plate;
+    const isBike = vehicle.type === 'Xe đạp / Đạp điện';
+
+    let newPlate = null;
+    if (window.showAppPrompt) {
+      newPlate = await window.showAppPrompt({
+        title: isBike ? 'Sửa mã vé xe đạp (Admin)' : 'Sửa biển số xe đang gửi (Admin)',
+        subtitle: `Chỉnh sửa lại ${isBike ? 'mã vé 6 số' : 'biển số'} do nhập lệch lúc vào (Hiện tại: ${oldPlate}):`,
+        defaultValue: oldPlate,
+        placeholder: isBike ? 'VD: 482915 (6 chữ số)' : 'VD: 51F-866.88 hoặc 29A-12345',
+        validateFn: (val) => validateVietnamesePlate(val, vehicle.type)
+      });
+    } else {
+      newPlate = prompt(`Nhập lại biển số đúng (hiện tại: ${oldPlate}):`, oldPlate);
+    }
+
+    if (!newPlate) return;
+    const cleanNewPlate = newPlate.trim().toUpperCase();
+    if (cleanNewPlate === oldPlate) return;
+
+    const currentUser = getCurrentUser();
+    try {
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/current-parking/sessions/${vehicle.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': (currentUser && currentUser.role) ? currentUser.role : 'admin'
+        },
+        body: JSON.stringify({
+          plate_number: cleanNewPlate,
+          operator_username: currentUser ? currentUser.username : null
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Không thể cập nhật biển số xe');
+
+      vehicle.plate = data.plate_number || cleanNewPlate;
+      if (activeModalVehicle && activeModalVehicle.id === vehicle.id && modalPlate) {
+        modalPlate.textContent = vehicle.plate;
+      }
+
+      if (window.showAppToast) {
+        window.showAppToast({
+          title: 'Đã cập nhật biển số',
+          message: `${oldPlate} → ${vehicle.plate}`,
+          type: 'success'
+        });
+      }
+
+      await loadVehicles();
+    } catch (err) {
+      if (window.showAppAlert) {
+        await window.showAppAlert({
+          title: 'Cập nhật thất bại',
+          message: err.message,
+          type: 'error'
+        });
+      } else {
+        alert(`Không thể sửa biển số: ${err.message}`);
+      }
     }
   }
 
@@ -554,6 +703,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Đóng modal
+  if (modalEditPlateBtn) {
+    modalEditPlateBtn.addEventListener('click', () => {
+      if (activeModalVehicle) {
+        handleEditPlate(activeModalVehicle);
+      }
+    });
+  }
   if (modalCloseBtn) {
     modalCloseBtn.addEventListener('click', closePhotoModal);
   }

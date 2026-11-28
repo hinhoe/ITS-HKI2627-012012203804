@@ -27,7 +27,7 @@ import re
 import sqlite3
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from Backend.database.connection import get_db
@@ -239,35 +239,86 @@ async def get_current_parking_vehicles(
 class UpdateSessionPayload(BaseModel):
     plate_number: str
     vehicle_type: Optional[str] = None
+    operator_username: Optional[str] = None
+
+
+def _verify_admin_operator(
+    db: sqlite3.Connection,
+    x_user_role: Optional[str],
+    operator_username: Optional[str],
+) -> str:
+    """Xác thực quyền Admin trước khi cho phép sửa biển số xe đang gửi."""
+    if (x_user_role or "").strip().lower() != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ tài khoản Quản trị viên (Admin) mới có quyền sửa biển số xe đang trong bãi.",
+        )
+
+    clean_op = (operator_username or "").strip()
+    if clean_op:
+        cur = db.cursor()
+        cur.execute(
+            "SELECT role, is_active FROM users WHERE username = ? LIMIT 1",
+            (clean_op,),
+        )
+        u_row = cur.fetchone()
+        if not u_row or int(u_row["is_active"] or 0) != 1 or (u_row["role"] or "").lower() != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Tài khoản thao tác không có quyền Quản trị viên hợp lệ.",
+            )
+    return clean_op or "admin"
 
 
 @router.put("/api/current-parking/sessions/{session_id}")
 async def update_current_parking_session(
     session_id: int,
     payload: UpdateSessionPayload,
+    x_user_role: Optional[str] = Header(default=None, alias="X-User-Role"),
     db: sqlite3.Connection = Depends(get_db),
 ):
     """
-    Sửa biển số xe hoặc loại xe nếu người dùng hoặc nhân viên nhập sai:
-    Cập nhật trực tiếp vào cơ sở dữ liệu SQLite.
+    Cho phép Quản trị viên (Admin) sửa lại biển số / mã vé của lượt xe đang gửi trong bãi
+    khi nhân viên lỡ nhập lệch ký tự lúc check-in.
     """
+    admin_user = _verify_admin_operator(db, x_user_role, payload.operator_username)
+
     clean_plate = payload.plate_number.strip().upper()
     if not clean_plate:
         raise HTTPException(status_code=400, detail="Biển số xe không được để trống")
 
     cur = db.cursor()
-    cur.execute("SELECT id, vehicle_type FROM parking_sessions WHERE id = ?", (session_id,))
+    cur.execute(
+        "SELECT id, plate_number, vehicle_type, status FROM parking_sessions WHERE id = ?",
+        (session_id,),
+    )
     row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Không tìm thấy phiên gửi xe cần sửa")
+    if row["status"] != "PARKED":
+        raise HTTPException(status_code=400, detail="Chỉ được phép sửa biển số cho xe đang gửi trong bãi (PARKED).")
 
     target_vtype = payload.vehicle_type or row["vehicle_type"] or "Ô tô"
     is_valid, error_msg = validate_vietnamese_plate(clean_plate, target_vtype)
     if not is_valid:
         raise HTTPException(
             status_code=400,
-            detail=f"Biển số / mã vé không hợp lệ: {error_msg}"
+            detail=f"Biển số / mã vé không hợp lệ: {error_msg}",
         )
+
+    # Chặn trùng biển số với xe khác đang gửi trong bãi
+    compact_new = re.sub(r"[\s\.\-_]", "", clean_plate)
+    cur.execute(
+        "SELECT id, plate_number FROM parking_sessions WHERE status = 'PARKED' AND id != ?",
+        (session_id,),
+    )
+    for other in cur.fetchall():
+        compact_other = re.sub(r"[\s\.\-_]", "", (other["plate_number"] or "").upper())
+        if compact_other == compact_new:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Biển số / mã vé '{clean_plate}' hiện đang có ở một lượt xe khác trong bãi!",
+            )
 
     if payload.vehicle_type:
         cur.execute(
@@ -288,6 +339,13 @@ async def update_current_parking_session(
             (clean_plate, session_id),
         )
     db.commit()
+    logger.info(
+        "Admin '%s' đã sửa biển số phiên #%s: %s -> %s",
+        admin_user,
+        session_id,
+        row["plate_number"],
+        clean_plate,
+    )
 
     return {
         "success": True,

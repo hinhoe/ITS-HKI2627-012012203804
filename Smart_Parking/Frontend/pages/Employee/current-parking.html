@@ -6,7 +6,7 @@
   <title>Xe đang gửi trong bãi - ParkAIVision</title>
   
   <!-- File CSS riêng biệt cho trang Quản lý xe đang gửi -->
-  <link rel="stylesheet" href="../../css/Employee/current-parking.css?v=13.0">
+  <link rel="stylesheet" href="../../css/Employee/current-parking.css?v=13.3">
   <link rel="stylesheet" href="../../css/Employee/notification-modal.css?v=2.0">
   
   <!-- Font chữ Inter chuẩn của toàn hệ thống -->
@@ -94,18 +94,10 @@
     
     <!-- Top Header -->
     <header class="top-header">
-      <!-- Tiêu đề & Badges thống kê đặt trực tiếp trong Header -->
+      <!-- Tiêu đề đặt gọn trong Header -->
       <div class="header-left">
         <div class="icon-badge-p">P</div>
         <h1 class="page-main-title">Xe đang gửi trong bãi</h1>
-        <span class="stat-pill stat-pill-blue" id="totalVehiclesBadge">
-          <i class="fa-solid fa-car"></i>
-          <span id="totalVehiclesCount">0 xe đang trong bãi</span>
-        </span>
-        <span class="stat-pill stat-pill-danger" id="overdueVehiclesBadge">
-          <i class="fa-regular fa-clock"></i>
-          <span id="overdueVehiclesCount">0 xe đã gửi quá 24h</span>
-        </span>
       </div>
 
       <!-- Dropdown Profile Nhân viên ở góc phải -->
@@ -123,14 +115,6 @@
 
         <!-- Menu thả xuống -->
         <div class="user-dropdown-menu" id="userDropdownMenu">
-          <a href="#" class="dropdown-item">
-            <i class="fa-regular fa-id-badge"></i>
-            <span>Thông tin cá nhân</span>
-          </a>
-          <a href="#" class="dropdown-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>Cài đặt ca trực</span>
-          </a>
           <a href="../login.html" class="dropdown-item logout">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
             <span>Đăng xuất</span>
@@ -242,6 +226,22 @@
 
       <!-- 3. Bảng danh sách xe đang trong bãi -->
       <section class="card table-card">
+        <div class="table-card-header">
+          <div class="table-card-heading">
+            <i class="fa-solid fa-square-parking"></i>
+            <span>Danh sách xe đang gửi</span>
+          </div>
+          <div class="table-stats-pills">
+            <span class="stat-pill stat-pill-blue" id="totalVehiclesBadge">
+              <i class="fa-solid fa-car"></i>
+              <span id="totalVehiclesCount">0 xe đang trong bãi</span>
+            </span>
+            <span class="stat-pill stat-pill-danger" id="overdueVehiclesBadge">
+              <i class="fa-regular fa-clock"></i>
+              <span id="overdueVehiclesCount">0 xe đã gửi quá 24h</span>
+            </span>
+          </div>
+        </div>
         <div class="table-responsive">
           <table class="custom-table">
             <thead>
@@ -298,9 +298,15 @@
           </div>
         </div>
         <div class="modal-meta-grid">
-          <div class="modal-meta-item">
-            <div class="modal-meta-label">Biển số xe</div>
-            <div class="modal-meta-value font-mono" id="modalPlateNumber">--</div>
+          <div class="modal-meta-item modal-plate-meta-row">
+            <div>
+              <div class="modal-meta-label">Biển số xe</div>
+              <div class="modal-meta-value font-mono" id="modalPlateNumber">--</div>
+            </div>
+            <button type="button" class="btn-modal-edit-plate" id="modalEditPlateBtn" style="display: none;" title="Sửa lại biển số xe (Chỉ Admin)">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Sửa biển số</span>
+            </button>
           </div>
           <div class="modal-meta-item">
             <div class="modal-meta-label">Loại xe</div>
@@ -321,6 +327,6 @@
 
   <!-- File JavaScript xử lý tương tác -->
   <script src="../../js/Employee/notification-modal.js?v=3.0"></script>
-  <script src="../../js/Employee/current-parking.js?v=19.0"></script>
+  <script src="../../js/Employee/current-parking.js?v=20.0"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@
   --color-blue-bg: #eff6ff;
   --color-danger: #ef4444;
 
-  --sidebar-width: 272px;
+  --sidebar-width: 260px;
   --header-height: 64px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -41,9 +41,9 @@ body {
   font-family: var(--font-family);
   background-color: var(--color-bg-body);
   color: var(--color-text-main);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
-  overflow-x: hidden;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -56,14 +56,15 @@ body {
 }
 
 /* ==========================================================================
-   SIDEBAR QUẢN TRỊ ĐỒNG BỘ HOÀN TOÀN VỚI EMPLOYEE
+   SIDEBAR QUẢN TRỊ ĐỒNG BỘ HOÀN TOÀN & CỐ ĐỊNH TỈ LỆ VỚI EMPLOYEE
    ========================================================================== */
 .sidebar {
-  width: var(--sidebar-width);
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  max-width: var(--sidebar-width) !important;
+  flex: 0 0 var(--sidebar-width) !important;
+  height: 100vh !important;
+  position: relative !important;
   background: linear-gradient(180deg, #0f172a 0%, #162033 100%);
   color: #f8fafc;
   display: flex;
@@ -72,6 +73,7 @@ body {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 50;
   padding: 0 !important;
+  overflow-y: auto;
 }
 
 .sidebar-top {
@@ -252,26 +254,27 @@ body {
    MAIN WRAPPER & HEADER CHUẨN HÓA ĐỒNG NHẤT 64PX
    ========================================================================== */
 .main-wrapper {
-  margin-left: var(--sidebar-width);
+  margin-left: 0 !important;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background-color: var(--color-bg-body);
 }
 
 .app-header {
   height: var(--header-height) !important;
   min-height: var(--header-height) !important;
+  max-height: var(--header-height) !important;
   background-color: #ffffff;
   border-bottom: 1px solid var(--color-border);
   padding: 0 28px !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 40;
 }
 
@@ -416,6 +419,9 @@ body {
 }
 
 .content-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 22px 28px 36px;
   display: flex;
   flex-direction: column;

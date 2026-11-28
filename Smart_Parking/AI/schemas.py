@@ -5,7 +5,7 @@ PARKTECH / PARKAIVISION — AI Data Models (Schemas)
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -99,3 +99,4 @@ class RecognizeResponse(BaseModel):
     plate_count: int = 0
     plates: list[PlateResult] = Field(default_factory=list)
     processing_time_ms: Optional[float] = None
+    duplicate_warning: Optional[dict[str, Any]] = None

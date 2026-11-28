@@ -430,12 +430,12 @@ body {
   background-color: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 20px 18px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -451,7 +451,7 @@ body {
   background-color: #f8fafc;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 12px;
+  padding: 14px;
   box-shadow: none;
   min-width: 0;
 }
@@ -873,7 +873,8 @@ body {
    CỘT 3: KẾT QUẢ XÁC THỰC & TÍNH PHÍ HÀI HÒA
    ========================================================================== */
 .results-pipeline-card {
-  gap: 10px;
+  gap: 8px;
+  padding: 14px 16px;
 }
 
 .badge-status-pill {
@@ -934,7 +935,7 @@ body {
   background: #f8fafc;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 7px 10px;
 }
 
 .crop-header-flex {
@@ -964,7 +965,7 @@ body {
 
 .crop-image-placeholder {
   width: 100%;
-  height: 75px;
+  height: 64px;
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: var(--radius-sm);
@@ -992,7 +993,7 @@ body {
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
-  height: 48px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1253,7 +1254,7 @@ body {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1.5px solid #cbd5e1;
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 8px 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -1317,7 +1318,7 @@ body {
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
-  padding: 11px 16px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
@@ -1680,4 +1681,241 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ==========================================================================
+   PHƯƠNG THỨC THANH TOÁN & MODAL VIETQR ĐỘNG
+   ========================================================================== */
+.payment-method-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pay-method-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.pay-method-btn:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.pay-method-btn.active {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.pay-method-btn.vietqr.active {
+  background-color: #ecfdf5;
+  border-color: #10b981;
+  color: #047857;
+}
+
+.vietqr-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 20px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vietqr-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vietqr-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vietqr-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.vietqr-title-group h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.vietqr-title-group p {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.vietqr-close-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.vietqr-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.vietqr-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vietqr-image-frame {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.vietqr-image-frame img {
+  max-width: 220px;
+  width: 100%;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vietqr-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.vietqr-details-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vietqr-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.vietqr-detail-row span {
+  color: #64748b;
+}
+
+.vietqr-detail-row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+.vietqr-amount-val {
+  color: #059669 !important;
+  font-size: 15px;
+}
+
+.vietqr-config-toggle-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-vietqr-config-toggle {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vietqr-config-panel {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vietqr-config-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.vietqr-config-grid select,
+.vietqr-config-grid input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--font-family);
+}
+
+.btn-save-vietqr-config {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vietqr-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }

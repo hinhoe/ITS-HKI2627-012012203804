@@ -538,6 +538,38 @@ body {
   flex-direction: column;
 }
 
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table-card-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.table-card-heading i {
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+.table-stats-pills {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -647,9 +679,11 @@ body {
 }
 
 .badge-status-overdue {
-  background-color: var(--color-danger-bg);
+  background: transparent;
   color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
+  border: none;
+  padding: 0;
+  font-weight: 600;
 }
 
 /* View Photo button */
@@ -901,6 +935,35 @@ body {
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border-light);
+}
+
+.modal-plate-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-modal-edit-plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-edit-plate:hover {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+}
 }
 
 .modal-meta-label {

@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ticketStaffName = document.getElementById('ticketStaffName');
   const btnCloseBikeTicket = document.getElementById('btnCloseBikeTicket');
   const btnPrintBikeTicket = document.getElementById('btnPrintBikeTicket');
+  const ticketQrCode = document.getElementById('ticketQrCode');
   let lastBikeTicketInfo = null;
 
   // Webcam elements
@@ -75,8 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnClearPlateInput = document.getElementById('btnClearPlateInput');
   const manualEntryHint = document.getElementById('manualEntryHint');
   const manualEntryHintText = document.getElementById('manualEntryHintText');
+  const duplicatePlateAlert = document.getElementById('duplicatePlateAlert');
+  const duplicatePlateAlertText = document.getElementById('duplicatePlateAlertText');
   const btnSwitchVehicleType = document.getElementById('btnSwitchVehicleType');
   let isManualEditMode = false;
+  let duplicateCheckTimer = null;
 
   // User Dropdown
   const userProfileBtn = document.getElementById('userProfileBtn');
@@ -315,8 +319,10 @@ document.addEventListener('DOMContentLoaded', () => {
               : `Biển số hợp lệ (${val}) — Sẵn sàng ghi nhận vào bãi.`;
           }
           if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
+          checkDuplicatePlateLive(val);
         }
       } else {
+        renderDuplicateWarning(null);
         const hintIcon = manualEntryHint ? manualEntryHint.querySelector('i') : null;
         if (licensePlateCard) licensePlateCard.classList.remove('error-mode');
         if (manualEntryHint && (manualEntryHint.classList.contains('danger') || manualEntryHint.classList.contains('valid'))) {
@@ -441,6 +447,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const month = pad(date.getMonth() + 1);
     const year = date.getFullYear();
     return `${hours}:${minutes}:${seconds} - ${day}/${month}/${year}`;
+  }
+
+  function renderDuplicateWarning(existing, notifyToast = false) {
+    if (!duplicatePlateAlert || !duplicatePlateAlertText) return;
+    if (!existing) {
+      duplicatePlateAlert.style.display = 'none';
+      if (licensePlateCard && !manualEntryHint?.classList.contains('danger')) {
+        licensePlateCard.classList.remove('error-mode');
+      }
+      return;
+    }
+
+    duplicatePlateAlertText.textContent =
+      `Cảnh báo an ninh: Biển số ${existing.plate_number} hiện vẫn ĐANG TRONG BÃI (vào lúc ${existing.checkin_time}, mã ${existing.session_code}). Kiểm tra nghi vấn gắn biển giả hoặc quên check-out!`;
+    duplicatePlateAlert.style.display = 'flex';
+    if (licensePlateCard) licensePlateCard.classList.add('error-mode');
+
+    if (notifyToast && window.showAppToast) {
+      window.showAppToast({
+        title: `Cảnh báo trùng biển số ${existing.plate_number}`,
+        message: `Phương tiện này đang ở trạng thái Đang đỗ từ ${existing.checkin_time}.`,
+        type: 'warning'
+      });
+    }
+  }
+
+  function checkDuplicatePlateLive(plate) {
+    clearTimeout(duplicateCheckTimer);
+    if (!plate || plate.length < 6) {
+      renderDuplicateWarning(null);
+      return;
+    }
+    duplicateCheckTimer = setTimeout(async () => {
+      try {
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/checkin/check-duplicate?plate=${encodeURIComponent(plate)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderDuplicateWarning(data.duplicate ? data.existing : null, false);
+      } catch (err) {
+        console.warn('Lỗi kiểm tra trùng biển số:', err);
+      }
+    }, 250);
   }
 
   // Cập nhật thanh tiến trình sức chứa bãi xe (Chuẩn giới hạn 500 xe)
@@ -897,10 +946,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Ẩn banner ghi nhận trước đó nếu có
+      // Ẩn banner ghi nhận & cảnh báo cũ trước đó nếu có
       if (successBanner) {
         successBanner.style.display = 'none';
       }
+      renderDuplicateWarning(null);
 
       // Trạng thái Loading
       btnRecognize.disabled = true;
@@ -1057,6 +1107,8 @@ document.addEventListener('DOMContentLoaded', () => {
           fileStatusText.textContent = `Đã nhận diện: ${detectedPlate}${elapsed}`;
         }
 
+        renderDuplicateWarning(data.duplicate_warning || null, Boolean(data.duplicate_warning));
+
       } catch (err) {
         console.error('Lỗi nhận diện:', err);
         const currentTime = formatDateTime();
@@ -1117,6 +1169,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ticketVehicleType) ticketVehicleType.textContent = info.vehicleType || 'Xe đạp / Đạp điện';
     if (ticketEntryTime) ticketEntryTime.textContent = info.entryTime || '--';
     if (ticketStaffName) ticketStaffName.textContent = info.staffName || 'Trần Bảo Anh';
+    if (ticketQrCode) {
+      ticketQrCode.innerHTML = '';
+      const qrPayload = `PARKTECH|${info.ticketCode || ''}|${info.sessionCode || ''}`;
+      if (typeof window.QRCode === 'function') {
+        try {
+          new window.QRCode(ticketQrCode, {
+            text: qrPayload,
+            width: 58,
+            height: 58,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: window.QRCode.CorrectLevel.M
+          });
+        } catch (err) {
+          ticketQrCode.innerHTML = `<span style="font-size:10px;font-weight:700;color:#475569;">${info.ticketCode || 'QR'}</span>`;
+        }
+      } else {
+        ticketQrCode.innerHTML = `<span style="font-size:10px;font-weight:700;color:#475569;">${info.ticketCode || 'QR'}</span>`;
+      }
+    }
     bikeTicketModalBackdrop.classList.add('show');
   }
 
@@ -1174,6 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (successBanner) successBanner.style.display = 'none';
       if (btnReopenBikeTicket) btnReopenBikeTicket.style.display = 'none';
+      renderDuplicateWarning(null);
 
       btnBikeTicket.disabled = true;
       btnBikeTicket.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang sinh mã 6 số...</span>`;
