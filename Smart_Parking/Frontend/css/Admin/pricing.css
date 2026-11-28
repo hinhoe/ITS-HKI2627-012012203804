@@ -470,6 +470,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 20px;
 }
 
 /* Card Header */
@@ -535,6 +536,8 @@ body {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid #dbeafe;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-active-dot {
@@ -579,7 +582,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 13px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-light);
   background-color: #ffffff;
@@ -594,7 +598,9 @@ body {
 .rule-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .rule-icon-box {
@@ -660,24 +666,28 @@ body {
 .rule-right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .price-value-box {
   text-align: right;
+  white-space: nowrap;
 }
 
 .price-number {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text-main);
   display: block;
   letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 
 .price-unit {
   font-size: 11px;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .btn-edit-rule {
