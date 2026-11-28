@@ -1211,16 +1211,16 @@ document.addEventListener('DOMContentLoaded', () => {
           status: 'recognized'
         };
 
-        // Hiển thị ảnh xe ở Cột 2 & Cột 3 để nhân viên xác nhận trực quan
+        // Hiển thị ảnh xe ở Cột 2 và bỏ qua ảnh cắt biển số (Crop) ở Cột 3 vì xe đạp / đạp điện không có biển số
         if (imgUrl && annotatedPreviewImg) {
           annotatedPreviewImg.src = imgUrl;
           annotatedPreviewImg.style.display = 'block';
           if (emptyAnnotatedPlaceholder) emptyAnnotatedPlaceholder.style.display = 'none';
         }
-        if (cropPlaceholder && imgUrl) {
-          cropPlaceholder.innerHTML = `<img src="${imgUrl}" alt="Ảnh xe đạp lúc vào" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px;">`;
+        if (cropPlaceholder) {
+          cropPlaceholder.innerHTML = `<i class="fa-solid fa-bicycle" style="color:#7c3aed;"></i><span>Xe không có biển số — Không cắt ảnh biển</span>`;
         }
-        if (cropDimsText) cropDimsText.textContent = 'Ảnh xe không biển số';
+        if (cropDimsText) cropDimsText.textContent = 'Không áp dụng';
 
         if (resultPlateText) resultPlateText.textContent = ticketCode;
         if (plateManualInput) plateManualInput.value = ticketCode;

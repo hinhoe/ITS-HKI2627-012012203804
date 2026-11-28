@@ -353,9 +353,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const tagSpan = document.querySelector('#viewportAnnotatedBox .viewport-tag span');
           if (tagSpan) tagSpan.textContent = 'ẢNH XE LÚC VÀO (ĐỐI CHIẾU)';
           if (cropPlaceholder) {
-            cropPlaceholder.innerHTML = `<img src="${photoSrc}?t=${Date.now()}" alt="Ảnh xe đạp lúc vào">`;
+            cropPlaceholder.innerHTML = '<i class="fa-solid fa-bicycle" style="color:#7c3aed;"></i><span>Xe không có biển số — Không cắt ảnh biển</span>';
           }
-          if (cropDimsText) cropDimsText.textContent = 'Ảnh xe lúc vào';
+          if (cropDimsText) cropDimsText.textContent = 'Không áp dụng';
           if (fileStatusText) {
             fileStatusText.textContent = `Đã đối soát vé ${state.currentCheckout.plate} — Vui lòng kiểm tra khớp ảnh xe lúc vào`;
           }
